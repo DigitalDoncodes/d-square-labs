@@ -37,6 +37,7 @@ app.use('/api/albums', require('./routes/albumRoutes'));
 app.use('/api/photos', require('./routes/photoRoutes'));
 app.use('/api/tasks', require('./routes/taskRoutes'));
 app.use('/api/finance', require('./routes/financeRoutes'));
+app.use('/api/resume', require('./routes/resumeRoutes'));
 
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 app.use(errorHandler);

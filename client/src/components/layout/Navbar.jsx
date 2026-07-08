@@ -10,6 +10,7 @@ const links = [
   { to: '/albums', label: 'Photos' },
   { to: '/planner', label: 'Planner' },
   { to: '/finance', label: 'Finance' },
+  { to: '/resume', label: 'Resume' },
 ];
 
 const linkClass = ({ isActive }) =>
@@ -31,7 +32,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/90 backdrop-blur dark:border-gray-800 dark:bg-gray-950/90">
+    <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/90 backdrop-blur print:hidden dark:border-gray-800 dark:bg-gray-950/90">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2 font-semibold">
           <GraduationCap className="h-6 w-6 text-indigo-600" />

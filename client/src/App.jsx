@@ -14,6 +14,8 @@ import AlbumsListPage from './pages/AlbumsListPage';
 import AlbumDetailPage from './pages/AlbumDetailPage';
 import PlannerPage from './pages/PlannerPage';
 import FinancePage from './pages/FinancePage';
+import ResumePage from './pages/ResumePage';
+import ResumePreviewPage from './pages/ResumePreviewPage';
 
 function AppLayout() {
   return (
@@ -43,6 +45,8 @@ export default function App() {
               <Route path="/albums/:id" element={<AlbumDetailPage />} />
               <Route path="/planner" element={<PlannerPage />} />
               <Route path="/finance" element={<FinancePage />} />
+              <Route path="/resume" element={<ResumePage />} />
+              <Route path="/resume/preview" element={<ResumePreviewPage />} />
             </Route>
           </Routes>
         </BrowserRouter>
