@@ -13,6 +13,7 @@ import NoteEditorPage from './pages/NoteEditorPage';
 import AlbumsListPage from './pages/AlbumsListPage';
 import AlbumDetailPage from './pages/AlbumDetailPage';
 import PlannerPage from './pages/PlannerPage';
+import FinancePage from './pages/FinancePage';
 
 function AppLayout() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
               <Route path="/albums" element={<AlbumsListPage />} />
               <Route path="/albums/:id" element={<AlbumDetailPage />} />
               <Route path="/planner" element={<PlannerPage />} />
+              <Route path="/finance" element={<FinancePage />} />
             </Route>
           </Routes>
         </BrowserRouter>

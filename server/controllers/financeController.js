@@ -1,0 +1,93 @@
+const mongoose = require('mongoose');
+const Expense = require('../models/Expense');
+const Budget = require('../models/Budget');
+
+const monthRange = (month) => {
+  // month is 'YYYY-MM'; defaults to current month
+  const [y, m] = month
+    ? month.split('-').map(Number)
+    : [new Date().getFullYear(), new Date().getMonth() + 1];
+  return { start: new Date(y, m - 1, 1), end: new Date(y, m, 1) };
+};
+
+exports.listExpenses = async (req, res, next) => {
+  try {
+    const { start, end } = monthRange(req.query.month);
+    const expenses = await Expense.find({
+      user: req.user.userId,
+      date: { $gte: start, $lt: end },
+    }).sort({ date: -1 });
+    res.json(expenses);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.createExpense = async (req, res, next) => {
+  try {
+    const { amount, category, note, date } = req.body;
+    if (amount === undefined || Number(amount) <= 0) {
+      return res.status(400).json({ message: 'A positive amount is required' });
+    }
+    const expense = await Expense.create({
+      amount,
+      category,
+      note,
+      date: date || Date.now(),
+      user: req.user.userId,
+    });
+    res.status(201).json(expense);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.deleteExpense = async (req, res, next) => {
+  try {
+    const expense = await Expense.findOne({ _id: req.params.id, user: req.user.userId });
+    if (!expense) return res.status(404).json({ message: 'Expense not found' });
+    await expense.deleteOne();
+    res.json({ message: 'Expense deleted' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getSummary = async (req, res, next) => {
+  try {
+    const { start, end } = monthRange(req.query.month);
+    const [byCategory, budget] = await Promise.all([
+      Expense.aggregate([
+        { $match: { user: new mongoose.Types.ObjectId(req.user.userId), date: { $gte: start, $lt: end } } },
+        { $group: { _id: '$category', total: { $sum: '$amount' } } },
+        { $sort: { total: -1 } },
+      ]),
+      Budget.findOne({ user: req.user.userId }),
+    ]);
+    const total = byCategory.reduce((sum, c) => sum + c.total, 0);
+    res.json({
+      total,
+      byCategory: byCategory.map((c) => ({ category: c._id, total: c.total })),
+      budget: budget ? budget.monthlyAmount : null,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.setBudget = async (req, res, next) => {
+  try {
+    const { monthlyAmount } = req.body;
+    if (monthlyAmount === undefined || Number(monthlyAmount) < 0) {
+      return res.status(400).json({ message: 'A valid monthly amount is required' });
+    }
+    const budget = await Budget.findOneAndUpdate(
+      { user: req.user.userId },
+      { monthlyAmount },
+      { new: true, upsert: true }
+    );
+    res.json(budget);
+  } catch (err) {
+    next(err);
+  }
+};

@@ -9,6 +9,7 @@ const links = [
   { to: '/notes', label: 'Notes' },
   { to: '/albums', label: 'Photos' },
   { to: '/planner', label: 'Planner' },
+  { to: '/finance', label: 'Finance' },
 ];
 
 const linkClass = ({ isActive }) =>
