@@ -73,11 +73,18 @@ function MoreMenu() {
   );
 }
 
+const adminLinks = [
+  { to: '/admin', label: 'Admin' },
+  { to: '/journal', label: 'Journal' },
+];
+
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { dark, toggle } = useTheme();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const isAdmin = user?.role === 'admin';
+  const navLinks = isAdmin ? [...links, ...adminLinks] : links;
 
   const handleLogout = () => {
     logout();
@@ -93,7 +100,7 @@ export default function Navbar() {
         </div>
 
         <nav className="hidden items-center gap-1 sm:flex">
-          {links.map((l) => (
+          {navLinks.map((l) => (
             <NavLink key={l.to} to={l.to} end={l.end} className={linkClass}>
               {l.label}
             </NavLink>
@@ -138,7 +145,7 @@ export default function Navbar() {
 
       {menuOpen && (
         <nav className="flex flex-col gap-1 border-t border-gray-200 px-4 py-2 dark:border-gray-800 sm:hidden">
-          {links.map((l) => (
+          {navLinks.map((l) => (
             <NavLink
               key={l.to}
               to={l.to}

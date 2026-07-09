@@ -19,7 +19,17 @@ import ResumePage from './pages/ResumePage';
 import ResumePreviewPage from './pages/ResumePreviewPage';
 import SupportPage from './pages/SupportPage';
 import ComingSoonPage from './pages/ComingSoonPage';
+import AdminPage from './pages/AdminPage';
+import JournalPage from './pages/JournalPage';
 import { UPCOMING_FEATURES } from './utils/upcomingFeatures';
+import { useAuth } from './context/AuthContext';
+import { Navigate } from 'react-router-dom';
+
+function AdminRoute({ children }) {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <Navigate to="/" replace />;
+  return children;
+}
 
 function AppLayout() {
   return (
@@ -57,6 +67,8 @@ export default function App() {
               <Route path="/resume" element={<ResumePage />} />
               <Route path="/resume/preview" element={<ResumePreviewPage />} />
               <Route path="/support" element={<SupportPage />} />
+              <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+              <Route path="/journal" element={<AdminRoute><JournalPage /></AdminRoute>} />
               {UPCOMING_FEATURES.map((f) => (
                 <Route key={f.slug} path={`/${f.slug}`} element={<ComingSoonPage feature={f} />} />
               ))}

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, CalendarDays, Camera, ArrowRight } from 'lucide-react';
+import { BookOpen, CalendarDays, Camera, ArrowRight, Megaphone, Pin } from 'lucide-react';
 import { listNotes } from '../api/notes';
 import { listTasks } from '../api/tasks';
 import { listRecentPhotos } from '../api/photos';
+import { listAnnouncements } from '../api/admin';
 import { useAuth } from '../context/AuthContext';
 import { formatDate, daysUntil } from '../utils/dateUtils';
 import Loader from '../components/common/Loader';
@@ -29,14 +30,15 @@ export default function DashboardPage() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    Promise.all([listNotes(), listTasks(), listRecentPhotos()]).then(
-      ([notes, tasks, photos]) =>
+    Promise.all([listNotes(), listTasks(), listRecentPhotos(), listAnnouncements()]).then(
+      ([notes, tasks, photos, announcements]) =>
         setData({
           notes: notes.data.slice(0, 4),
           tasks: tasks.data
             .filter((t) => t.status !== 'done' && daysUntil(t.dueDate) >= -7)
             .slice(0, 5),
           photos: photos.data.slice(0, 4),
+          announcements: announcements.data.slice(0, 3),
         })
     );
   }, []);
@@ -47,6 +49,33 @@ export default function DashboardPage() {
     <div className="mx-auto max-w-5xl px-4 py-6">
       <h1 className="mb-1 text-2xl font-bold">Hey, {user?.name?.split(' ')[0]} 👋</h1>
       <p className="mb-6 text-sm text-gray-500">Here's what's happening in your batch</p>
+
+      {data.announcements.length > 0 && (
+        <div className="mb-4 space-y-2">
+          {data.announcements.map((a) => (
+            <div
+              key={a._id}
+              className={`flex items-start gap-2 rounded-xl border p-3 text-sm ${
+                a.priority === 'important'
+                  ? 'border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/20'
+                  : 'border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900'
+              }`}
+            >
+              <Megaphone className="mt-0.5 h-4 w-4 shrink-0 text-indigo-500" />
+              <div>
+                <p className="font-medium">
+                  {a.pinned && <Pin className="mr-1 inline h-3 w-3 text-amber-500" />}
+                  {a.title}
+                </p>
+                <p className="whitespace-pre-wrap text-gray-600 dark:text-gray-300">{a.body}</p>
+                <p className="mt-1 text-xs text-gray-400">
+                  {a.createdBy?.name} · {formatDate(a.createdAt)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <SectionCard title="Upcoming deadlines" icon={CalendarDays} to="/planner">

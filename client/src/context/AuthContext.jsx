@@ -8,7 +8,12 @@ const decodeUser = (token) => {
   try {
     const payload = jwtDecode(token);
     if (payload.exp * 1000 < Date.now()) return null;
-    return { id: payload.userId, name: payload.name, email: payload.email };
+    return {
+      id: payload.userId,
+      name: payload.name,
+      email: payload.email,
+      role: payload.role || 'member',
+    };
   } catch {
     return null;
   }

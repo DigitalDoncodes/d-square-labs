@@ -38,6 +38,8 @@ app.use('/api/photos', require('./routes/photoRoutes'));
 app.use('/api/tasks', require('./routes/taskRoutes'));
 app.use('/api/finance', require('./routes/financeRoutes'));
 app.use('/api/resume', require('./routes/resumeRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/announcements', require('./routes/announcementRoutes'));
 
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 app.use(errorHandler);
