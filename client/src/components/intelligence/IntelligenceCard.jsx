@@ -75,8 +75,10 @@ export default function IntelligenceCard({ article, onToggleBookmark, isAdmin, o
         </div>
       </div>
 
-      <h2 className="text-lg font-bold leading-snug">{article.headline}</h2>
-      <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-300">{article.summary}</p>
+      <h2 className="text-lg font-bold leading-snug">{article.title || article.headline}</h2>
+      {article.summary && (
+        <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-300">{article.summary}</p>
+      )}
 
       <div className="mt-3 space-y-2">
         {article.whyItMatters && (
@@ -154,11 +156,11 @@ export default function IntelligenceCard({ article, onToggleBookmark, isAdmin, o
 
       <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-2 text-xs text-gray-400 dark:border-gray-800">
         <span>
-          {article.source || 'D² Intelligence'} · {formatDateTime(article.createdAt)}
+          {article.source || 'D² Intelligence'} · {formatDateTime(article.publishedAt || article.createdAt)}
         </span>
-        {article.sourceUrl && (
-          <a href={article.sourceUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-indigo-500 hover:underline">
-            Source <ExternalLink className="h-3 w-3" />
+        {(article.link || article.sourceUrl) && (
+          <a href={article.link || article.sourceUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-indigo-500 hover:underline">
+            Read full <ExternalLink className="h-3 w-3" />
           </a>
         )}
       </div>

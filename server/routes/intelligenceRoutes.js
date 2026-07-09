@@ -5,12 +5,10 @@ const {
   listArticles,
   listBookmarked,
   toggleBookmark,
+  refresh,
   setInterests,
   getMarket,
   setMarket,
-  createArticle,
-  updateArticle,
-  deleteArticle,
 } = require('../controllers/intelligenceController');
 
 router.use(verifyToken);
@@ -22,10 +20,8 @@ router.get('/bookmarks', listBookmarked);
 router.post('/:id/bookmark', toggleBookmark);
 router.put('/interests', setInterests);
 
-// Admin curation
-router.post('/', checkRole('admin'), createArticle);
+// Admin
+router.post('/refresh', checkRole('admin'), refresh);
 router.put('/market', checkRole('admin'), setMarket);
-router.put('/:id', checkRole('admin'), updateArticle);
-router.delete('/:id', checkRole('admin'), deleteArticle);
 
 module.exports = router;

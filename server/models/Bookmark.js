@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
-// A user's saved intelligence article. One per (user, article).
+// A user's saved news item. One per (user, article).
 const bookmarkSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    article: { type: mongoose.Schema.Types.ObjectId, ref: 'IntelligenceArticle', required: true },
+    article: { type: mongoose.Schema.Types.ObjectId, ref: 'NewsItem', required: true },
   },
   { timestamps: true }
 );

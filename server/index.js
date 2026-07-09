@@ -55,10 +55,13 @@ app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
+const { startNewsRefresh } = require('./services/newsFetcher');
 
 connectDB()
   .then(() => {
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    // Pull live news on boot, then refresh every 30 minutes.
+    startNewsRefresh(30);
   })
   .catch((err) => {
     console.error('Failed to connect to MongoDB:', err.message);

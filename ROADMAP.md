@@ -11,18 +11,24 @@ MBA students open every day. Modules ship incrementally; nothing existing breaks
 - Resume Builder (private): guided sections → ATS print-to-PDF
 - Photos: Google Photos shared-album links (no upload/storage cost)
 - Roles: admin superuser (by email) + members · admin Journal, Console, announcements (Brevo email)
-- **Intelligence Center** (News): admin-curated business-intelligence cards with full MBA framing
-  (what happened / why it matters / MBA concepts / interview relevance / prep pack), 10 categories,
-  bookmarks, topic personalization ("For you"), admin-updated market snapshot, News of the Day,
+- **Intelligence Center** (News): **live** business news auto-pulled from Economic Times RSS
+  feeds (10 category feeds, refreshed every 30 min, cached in Mongo), 10 categories, bookmarks,
+  topic personalization ("For you"), Top Story highlight, admin-updated market snapshot,
   dashboard integration
 - Support page: UPI QR presets + roadmap · Footer with feedback links · Privacy/Terms · Settings
 
 ## Intelligence Center — Phase 2 (needs API keys + budget)
 
-- Live news aggregation (NewsAPI/GNews) auto-populating the feed
-- Live market ticker (Nifty/Sensex/Gold/USD-INR/Oil) via a market-data API
-- AI auto-enhancement per article (summary, why-it-matters, MBA concepts, interview questions,
-  similar past events) via an LLM API — currently these fields are admin-curated
+- ✅ Live news aggregation — DONE via RSS (free, no key). More sources can be added in
+  `server/config/newsFeeds.js`.
+- Live market ticker (Nifty/Sensex/Gold/USD-INR/Oil) via a market-data API — market numbers
+  are still admin-entered.
+- AI auto-enhancement per live article (why-it-matters, MBA concepts, interview questions) via an
+  LLM API key — the `NewsItem` model already reserves these fields; a worker would fill them.
+
+**Deployment note:** the news fetcher makes outbound HTTPS requests to the RSS feeds. It sends a
+browser User-Agent; if a host blocks datacenter egress or the publisher rate-limits, add feeds or
+a small proxy. Works on localhost and standard PaaS.
 
 ## 🔜 Phase 1 — Go live
 

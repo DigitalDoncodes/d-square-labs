@@ -63,7 +63,7 @@ export default function DashboardPage() {
         albums: albums.data.slice(0, 4),
         announcements: announcements.data.slice(0, 3),
         headlines: articles.data.slice(0, 5),
-        newsOfDay: articles.data.find((a) => a.newsOfTheDay) || null,
+        newsOfDay: articles.data[0] || null,
         market: market.data.indicators || [],
         counts: { notes: notes.data.length, tasks: upcoming.length, albums: albums.data.length },
       });
@@ -101,9 +101,9 @@ export default function DashboardPage() {
           {data.newsOfDay && (
             <Link to="/news" className="mt-3 block rounded-xl bg-gradient-to-br from-indigo-500/10 to-blue-500/10 p-3">
               <p className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-amber-500">
-                <Sparkles className="h-3 w-3" /> News of the day
+                <Sparkles className="h-3 w-3" /> Top story
               </p>
-              <p className="mt-0.5 text-sm font-semibold">{data.newsOfDay.headline}</p>
+              <p className="mt-0.5 text-sm font-semibold">{data.newsOfDay.title}</p>
             </Link>
           )}
           {data.headlines.length > 0 && (
@@ -112,7 +112,7 @@ export default function DashboardPage() {
                 <li key={a._id}>
                   <Link to="/news" className="flex items-start gap-2 text-sm hover:text-indigo-600">
                     <span className="shrink-0">{categoryMeta(a.category).emoji}</span>
-                    <span className="line-clamp-1">{a.headline}</span>
+                    <span className="line-clamp-1">{a.title}</span>
                   </Link>
                 </li>
               ))}
