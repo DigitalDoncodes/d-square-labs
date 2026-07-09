@@ -24,7 +24,12 @@ and maintained by Dhatchinamoorthi.
 | Resume | Guided ATS resume builder with print-to-PDF | Private per user |
 | Support | UPI contributions toward hosting & development | — |
 
-See [ROADMAP.md](ROADMAP.md) for what's next (Placement Hub, Community Feed, AI tools…).
+## Documentation
+
+- [ARCHITECTURE.md](ARCHITECTURE.md) — system design, data model, and the privacy/sharing model
+- [SECURITY.md](SECURITY.md) — security measures, pre-launch audit, and go-live checklist
+- [DEPLOYMENT.md](DEPLOYMENT.md) — step-by-step Render + Vercel runbook
+- [ROADMAP.md](ROADMAP.md) — what's next (Placement Hub, Community Feed, AI tools…)
 
 ## Setup
 
