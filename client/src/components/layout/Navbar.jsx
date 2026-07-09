@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Heart, Moon, Sun, LogOut, Menu, X } from 'lucide-react';
+import { ChevronDown, Heart, Moon, Sun, LogOut, Menu, X } from 'lucide-react';
 import { DSquareMark } from '../common/Logo';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { UPCOMING_FEATURES } from '../../utils/upcomingFeatures';
 
 const links = [
   { to: '/', label: 'Dashboard', end: true },
@@ -20,6 +21,57 @@ const linkClass = ({ isActive }) =>
       ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
       : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
   }`;
+
+function SoonBadge() {
+  return (
+    <span className="ml-auto rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+      soon
+    </span>
+  );
+}
+
+function MoreMenu() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const close = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-0.5 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+      >
+        More <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-1 w-56 rounded-xl border border-gray-200 bg-white p-1.5 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+          {UPCOMING_FEATURES.map((f) => {
+            const Icon = f.icon;
+            return (
+              <NavLink
+                key={f.slug}
+                to={`/${f.slug}`}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                <Icon className="h-4 w-4 text-indigo-500" />
+                {f.name}
+                <SoonBadge />
+              </NavLink>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -46,6 +98,7 @@ export default function Navbar() {
               {l.label}
             </NavLink>
           ))}
+          <MoreMenu />
         </nav>
 
         <div className="flex items-center gap-2">
@@ -94,6 +147,20 @@ export default function Navbar() {
               onClick={() => setMenuOpen(false)}
             >
               {l.label}
+            </NavLink>
+          ))}
+          <p className="mt-2 px-3 text-[11px] font-medium uppercase tracking-wide text-gray-400">
+            Coming soon
+          </p>
+          {UPCOMING_FEATURES.map((f) => (
+            <NavLink
+              key={f.slug}
+              to={`/${f.slug}`}
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+              onClick={() => setMenuOpen(false)}
+            >
+              {f.name}
+              <SoonBadge />
             </NavLink>
           ))}
         </nav>

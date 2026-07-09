@@ -18,6 +18,8 @@ import FinancePage from './pages/FinancePage';
 import ResumePage from './pages/ResumePage';
 import ResumePreviewPage from './pages/ResumePreviewPage';
 import SupportPage from './pages/SupportPage';
+import ComingSoonPage from './pages/ComingSoonPage';
+import { UPCOMING_FEATURES } from './utils/upcomingFeatures';
 
 function AppLayout() {
   return (
@@ -55,6 +57,9 @@ export default function App() {
               <Route path="/resume" element={<ResumePage />} />
               <Route path="/resume/preview" element={<ResumePreviewPage />} />
               <Route path="/support" element={<SupportPage />} />
+              {UPCOMING_FEATURES.map((f) => (
+                <Route key={f.slug} path={`/${f.slug}`} element={<ComingSoonPage feature={f} />} />
+              ))}
             </Route>
           </Routes>
         </BrowserRouter>
