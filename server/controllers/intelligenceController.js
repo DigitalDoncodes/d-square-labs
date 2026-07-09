@@ -3,6 +3,7 @@ const MarketSnapshot = require('../models/MarketSnapshot');
 const Bookmark = require('../models/Bookmark');
 const User = require('../models/User');
 const { refreshNews } = require('../services/newsFetcher');
+const { refreshMarket } = require('../services/marketFetcher');
 
 // ---- Live news (read) ----
 
@@ -50,11 +51,11 @@ exports.toggleBookmark = async (req, res, next) => {
   }
 };
 
-// Admin: force an immediate refresh from the RSS sources.
+// Admin: force an immediate refresh of both news and market data.
 exports.refresh = async (req, res, next) => {
   try {
-    const result = await refreshNews();
-    res.json(result);
+    const [news, market] = await Promise.all([refreshNews(), refreshMarket()]);
+    res.json({ ...news, market: market.live });
   } catch (err) {
     next(err);
   }
@@ -82,17 +83,6 @@ exports.getMarket = async (req, res, next) => {
   try {
     const snapshot = await MarketSnapshot.findOne().sort({ updatedAt: -1 });
     res.json(snapshot || { indicators: [], updatedAt: null });
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.setMarket = async (req, res, next) => {
-  try {
-    const indicators = Array.isArray(req.body.indicators) ? req.body.indicators.slice(0, 10) : [];
-    await MarketSnapshot.deleteMany({});
-    const snapshot = await MarketSnapshot.create({ indicators, updatedBy: req.user.userId });
-    res.json(snapshot);
   } catch (err) {
     next(err);
   }

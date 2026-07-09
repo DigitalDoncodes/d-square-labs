@@ -56,12 +56,14 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 const { startNewsRefresh } = require('./services/newsFetcher');
+const { startMarketRefresh } = require('./services/marketFetcher');
 
 connectDB()
   .then(() => {
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-    // Pull live news on boot, then refresh every 30 minutes.
+    // Pull live news (every 30 min) and live market data (every 15 min) on boot.
     startNewsRefresh(30);
+    startMarketRefresh(15);
   })
   .catch((err) => {
     console.error('Failed to connect to MongoDB:', err.message);

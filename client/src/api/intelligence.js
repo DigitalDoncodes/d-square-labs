@@ -7,4 +7,3 @@ export const setInterests = (interests) => api.put('/intelligence/interests', { 
 export const refreshNews = () => api.post('/intelligence/refresh');
 
 export const getMarket = () => api.get('/intelligence/market');
-export const setMarket = (indicators) => api.put('/intelligence/market', { indicators });

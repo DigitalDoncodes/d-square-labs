@@ -8,7 +8,6 @@ const {
   refresh,
   setInterests,
   getMarket,
-  setMarket,
 } = require('../controllers/intelligenceController');
 
 router.use(verifyToken);
@@ -22,6 +21,5 @@ router.put('/interests', setInterests);
 
 // Admin
 router.post('/refresh', checkRole('admin'), refresh);
-router.put('/market', checkRole('admin'), setMarket);
 
 module.exports = router;

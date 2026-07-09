@@ -21,8 +21,8 @@ MBA students open every day. Modules ship incrementally; nothing existing breaks
 
 - ✅ Live news aggregation — DONE via RSS (free, no key). More sources can be added in
   `server/config/newsFeeds.js`.
-- Live market ticker (Nifty/Sensex/Gold/USD-INR/Oil) via a market-data API — market numbers
-  are still admin-entered.
+- ✅ Live market snapshot — DONE via Yahoo Finance's keyless endpoint (Nifty, Sensex, USD/INR,
+  Gold, Crude), refreshed every 15 min. Symbols are in `server/services/marketFetcher.js`.
 - AI auto-enhancement per live article (why-it-matters, MBA concepts, interview questions) via an
   LLM API key — the `NewsItem` model already reserves these fields; a worker would fill them.
 

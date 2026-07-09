@@ -18,7 +18,6 @@ import EmptyState from '../components/common/EmptyState';
 import Modal from '../components/common/Modal';
 import IntelligenceCard from '../components/intelligence/IntelligenceCard';
 import MarketStrip from '../components/intelligence/MarketStrip';
-import MarketEditor from '../components/intelligence/MarketEditor';
 
 const chip = (active) =>
   `shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -38,7 +37,6 @@ export default function IntelligencePage() {
   const [view, setView] = useState('all'); // 'all' | 'foryou' | 'saved'
   const [category, setCategory] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const [marketOpen, setMarketOpen] = useState(false);
   const [topicsOpen, setTopicsOpen] = useState(false);
 
   const loadArticles = useCallback(() => {
@@ -71,8 +69,12 @@ export default function IntelligencePage() {
     setRefreshing(true);
     try {
       const res = await refreshNews();
-      toast.success(`Pulled fresh news (${res.data.total} stories cached)`);
+      toast.success(`Refreshed — ${res.data.total} stories, ${res.data.market} live market feeds`);
       loadArticles();
+      getMarket().then((r) => {
+        setMarketState(r.data.indicators || []);
+        setUpdatedAt(r.data.updatedAt || null);
+      });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Refresh failed');
     } finally {
@@ -127,25 +129,17 @@ export default function IntelligencePage() {
         Live business news for MBA students — auto-updated from the newsroom, sorted by topic.
       </p>
 
-      {/* Market snapshot */}
-      {(market.length > 0 || isAdmin) && (
+      {/* Market snapshot (live) */}
+      {market.length > 0 && (
         <div className="mb-4">
-          <div className="mb-1.5 flex items-center justify-between">
-            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">
-              <LineChart className="h-3.5 w-3.5" /> Market snapshot
-              {updatedAt && <span className="font-normal normal-case">· {formatDateTime(updatedAt)}</span>}
-            </p>
-            {isAdmin && (
-              <button onClick={() => setMarketOpen(true)} className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400">
-                Update
-              </button>
-            )}
-          </div>
-          {market.length > 0 ? (
-            <MarketStrip indicators={market} />
-          ) : (
-            <p className="text-sm text-gray-400">No market data yet — add today's figures.</p>
-          )}
+          <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            <LineChart className="h-3.5 w-3.5" /> Market snapshot
+            <span className="inline-flex items-center gap-1 font-normal normal-case text-green-600 dark:text-green-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-500" /> live
+            </span>
+            {updatedAt && <span className="font-normal normal-case">· {formatDateTime(updatedAt)}</span>}
+          </p>
+          <MarketStrip indicators={market} />
         </div>
       )}
 
@@ -202,18 +196,6 @@ export default function IntelligencePage() {
           ))}
         </div>
       )}
-
-      <MarketEditor
-        open={marketOpen}
-        current={market}
-        onClose={() => setMarketOpen(false)}
-        onSaved={() =>
-          getMarket().then((r) => {
-            setMarketState(r.data.indicators || []);
-            setUpdatedAt(r.data.updatedAt || null);
-          })
-        }
-      />
 
       <Modal open={topicsOpen} onClose={() => setTopicsOpen(false)} title="Follow topics">
         <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
