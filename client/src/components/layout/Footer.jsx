@@ -24,7 +24,11 @@ export default function Footer() {
           <a href="tel:+919363632214" className="hover:text-gray-600 dark:hover:text-gray-300">{PHONE}</a>
         </nav>
         <p>
-          D² Labs · Built by Dhatchinamoorthi · Technology × Psychology × Impact
+          D² Labs · Built by{' '}
+          <Link to="/creator" className="font-medium text-indigo-500 hover:underline dark:text-indigo-400">
+            Dhatchina Moorthi
+          </Link>{' '}
+          · Technology × Psychology × Impact
         </p>
       </div>
     </footer>

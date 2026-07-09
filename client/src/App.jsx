@@ -20,6 +20,7 @@ import ResumePreviewPage from './pages/ResumePreviewPage';
 import SupportPage from './pages/SupportPage';
 import ComingSoonPage from './pages/ComingSoonPage';
 import AdminPage from './pages/AdminPage';
+import CreatorPage from './pages/CreatorPage';
 import JournalPage from './pages/JournalPage';
 import { UPCOMING_FEATURES } from './utils/upcomingFeatures';
 import { useAuth } from './context/AuthContext';
@@ -54,6 +55,7 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/creator" element={<CreatorPage />} />
             <Route element={<AppLayout />}>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/notes" element={<NotesListPage />} />

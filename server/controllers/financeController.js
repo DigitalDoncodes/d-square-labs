@@ -25,18 +25,20 @@ exports.listExpenses = async (req, res, next) => {
 
 exports.createExpense = async (req, res, next) => {
   try {
-    const { amount, category, note, date } = req.body;
+    const { kind, amount, category, source, note, date } = req.body;
     if (amount === undefined || Number(amount) <= 0) {
       return res.status(400).json({ message: 'A positive amount is required' });
     }
-    const expense = await Expense.create({
+    const entry = await Expense.create({
+      kind: kind === 'income' ? 'income' : 'expense',
       amount,
-      category,
+      category: kind === 'income' ? undefined : category,
+      source: kind === 'income' ? source || 'Other' : undefined,
       note,
       date: date || Date.now(),
       user: req.user.userId,
     });
-    res.status(201).json(expense);
+    res.status(201).json(entry);
   } catch (err) {
     next(err);
   }
@@ -56,17 +58,26 @@ exports.deleteExpense = async (req, res, next) => {
 exports.getSummary = async (req, res, next) => {
   try {
     const { start, end } = monthRange(req.query.month);
-    const [byCategory, budget] = await Promise.all([
+    const userId = new mongoose.Types.ObjectId(req.user.userId);
+    const inMonth = { user: userId, date: { $gte: start, $lt: end } };
+    const [byCategory, incomeAgg, budget] = await Promise.all([
       Expense.aggregate([
-        { $match: { user: new mongoose.Types.ObjectId(req.user.userId), date: { $gte: start, $lt: end } } },
+        { $match: { ...inMonth, kind: 'expense' } },
         { $group: { _id: '$category', total: { $sum: '$amount' } } },
         { $sort: { total: -1 } },
+      ]),
+      Expense.aggregate([
+        { $match: { ...inMonth, kind: 'income' } },
+        { $group: { _id: null, total: { $sum: '$amount' } } },
       ]),
       Budget.findOne({ user: req.user.userId }),
     ]);
     const total = byCategory.reduce((sum, c) => sum + c.total, 0);
+    const income = incomeAgg[0]?.total || 0;
     res.json({
       total,
+      income,
+      balance: income - total,
       byCategory: byCategory.map((c) => ({ category: c._id, total: c.total })),
       budget: budget ? budget.monthlyAmount : null,
     });

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, Wallet, Pencil } from 'lucide-react';
+import { Plus, Trash2, Wallet, Pencil, TrendingUp, TrendingDown } from 'lucide-react';
 import {
   listExpenses,
   createExpense,
@@ -18,6 +18,7 @@ import BudgetBar from '../components/finance/BudgetBar';
 import Calculators from '../components/finance/Calculators';
 
 const CATEGORIES = ['Food', 'Travel', 'Rent', 'Books & Courses', 'Entertainment', 'Shopping', 'Other'];
+const SOURCES = ['Allowance', 'Stipend', 'Salary', 'Freelance', 'Scholarship', 'Gift', 'Other'];
 const formatINR = (n) => '₹' + n.toLocaleString('en-IN');
 const currentMonth = () => new Date().toISOString().slice(0, 7);
 
@@ -29,9 +30,9 @@ export default function FinancePage() {
   const [month, setMonth] = useState(currentMonth());
   const [expenses, setExpenses] = useState(null);
   const [summary, setSummary] = useState(null);
-  const [expenseModal, setExpenseModal] = useState(false);
+  const [entryModal, setEntryModal] = useState(null); // null | 'expense' | 'income'
   const [budgetModal, setBudgetModal] = useState(false);
-  const expenseForm = useForm({ defaultValues: { category: 'Food' } });
+  const expenseForm = useForm({ defaultValues: { category: 'Food', source: 'Allowance' } });
   const budgetForm = useForm();
 
   const load = useCallback(() => {
@@ -40,15 +41,15 @@ export default function FinancePage() {
   }, [month]);
   useEffect(load, [load]);
 
-  const onAddExpense = async (data) => {
+  const onAddEntry = async (data) => {
     try {
-      await createExpense(data);
-      toast.success('Expense added');
-      expenseForm.reset({ category: data.category });
-      setExpenseModal(false);
+      await createExpense({ ...data, kind: entryModal });
+      toast.success(entryModal === 'income' ? 'Income added' : 'Expense added');
+      expenseForm.reset({ category: data.category, source: data.source });
+      setEntryModal(null);
       load();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to add expense');
+      toast.error(err.response?.data?.message || 'Failed to add entry');
     }
   };
 
@@ -122,7 +123,13 @@ export default function FinancePage() {
                 <Pencil className="h-4 w-4" /> {summary.budget ? 'Edit budget' : 'Set budget'}
               </button>
               <button
-                onClick={() => setExpenseModal(true)}
+                onClick={() => setEntryModal('income')}
+                className="flex items-center gap-1 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700"
+              >
+                <TrendingUp className="h-4 w-4" /> Add income
+              </button>
+              <button
+                onClick={() => setEntryModal('expense')}
                 className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
               >
                 <Plus className="h-4 w-4" /> Add expense
@@ -131,9 +138,34 @@ export default function FinancePage() {
           </div>
 
           <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-            <div className="mb-4 flex items-baseline justify-between">
-              <h2 className="font-semibold">This month</h2>
-              <span className="text-2xl font-bold">{formatINR(summary.total)}</span>
+            <h2 className="mb-3 font-semibold">This month</h2>
+            <div className="mb-4 grid grid-cols-3 gap-3 text-center">
+              <div>
+                <p className="flex items-center justify-center gap-1 text-xs text-gray-400">
+                  <TrendingUp className="h-3.5 w-3.5 text-green-600" /> Income
+                </p>
+                <p className="mt-0.5 text-xl font-bold text-green-700 dark:text-green-400">
+                  {formatINR(summary.income)}
+                </p>
+              </div>
+              <div>
+                <p className="flex items-center justify-center gap-1 text-xs text-gray-400">
+                  <TrendingDown className="h-3.5 w-3.5 text-red-500" /> Spent
+                </p>
+                <p className="mt-0.5 text-xl font-bold">{formatINR(summary.total)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400">Balance</p>
+                <p
+                  className={`mt-0.5 text-xl font-bold ${
+                    summary.balance < 0
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-green-700 dark:text-green-400'
+                  }`}
+                >
+                  {formatINR(summary.balance)}
+                </p>
+              </div>
             </div>
             <BudgetBar spent={summary.total} budget={summary.budget} />
             {!summary.budget && (
@@ -147,20 +179,28 @@ export default function FinancePage() {
           </div>
 
           <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-            <h2 className="mb-3 font-semibold">Expenses</h2>
+            <h2 className="mb-3 font-semibold">Transactions</h2>
             {expenses.length === 0 ? (
-              <EmptyState icon={Wallet} title="No expenses this month" subtitle="Add your first expense to start tracking" />
+              <EmptyState icon={Wallet} title="Nothing this month" subtitle="Add income or an expense to start tracking" />
             ) : (
               <ul className="divide-y divide-gray-100 dark:divide-gray-800">
                 {expenses.map((exp) => (
                   <li key={exp._id} className="flex items-center gap-3 py-2.5">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{exp.note || exp.category}</p>
+                      <p className="truncate text-sm font-medium">
+                        {exp.note || (exp.kind === 'income' ? exp.source : exp.category)}
+                      </p>
                       <p className="text-xs text-gray-400">
-                        {exp.category} · {formatDate(exp.date)}
+                        {exp.kind === 'income' ? `Income · ${exp.source}` : exp.category} · {formatDate(exp.date)}
                       </p>
                     </div>
-                    <span className="text-sm font-semibold tabular-nums">{formatINR(exp.amount)}</span>
+                    <span
+                      className={`text-sm font-semibold tabular-nums ${
+                        exp.kind === 'income' ? 'text-green-700 dark:text-green-400' : ''
+                      }`}
+                    >
+                      {exp.kind === 'income' ? '+' : '−'}{formatINR(exp.amount)}
+                    </span>
                     <button
                       onClick={() => onDelete(exp._id)}
                       aria-label="Delete expense"
@@ -176,8 +216,12 @@ export default function FinancePage() {
         </div>
       )}
 
-      <Modal open={expenseModal} onClose={() => setExpenseModal(false)} title="Add expense">
-        <form onSubmit={expenseForm.handleSubmit(onAddExpense)} className="space-y-4">
+      <Modal
+        open={Boolean(entryModal)}
+        onClose={() => setEntryModal(null)}
+        title={entryModal === 'income' ? 'Add income' : 'Add expense'}
+      >
+        <form onSubmit={expenseForm.handleSubmit(onAddEntry)} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="exp-amount" className="mb-1 block text-sm font-medium">Amount (₹)</label>
@@ -190,20 +234,36 @@ export default function FinancePage() {
                 className={inputClass}
               />
             </div>
-            <div>
-              <label htmlFor="exp-category" className="mb-1 block text-sm font-medium">Category</label>
-              <select id="exp-category" {...expenseForm.register('category')} className={inputClass}>
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
+            {entryModal === 'income' ? (
+              <div>
+                <label htmlFor="exp-source" className="mb-1 block text-sm font-medium">Source</label>
+                <select id="exp-source" {...expenseForm.register('source')} className={inputClass}>
+                  {SOURCES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div>
+                <label htmlFor="exp-category" className="mb-1 block text-sm font-medium">Category</label>
+                <select id="exp-category" {...expenseForm.register('category')} className={inputClass}>
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
           <div>
             <label htmlFor="exp-note" className="mb-1 block text-sm font-medium">
               Note <span className="text-gray-400">(optional)</span>
             </label>
-            <input id="exp-note" {...expenseForm.register('note')} placeholder="e.g. Mess bill" className={inputClass} />
+            <input
+              id="exp-note"
+              {...expenseForm.register('note')}
+              placeholder={entryModal === 'income' ? 'e.g. Monthly allowance from home' : 'e.g. Mess bill'}
+              className={inputClass}
+            />
           </div>
           <div>
             <label htmlFor="exp-date" className="mb-1 block text-sm font-medium">Date</label>
@@ -218,9 +278,11 @@ export default function FinancePage() {
           <button
             type="submit"
             disabled={expenseForm.formState.isSubmitting}
-            className="w-full rounded-lg bg-indigo-600 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className={`w-full rounded-lg py-2 text-sm font-medium text-white disabled:opacity-50 ${
+              entryModal === 'income' ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'
+            }`}
           >
-            Add expense
+            {entryModal === 'income' ? 'Add income' : 'Add expense'}
           </button>
         </form>
       </Modal>
