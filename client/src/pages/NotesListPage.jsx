@@ -54,7 +54,7 @@ export default function NotesListPage() {
             <Link
               key={note._id}
               to={`/notes/${note._id}`}
-              className="rounded-xl border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md dark:border-gray-800 dark:bg-gray-900"
+              className="card-hover rounded-2xl border border-gray-200/80 bg-white p-4 dark:border-gray-800/80 dark:bg-gray-900"
             >
               <div className="mb-2 flex items-center gap-2">
                 <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">

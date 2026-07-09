@@ -1,9 +1,12 @@
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import Logo from '../components/common/Logo';
+import AuthShell from '../components/layout/AuthShell';
 import { login as loginApi } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
+
+const fieldClass =
+  'w-full rounded-lg border border-gray-300 bg-white/50 px-3 py-2 text-sm transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-900/50';
 
 export default function LoginPage() {
   const { register, handleSubmit, formState } = useForm();
@@ -21,49 +24,30 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-6 flex flex-col items-center gap-2">
-          <Logo size="lg" showTagline />
-          <p className="mt-2 text-sm text-gray-500">Log in to your space</p>
+    <AuthShell subtitle="Log in to your space">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div>
+          <label htmlFor="email" className="mb-1 block text-sm font-medium">Email</label>
+          <input id="email" type="email" {...register('email', { required: true })} className={fieldClass} />
         </div>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-4 rounded-xl bg-white p-6 shadow dark:bg-gray-900"
+        <div>
+          <label htmlFor="password" className="mb-1 block text-sm font-medium">Password</label>
+          <input id="password" type="password" {...register('password', { required: true })} className={fieldClass} />
+        </div>
+        <button
+          type="submit"
+          disabled={formState.isSubmitting}
+          className="w-full rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-indigo-500/40 hover:brightness-110 disabled:opacity-50"
         >
-          <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-medium">Email</label>
-            <input
-              id="email"
-              type="email"
-              {...register('email', { required: true })}
-              className="w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-medium">Password</label>
-            <input
-              id="password"
-              type="password"
-              {...register('password', { required: true })}
-              className="w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={formState.isSubmitting}
-            className="w-full rounded-lg bg-indigo-600 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {formState.isSubmitting ? 'Logging in…' : 'Log in'}
-          </button>
-          <p className="text-center text-sm text-gray-500">
-            New here?{' '}
-            <Link to="/register" className="text-indigo-600 hover:underline">
-              Create an account
-            </Link>
-          </p>
-        </form>
-      </div>
-    </div>
+          {formState.isSubmitting ? 'Logging in…' : 'Log in'}
+        </button>
+        <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+          New here?{' '}
+          <Link to="/register" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+            Create an account
+          </Link>
+        </p>
+      </form>
+    </AuthShell>
   );
 }

@@ -92,7 +92,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/90 backdrop-blur print:hidden dark:border-gray-800 dark:bg-gray-950/90">
+    <header className="glass sticky top-0 z-40 border-x-0 border-t-0 border-b border-gray-200/70 print:hidden dark:border-gray-800/70">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <div className="flex items-baseline gap-1.5 whitespace-nowrap font-semibold">
           <DSquareMark />

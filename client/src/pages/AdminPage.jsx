@@ -24,17 +24,18 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { formatDate } from '../utils/dateUtils';
 import Loader from '../components/common/Loader';
+import { AnimatedNumber } from '../components/common/motion';
 
 const inputClass =
   'w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700';
 
 function StatTile({ icon: Icon, label, value }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+    <div className="card-hover rounded-2xl border border-gray-200/80 bg-white p-4 dark:border-gray-800/80 dark:bg-gray-900">
       <div className="flex items-center gap-2 text-xs text-gray-400">
         <Icon className="h-4 w-4 text-indigo-500" /> {label}
       </div>
-      <p className="mt-1 text-2xl font-bold">{value}</p>
+      <AnimatedNumber value={value} className="mt-1 block text-2xl font-bold tabular-nums" />
     </div>
   );
 }

@@ -60,7 +60,7 @@ export default function AlbumsListPage() {
             <Link
               key={album._id}
               to={`/albums/${album._id}`}
-              className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow hover:shadow-md dark:border-gray-800 dark:bg-gray-900"
+              className="card-hover overflow-hidden rounded-2xl border border-gray-200/80 bg-white dark:border-gray-800/80 dark:bg-gray-900"
             >
               <div className="flex h-36 items-center justify-center bg-gray-100 dark:bg-gray-800">
                 {album.coverUrl ? (
