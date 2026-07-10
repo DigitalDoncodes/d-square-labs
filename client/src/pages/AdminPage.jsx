@@ -11,6 +11,7 @@ import {
   Clapperboard,
   ScrollText,
   Gift,
+  Briefcase,
   ChevronRight,
 } from 'lucide-react';
 import { getStats, listStudents } from '../api/admin';
@@ -95,6 +96,12 @@ export default function AdminPage() {
       icon: Gift,
       title: 'Referral network',
       description: 'Who invited whom, and every code’s status',
+    },
+    {
+      to: '/admin/companies',
+      icon: Briefcase,
+      title: 'Company prep cards',
+      description: 'Publish recruiter pages — process, questions, salaries',
     },
     {
       to: '/admin/archive',

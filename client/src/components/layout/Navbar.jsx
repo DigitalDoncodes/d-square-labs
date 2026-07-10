@@ -14,6 +14,7 @@ const links = [
   { to: '/finance', label: 'Finance' },
   { to: '/resume', label: 'Resume' },
   { to: '/news', label: 'News' },
+  { to: '/companies', label: 'Companies' },
 ];
 
 // Secondary destinations live in the "More" dropdown to keep the bar uncluttered.

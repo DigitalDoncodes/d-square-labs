@@ -250,8 +250,14 @@ exports.forgotPassword = async (req, res, next) => {
     user.resetTokenExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
     await user.save();
 
-    const clientUrl = process.env.CLIENT_URL.split(',')[0].trim();
-    const link = `${clientUrl}/reset-password?token=${token}`;
+    // Build the reset link from wherever the user is actually browsing —
+    // through an ngrok tunnel the request Origin is the tunnel URL, and a
+    // localhost CLIENT_URL link would be unreachable for them.
+    const origin = req.get('origin') || '';
+    const trustedOrigin = /^https:\/\/[a-z0-9-]+\.(ngrok-free\.app|ngrok\.app|ngrok\.io)$/.test(origin)
+      ? origin
+      : process.env.CLIENT_URL.split(',')[0].trim();
+    const link = `${trustedOrigin}/reset-password?token=${token}`;
     sendPasswordResetEmail(user, link).catch((err) =>
       console.error('Reset email failed:', err.message)
     );

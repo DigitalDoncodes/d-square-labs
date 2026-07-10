@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+// Default to a relative /api base: in dev Vite proxies it to the server,
+// and in production (or through an ngrok tunnel) the API is same-origin.
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
 });
 
 api.interceptors.request.use((config) => {

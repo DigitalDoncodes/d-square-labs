@@ -33,6 +33,9 @@ const AdminAnnouncementsPage = lazy(() => import('./pages/admin/AdminAnnouncemen
 const AdminLogsPage = lazy(() => import('./pages/admin/AdminLogsPage'));
 const AdminReferralsPage = lazy(() => import('./pages/admin/AdminReferralsPage'));
 const AdminArchivePage = lazy(() => import('./pages/admin/AdminArchivePage'));
+const AdminCompaniesPage = lazy(() => import('./pages/admin/AdminCompaniesPage'));
+const CompaniesPage = lazy(() => import('./pages/CompaniesPage'));
+const CompanyDetailPage = lazy(() => import('./pages/CompanyDetailPage'));
 const CreatorPage = lazy(() => import('./pages/CreatorPage'));
 const JournalPage = lazy(() => import('./pages/JournalPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
@@ -98,6 +101,9 @@ export default function App() {
                 <Route path="/admin/referrals" element={<AdminRoute><AdminReferralsPage /></AdminRoute>} />
                 <Route path="/admin/archive" element={<AdminRoute><AdminArchivePage /></AdminRoute>} />
                 <Route path="/journal" element={<AdminRoute><JournalPage /></AdminRoute>} />
+                <Route path="/companies" element={<CompaniesPage />} />
+                <Route path="/companies/:slug" element={<CompanyDetailPage />} />
+                <Route path="/admin/companies" element={<AdminRoute><AdminCompaniesPage /></AdminRoute>} />
                 <Route path="/entertainment" element={<EntertainmentPage />} />
                 <Route path="/entertainment/:category/:slug" element={<EntertainmentDetailPage />} />
                 <Route path="/about" element={<AboutPage />} />
