@@ -2,8 +2,10 @@ const User = require('../models/User');
 const Note = require('../models/Note');
 const Photo = require('../models/Photo');
 const Task = require('../models/Task');
-const JournalEntry = require('../models/JournalEntry');
 const Announcement = require('../models/Announcement');
+const JournalEntry = require('../models/JournalEntry');
+const AutomationLog = require('../models/AutomationLog');
+const SubscriptionRequest = require('../models/SubscriptionRequest');
 const { sendAnnouncementEmail, sendAccountApprovedEmail, sendWelcomeEmail } = require('../config/mailer');
 const ActivityLog = require('../models/ActivityLog');
 const logActivity = require('../utils/logActivity');
@@ -12,14 +14,39 @@ const logActivity = require('../utils/logActivity');
 
 exports.getStats = async (req, res, next) => {
   try {
-    const [students, notes, photos, tasks, journalEntries] = await Promise.all([
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    const [
+      students, notes, photos, tasks, journalEntries,
+      activeUsers, pendingApprovals, pendingSubscriptions,
+      aiCostResult, recentJobResult,
+    ] = await Promise.all([
       User.countDocuments(),
       Note.countDocuments(),
       Photo.countDocuments(),
       Task.countDocuments(),
       JournalEntry.countDocuments({ user: req.user.userId }),
+      User.countDocuments({ updatedAt: { $gte: sevenDaysAgo } }),
+      User.countDocuments({ status: 'pending' }),
+      SubscriptionRequest.countDocuments({ status: 'pending' }),
+      AutomationLog.aggregate([
+        { $match: { createdAt: { $gte: thirtyDaysAgo }, estimatedCostUsd: { $gt: 0 } } },
+        { $group: { _id: null, total: { $sum: '$estimatedCostUsd' }, count: { $sum: 1 } } },
+      ]),
+      AutomationLog.findOne({}).sort({ createdAt: -1 }).select('jobName status createdAt').lean(),
     ]);
-    res.json({ students, notes, photos, tasks, journalEntries });
+
+    const aiCost30d = aiCostResult[0]?.total ?? 0;
+    const aiJobCount30d = aiCostResult[0]?.count ?? 0;
+
+    res.json({
+      students, notes, photos, tasks, journalEntries,
+      activeUsers, pendingApprovals, pendingSubscriptions,
+      aiCost30d: parseFloat(aiCost30d.toFixed(4)),
+      aiJobCount30d,
+      lastJob: recentJobResult,
+    });
   } catch (err) {
     next(err);
   }
@@ -91,61 +118,6 @@ exports.getReferralMap = async (req, res, next) => {
       .sort({ createdAt: 1 })
       .lean();
     res.json(users);
-  } catch (err) {
-    next(err);
-  }
-};
-
-// ---- Journal (admin's private diary) ----
-
-exports.listJournal = async (req, res, next) => {
-  try {
-    const entries = await JournalEntry.find({ user: req.user.userId }).sort({ entryDate: -1 });
-    res.json(entries);
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.createJournalEntry = async (req, res, next) => {
-  try {
-    const { title, content, mood, entryDate } = req.body;
-    if (!content) return res.status(400).json({ message: 'Content is required' });
-    const entry = await JournalEntry.create({
-      title,
-      content,
-      mood,
-      entryDate: entryDate || Date.now(),
-      user: req.user.userId,
-    });
-    res.status(201).json(entry);
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.updateJournalEntry = async (req, res, next) => {
-  try {
-    const entry = await JournalEntry.findOne({ _id: req.params.id, user: req.user.userId });
-    if (!entry) return res.status(404).json({ message: 'Entry not found' });
-    const { title, content, mood, entryDate } = req.body;
-    const updates = { title, content, mood, entryDate };
-    for (const [key, value] of Object.entries(updates)) {
-      if (value !== undefined) entry[key] = value;
-    }
-    await entry.save();
-    res.json(entry);
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.deleteJournalEntry = async (req, res, next) => {
-  try {
-    const entry = await JournalEntry.findOne({ _id: req.params.id, user: req.user.userId });
-    if (!entry) return res.status(404).json({ message: 'Entry not found' });
-    await entry.deleteOne();
-    res.json({ message: 'Entry deleted' });
   } catch (err) {
     next(err);
   }

@@ -5,9 +5,11 @@ import { listStudents, approveStudent, rejectStudent } from '../../api/admin';
 import { formatDate } from '../../utils/dateUtils';
 import Loader from '../../components/common/Loader';
 import { AdminShell } from './shared';
+import ConfirmModal from '../../components/common/ConfirmModal';
 
 export default function AdminStudentsPage() {
   const [students, setStudents] = useState(null);
+  const [confirmReject, setConfirmReject] = useState(null); // student object
 
   const load = () => listStudents().then((res) => setStudents(res.data));
   useEffect(() => {
@@ -25,7 +27,6 @@ export default function AdminStudentsPage() {
   };
 
   const onReject = async (s) => {
-    if (!window.confirm(`Reject and remove ${s.name}'s pending account?`)) return;
     try {
       await rejectStudent(s._id);
       toast.success('Pending account removed');
@@ -74,7 +75,7 @@ export default function AdminStudentsPage() {
                     Approve
                   </button>
                   <button
-                    onClick={() => onReject(s)}
+                    onClick={() => setConfirmReject(s)}
                     className="rounded-lg border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-500 hover:border-red-300 hover:text-red-500 dark:border-gray-700"
                   >
                     Reject
@@ -87,6 +88,15 @@ export default function AdminStudentsPage() {
           ))}
         </ul>
       </div>
+      <ConfirmModal
+        open={!!confirmReject}
+        onClose={() => setConfirmReject(null)}
+        onConfirm={() => onReject(confirmReject)}
+        title="Reject account"
+        message={confirmReject ? `Reject and remove ${confirmReject.name}'s pending account? This cannot be undone.` : ''}
+        danger
+        confirmLabel="Reject"
+      />
     </AdminShell>
   );
 }

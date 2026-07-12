@@ -5,10 +5,10 @@ import { getReadiness } from '../../api/readiness';
 
 // Where each component's "fix it" action lives.
 const COMPONENT_LINKS = {
-  resume: '/resume',
-  companies: '/companies',
-  market: '/news',
-  planner: '/planner',
+  resume: '/career/resume',
+  companies: '/career/companies',
+  market: '/briefing',
+  planner: '/me/planner',
 };
 
 const ringColor = (score) => {
@@ -110,10 +110,10 @@ export default function ReadinessCard() {
       </div>
 
       <Link
-        to={weakest ? COMPONENT_LINKS[weakest.key] : '/companies'}
+        to={weakest ? COMPONENT_LINKS[weakest.key] : '/career/companies'}
         className="mt-4 flex items-center justify-between rounded-xl bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-900/60"
       >
-        <span>👉 {data.nextAction}</span>
+        <span>{data.nextAction}</span>
         <ArrowRight className="h-4 w-4 shrink-0" />
       </Link>
     </div>

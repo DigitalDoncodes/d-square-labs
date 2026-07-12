@@ -1,9 +1,43 @@
-export default function EmptyState({ icon: Icon, title, subtitle, action }) {
+import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
+
+// cta: { label, to } → renders as a Link
+// cta: { label, onClick } → renders as a button
+// action: arbitrary JSX for complex CTAs
+export default function EmptyState({ icon: Icon, title, description, subtitle, cta, action }) {
+  const desc = description || subtitle;
   return (
-    <div className="flex flex-col items-center gap-2 py-16 text-center">
-      {Icon && <Icon className="h-10 w-10 text-gray-400" />}
-      <p className="font-medium text-gray-600 dark:text-gray-300">{title}</p>
-      {subtitle && <p className="text-sm text-gray-400">{subtitle}</p>}
+    <div className="flex flex-col items-center gap-4 py-16 text-center">
+      {Icon && (
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100/80 ring-1 ring-gray-200/60 dark:bg-gray-800/80 dark:ring-gray-700/60">
+          <Icon className="h-8 w-8 text-gray-300 dark:text-gray-600" />
+        </div>
+      )}
+      <div className="max-w-xs">
+        <p className="font-semibold text-gray-700 dark:text-gray-200">{title}</p>
+        {desc && (
+          <p className="mt-1.5 text-sm leading-relaxed text-gray-400 dark:text-gray-500 text-balance">
+            {desc}
+          </p>
+        )}
+      </div>
+      {cta && (
+        cta.onClick ? (
+          <button
+            onClick={cta.onClick}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 active:scale-95 transition-transform"
+          >
+            {cta.label} <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        ) : (
+          <Link
+            to={cta.to}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 active:scale-95 transition-transform"
+          >
+            {cta.label} <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        )
+      )}
       {action}
     </div>
   );

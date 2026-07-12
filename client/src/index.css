@@ -22,7 +22,7 @@
 @layer components {
   /* Surfaces that lift on hover — the core "premium card" feel. */
   .card-hover {
-    @apply transition-all duration-300;
+    @apply transition-all duration-200;
   }
   .card-hover:hover {
     @apply -translate-y-0.5 shadow-lg shadow-indigo-500/5;
@@ -37,6 +37,40 @@
   .gradient-text {
     @apply bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent dark:from-indigo-400 dark:to-blue-400;
   }
+
+  /* Skeleton shimmer — matches card surface so it blends in. */
+  .skeleton {
+    @apply relative overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800;
+  }
+  .skeleton::after {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+    animation: shimmer 1.6s ease-in-out infinite;
+    transform: translateX(-100%);
+  }
+  .dark .skeleton::after {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  }
+
+  /* Tap target helper — ensures 44px minimum for mobile accessibility. */
+  .tap-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+
+  /* Premium pulse — for live / AI-active indicators. */
+  .pulse-indigo {
+    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes shimmer {
+  to { transform: translateX(100%); }
+}
+
+@keyframes pulse-ring {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 /* CSS-driven entrance animations — compositor-based and always settle to the
@@ -75,4 +109,46 @@
     animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ── PWA / Mobile native feel ─────────────────────────────────────────────── */
+
+/* Prevent double-tap zoom on interactive elements for a faster native feel. */
+button, a, [role="button"] {
+  touch-action: manipulation;
+}
+
+/* iOS overscroll bounce only on the body, not on panels. */
+html {
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Full-screen PWA: extend content under the status bar. */
+body {
+  /* Safe area padding ensures nothing is hidden by the home indicator
+     or notch when running in standalone / fullscreen mode. */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Bottom tab bar needs to sit above the home indicator. */
+.safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.5rem);
+}
+
+/* Momentum-based scrolling inside overflow containers on iOS. */
+.scroll-ios {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Remove focus ring on non-keyboard focus (mouse/touch) while keeping
+   keyboard navigation accessible. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Minimum 44×44 pt touch targets (Apple HIG / WCAG 2.5.5). */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
 }

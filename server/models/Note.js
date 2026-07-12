@@ -7,6 +7,7 @@ const noteSchema = new mongoose.Schema(
     semester: { type: String, trim: true, maxlength: 30 },
     content: { type: String, default: '', maxlength: 20000 },
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    contentItem: { type: mongoose.Schema.Types.ObjectId, ref: 'ContentItem' },
   },
   { timestamps: true }
 );

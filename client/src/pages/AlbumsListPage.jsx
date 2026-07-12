@@ -5,16 +5,18 @@ import { Camera, Plus, Image, Trash2, ExternalLink } from 'lucide-react';
 import { listAlbums, createAlbum, deleteAlbum } from '../api/albums';
 import { useAuth } from '../context/AuthContext';
 import { formatDate } from '../utils/dateUtils';
-import Loader from '../components/common/Loader';
+import { CardGridSkeleton } from '../components/common/Skeleton';
 import EmptyState from '../components/common/EmptyState';
 import Modal from '../components/common/Modal';
+import ConfirmModal from '../components/common/ConfirmModal';
 
 const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700';
+  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 export default function AlbumsListPage() {
   const [albums, setAlbums] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const { register, handleSubmit, reset, formState } = useForm();
   const { user } = useAuth();
 
@@ -35,13 +37,16 @@ export default function AlbumsListPage() {
     }
   };
 
-  const onDelete = async (e, id) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!window.confirm('Remove this album link?')) return;
+  const onDelete = async (id) => {
     await deleteAlbum(id);
     toast.success('Album removed');
     load();
+  };
+
+  const requestDelete = (e, id) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setConfirmDeleteId(id);
   };
 
   return (
@@ -60,7 +65,7 @@ export default function AlbumsListPage() {
       </p>
 
       {!albums ? (
-        <Loader />
+        <CardGridSkeleton count={6} />
       ) : albums.length === 0 ? (
         <EmptyState
           icon={Camera}
@@ -105,7 +110,7 @@ export default function AlbumsListPage() {
               </div>
               {album.createdBy?._id === user?.id && (
                 <button
-                  onClick={(e) => onDelete(e, album._id)}
+                  onClick={(e) => requestDelete(e, album._id)}
                   aria-label="Remove album"
                   className="absolute bottom-3 right-3 rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30"
                 >
@@ -116,6 +121,16 @@ export default function AlbumsListPage() {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        open={!!confirmDeleteId}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={() => onDelete(confirmDeleteId)}
+        title="Remove album"
+        message="This album link will be removed from DATAD."
+        danger
+        confirmLabel="Remove"
+      />
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add a Google Photos album">
         <form onSubmit={handleSubmit(onCreate)} className="space-y-4">

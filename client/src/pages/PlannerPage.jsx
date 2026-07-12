@@ -1,17 +1,85 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { CalendarDays, Check, Plus, Trash2 } from 'lucide-react';
+import { CalendarDays, Check, Pencil, Plus, Trash2, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { listTasks, createTask, updateTask, deleteTask } from '../api/tasks';
+import { plannerSuggest } from '../api/ai';
 import { useAuth } from '../context/AuthContext';
 import { SUBJECTS, TASK_TYPES, TASK_STATUSES } from '../utils/constants';
 import { formatDate, daysUntil } from '../utils/dateUtils';
-import Loader from '../components/common/Loader';
+import { FeedSkeleton } from '../components/common/Skeleton';
 import EmptyState from '../components/common/EmptyState';
 import Modal from '../components/common/Modal';
+import ConfirmModal from '../components/common/ConfirmModal';
+import TierGate from '../components/common/TierGate';
+import CrownBadge from '../components/common/CrownBadge';
+
+function AIPlannerPanel() {
+  const [state, setState] = useState('idle');
+  const [result, setResult] = useState(null);
+
+  const run = async () => {
+    setState('loading');
+    try {
+      const res = await plannerSuggest();
+      setResult(res.data);
+      setState('done');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'AI suggestions failed');
+      setState('error');
+    }
+  };
+
+  if (state === 'idle' || state === 'error') {
+    return (
+      <button
+        onClick={run}
+        className="flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800/60 dark:bg-indigo-900/30 dark:text-indigo-300"
+      >
+        <Sparkles className="h-4 w-4" />
+        {state === 'error' ? 'Retry AI suggestions' : 'Get AI suggestions for today'}
+      </button>
+    );
+  }
+
+  if (state === 'loading') {
+    return (
+      <div className="flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-600 dark:border-indigo-800/60 dark:bg-indigo-900/30">
+        <Loader2 className="h-4 w-4 animate-spin" /> Thinking through your priorities…
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800/60 dark:bg-indigo-900/20">
+      <div className="mb-2 flex items-center justify-between">
+        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+          <Sparkles className="h-3.5 w-3.5" /> AI Priorities for Today
+        </p>
+        <button onClick={run} className="text-indigo-400 hover:text-indigo-600">
+          <RefreshCw className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      {result?.focusArea && (
+        <p className="mb-3 text-sm font-medium text-indigo-800 dark:text-indigo-200">{result.focusArea}</p>
+      )}
+      <ol className="mb-3 space-y-1.5">
+        {(result?.priorities || []).map((p, i) => (
+          <li key={i} className="flex items-start gap-2 text-sm text-indigo-700 dark:text-indigo-300">
+            <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-indigo-200 text-[10px] font-bold text-indigo-700 dark:bg-indigo-800 dark:text-indigo-200">{i + 1}</span>
+            {p}
+          </li>
+        ))}
+      </ol>
+      {result?.motivationalNote && (
+        <p className="text-xs italic text-indigo-500 dark:text-indigo-400">{result.motivationalNote}</p>
+      )}
+    </div>
+  );
+}
 
 const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700';
+  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 const statusStyles = {
   pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
@@ -31,6 +99,8 @@ export default function PlannerPage() {
   const [tasks, setTasks] = useState(null);
   const [statusFilter, setStatusFilter] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState(null); // task being edited, or null for new
+  const [confirmDelete, setConfirmDelete] = useState(null); // task _id to delete
   const { register, handleSubmit, reset, formState } = useForm();
   const { user } = useAuth();
 
@@ -40,15 +110,43 @@ export default function PlannerPage() {
     load();
   }, [statusFilter]);
 
-  const onCreate = async (data) => {
+  const openNew = () => {
+    setEditing(null);
+    reset({ title: '', type: TASK_TYPES[0]?.value, subject: '', dueDate: '', assignToSelf: false });
+    setModalOpen(true);
+  };
+
+  const openEdit = (task) => {
+    setEditing(task);
+    reset({
+      title: task.title,
+      type: task.type,
+      subject: task.subject || '',
+      dueDate: task.dueDate ? task.dueDate.slice(0, 10) : '',
+      assignToSelf: !!task.assignee,
+    });
+    setModalOpen(true);
+  };
+
+  const onSave = async (data) => {
     try {
-      await createTask(data);
-      toast.success('Task added');
+      if (editing) {
+        await updateTask(editing._id, {
+          title: data.title,
+          type: data.type,
+          subject: data.subject,
+          dueDate: data.dueDate,
+        });
+        toast.success('Task updated');
+      } else {
+        await createTask(data);
+        toast.success('Task added');
+      }
       reset();
       setModalOpen(false);
       load();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to add task');
+      toast.error(err.response?.data?.message || 'Failed to save task');
     }
   };
 
@@ -64,7 +162,6 @@ export default function PlannerPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this task?')) return;
     try {
       await deleteTask(id);
       toast.success('Task deleted');
@@ -94,7 +191,7 @@ export default function PlannerPage() {
             ))}
           </select>
           <button
-            onClick={() => setModalOpen(true)}
+            onClick={openNew}
             className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
           >
             <Plus className="h-4 w-4" /> Add task
@@ -102,13 +199,32 @@ export default function PlannerPage() {
         </div>
       </div>
 
+      <div className="mb-4">
+        <div className="mb-2 flex items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">AI Suggestions</span>
+          <CrownBadge required="pro" />
+        </div>
+        <TierGate required="pro" inline description="AI prioritizes your tasks for today based on deadlines, readiness score, and your goals.">
+          <AIPlannerPanel />
+        </TierGate>
+      </div>
+
       {!tasks ? (
-        <Loader />
+        <FeedSkeleton count={5} />
       ) : tasks.length === 0 ? (
         <EmptyState
           icon={CalendarDays}
           title="No tasks yet"
-          subtitle="Add deadlines, case studies and exam prep for your batch"
+          subtitle="Add deadlines, case studies and exam prep so nothing slips through the cracks"
+          cta={{ label: 'Add your first task', to: '#' }}
+          action={
+            <button
+              onClick={() => setModalOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+            >
+              Add first task
+            </button>
+          }
         />
       ) : (
         <div className="space-y-2">
@@ -141,7 +257,16 @@ export default function PlannerPage() {
                 <span className={`text-xs ${due.cls}`}>{task.status === 'done' ? '' : due.text}</span>
                 {canModify(task) && (
                   <button
-                    onClick={() => handleDelete(task._id)}
+                    onClick={() => openEdit(task)}
+                    aria-label="Edit task"
+                    className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                )}
+                {canModify(task) && (
+                  <button
+                    onClick={() => setConfirmDelete(task._id)}
                     aria-label="Delete task"
                     className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30"
                   >
@@ -154,8 +279,18 @@ export default function PlannerPage() {
         </div>
       )}
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add task">
-        <form onSubmit={handleSubmit(onCreate)} className="space-y-4">
+      <ConfirmModal
+        open={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={() => handleDelete(confirmDelete)}
+        title="Delete task"
+        message="This task will be permanently deleted."
+        danger
+        confirmLabel="Delete"
+      />
+
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Edit task' : 'Add task'}>
+        <form onSubmit={handleSubmit(onSave)} className="space-y-4">
           <div>
             <label htmlFor="task-title" className="mb-1 block text-sm font-medium">Title</label>
             <input
@@ -193,16 +328,18 @@ export default function PlannerPage() {
               className={inputClass}
             />
           </div>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" {...register('assignToSelf')} className="rounded" />
-            Assign to me (otherwise it's for the whole batch)
-          </label>
+          {!editing && (
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" {...register('assignToSelf')} className="rounded" />
+              Assign to me (otherwise it's for the whole batch)
+            </label>
+          )}
           <button
             type="submit"
             disabled={formState.isSubmitting}
             className="w-full rounded-lg bg-indigo-600 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
           >
-            Add task
+            {formState.isSubmitting ? 'Saving…' : editing ? 'Save changes' : 'Add task'}
           </button>
         </form>
       </Modal>

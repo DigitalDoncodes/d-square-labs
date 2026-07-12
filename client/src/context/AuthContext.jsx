@@ -13,6 +13,7 @@ const decodeUser = (token) => {
       name: payload.name,
       email: payload.email,
       role: payload.role || 'member',
+      tier: payload.tier || 'free',
     };
   } catch {
     return null;

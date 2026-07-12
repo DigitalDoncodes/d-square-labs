@@ -1,0 +1,70 @@
+/**
+ * Scheduler registry — registers all cron jobs using node-cron.
+ * Called once from server/index.js after the DB connects.
+ * Each job catches its own errors so one failure never kills the rest.
+ */
+const cron = require('node-cron');
+const cfg = require('../config/automation');
+
+// Automation modules
+const { generateDailyCase }         = require('../automation/cases/generateDailyCase');
+const { generateDailyBriefing }     = require('../automation/briefing/generateDailyBriefing');
+const { generateDailyReflection }   = require('../automation/reflections/generateDailyReflection');
+const { generateResumeTip }         = require('../automation/resume/generateResumeTip');
+const { enrichCompanies }           = require('../automation/companies/enrichCompanies');
+const { generateInterviewQuestions }= require('../automation/interviews/generateInterviewQuestions');
+const { moderatePosts }             = require('../automation/moderation/moderatePosts');
+const { generateWeeklyNewsletter }  = require('../automation/newsletter/generateWeeklyNewsletter');
+
+// Existing services (kept running via cron instead of setInterval)
+const { refreshNews }   = require('../services/newsFetcher');
+const { refreshMarket } = require('../services/marketFetcher');
+
+function safe(name, fn) {
+  return async () => {
+    try { await fn(); }
+    catch (err) { console.error(`[scheduler:${name}] uncaught error: ${err.message}`); }
+  };
+}
+
+function register() {
+  const s = cfg.schedules;
+
+  // ── Every 15 min: market data ───────────────────────────────────────────────
+  cron.schedule(s.marketRefresh, safe('market-refresh', refreshMarket));
+
+  // ── Every 30 min: news RSS + enhancement ────────────────────────────────────
+  cron.schedule(s.newsRefresh, safe('news-refresh', refreshNews));
+
+  // ── Every 10 min: discussion moderation ─────────────────────────────────────
+  cron.schedule(s.moderation, safe('moderation', moderatePosts));
+
+  // ── 5am daily: case study ───────────────────────────────────────────────────
+  cron.schedule(s.dailyCase, safe('daily-case', generateDailyCase));
+
+  // ── 6am daily: briefing + reflection ────────────────────────────────────────
+  cron.schedule(s.dailyBriefing, safe('daily-briefing', generateDailyBriefing));
+  cron.schedule(s.dailyReflection, safe('daily-reflection', generateDailyReflection));
+
+  // ── 7am daily: resume tip ───────────────────────────────────────────────────
+  cron.schedule(s.resumeTip, safe('resume-tip', generateResumeTip));
+
+  // ── 2am daily: company enrichment ───────────────────────────────────────────
+  cron.schedule(s.companyRefresh, safe('company-enrichment', enrichCompanies));
+
+  // ── 4am Sunday: interview questions ─────────────────────────────────────────
+  cron.schedule(s.interviewQuestions, safe('interview-questions', generateInterviewQuestions));
+
+  // ── 8am Sunday: weekly newsletter ───────────────────────────────────────────
+  cron.schedule(s.newsletter, safe('weekly-newsletter', generateWeeklyNewsletter));
+
+  // ── Every minute: publish scheduled Content Studio items ───────────────────
+  if (process.env.STUDIO_ENABLED !== 'false') {
+    const { publishDue } = require('../services/publishing/publishService');
+    cron.schedule('* * * * *', safe('studio-scheduled-publish', publishDue));
+  }
+
+  console.log('[schedulers] All cron jobs registered');
+}
+
+module.exports = { register };

@@ -1,0 +1,50 @@
+// Shared page header used by every module page.
+// Keeps title, subtitle, and primary action visually consistent
+// so the product feels designed together rather than assembled.
+import { Sparkles } from 'lucide-react';
+
+export default function PageHeader({
+  icon: Icon,
+  title,
+  subtitle,
+  action,         // { label, onClick | href, icon: ActionIcon } or JSX
+  insight,        // string — a one-line AI-derived insight shown as a soft pill
+  className = '',
+}) {
+  return (
+    <div className={`mb-5 ${className}`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="flex items-center gap-2 text-xl font-bold text-balance">
+            {Icon && <Icon className="h-5 w-5 shrink-0 text-indigo-500" />}
+            {title}
+          </h1>
+          {subtitle && (
+            <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400 text-balance">
+              {subtitle}
+            </p>
+          )}
+        </div>
+        {action && (
+          <div className="shrink-0">
+            {typeof action === 'object' && action.label ? (
+              <button
+                onClick={action.onClick}
+                className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 active:scale-95 transition-transform"
+              >
+                {action.icon && <action.icon className="h-4 w-4" />}
+                {action.label}
+              </button>
+            ) : action}
+          </div>
+        )}
+      </div>
+      {insight && (
+        <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 dark:border-indigo-800/60 dark:bg-indigo-900/30 dark:text-indigo-300">
+          <Sparkles className="h-3 w-3 shrink-0" />
+          {insight}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, Wallet, Pencil, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, Trash2, Wallet, Pencil, TrendingUp, TrendingDown, Download } from 'lucide-react';
 import {
   listExpenses,
   createExpense,
@@ -13,6 +13,7 @@ import { formatDate } from '../utils/dateUtils';
 import Loader from '../components/common/Loader';
 import EmptyState from '../components/common/EmptyState';
 import Modal from '../components/common/Modal';
+import ConfirmModal from '../components/common/ConfirmModal';
 import CategoryChart from '../components/finance/CategoryChart';
 import BudgetBar from '../components/finance/BudgetBar';
 import Calculators from '../components/finance/Calculators';
@@ -22,8 +23,28 @@ const SOURCES = ['Allowance', 'Stipend', 'Salary', 'Freelance', 'Scholarship', '
 const formatINR = (n) => '₹' + n.toLocaleString('en-IN');
 const currentMonth = () => new Date().toISOString().slice(0, 7);
 
+const exportCSV = (expenses, month) => {
+  const rows = [['Date', 'Type', 'Category / Source', 'Note', 'Amount (INR)']];
+  expenses.forEach((e) => {
+    rows.push([
+      e.date ? e.date.slice(0, 10) : '',
+      e.kind === 'income' ? 'Income' : 'Expense',
+      e.kind === 'income' ? (e.source || '') : (e.category || ''),
+      e.note || '',
+      e.kind === 'income' ? e.amount : -e.amount,
+    ]);
+  });
+  const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `finance-${month}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
 const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700';
+  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 export default function FinancePage() {
   const [tab, setTab] = useState('tracker');
@@ -32,6 +53,7 @@ export default function FinancePage() {
   const [summary, setSummary] = useState(null);
   const [entryModal, setEntryModal] = useState(null); // null | 'expense' | 'income'
   const [budgetModal, setBudgetModal] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const expenseForm = useForm({ defaultValues: { category: 'Food', source: 'Allowance' } });
   const budgetForm = useForm();
 
@@ -65,7 +87,6 @@ export default function FinancePage() {
   };
 
   const onDelete = async (id) => {
-    if (!window.confirm('Delete this expense?')) return;
     await deleteExpense(id);
     load();
   };
@@ -133,6 +154,14 @@ export default function FinancePage() {
                 className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
               >
                 <Plus className="h-4 w-4" /> Add expense
+              </button>
+              <button
+                onClick={() => exportCSV(expenses, month)}
+                disabled={!expenses?.length}
+                title="Export to CSV"
+                className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:hover:bg-gray-800"
+              >
+                <Download className="h-4 w-4" /> Export
               </button>
             </div>
           </div>
@@ -202,7 +231,7 @@ export default function FinancePage() {
                       {exp.kind === 'income' ? '+' : '−'}{formatINR(exp.amount)}
                     </span>
                     <button
-                      onClick={() => onDelete(exp._id)}
+                      onClick={() => setConfirmDeleteId(exp._id)}
                       aria-label="Delete expense"
                       className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30"
                     >
@@ -215,6 +244,16 @@ export default function FinancePage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={!!confirmDeleteId}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={() => onDelete(confirmDeleteId)}
+        title="Delete entry"
+        message="This transaction will be permanently deleted."
+        danger
+        confirmLabel="Delete"
+      />
 
       <Modal
         open={Boolean(entryModal)}

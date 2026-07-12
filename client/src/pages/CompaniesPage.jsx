@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Search, Briefcase, Eye, IndianRupee } from 'lucide-react';
 import { listCompanies } from '../api/companies';
 import { SECTORS, sectorMeta } from '../utils/companies';
-import Loader from '../components/common/Loader';
+import { CardGridSkeleton } from '../components/common/Skeleton';
 import EmptyState from '../components/common/EmptyState';
 
 export default function CompaniesPage() {
@@ -97,7 +97,7 @@ export default function CompaniesPage() {
       </div>
 
       {!companies ? (
-        <Loader />
+        <CardGridSkeleton count={6} />
       ) : companies.length === 0 ? (
         <EmptyState
           icon={Briefcase}

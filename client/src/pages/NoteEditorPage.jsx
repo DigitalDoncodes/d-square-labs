@@ -28,11 +28,11 @@ export default function NoteEditorPage() {
       if (isEdit) {
         await updateNote(id, data);
         toast.success('Note updated');
-        navigate(`/notes/${id}`);
+        navigate(`/study/notes/${id}`);
       } else {
         const res = await createNote(data);
         toast.success('Note created');
-        navigate(`/notes/${res.data._id}`);
+        navigate(`/study/notes/${res.data._id}`);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save note');

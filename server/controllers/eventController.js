@@ -1,0 +1,93 @@
+const Event = require('../models/Event');
+const EventRSVP = require('../models/EventRSVP');
+const { notify } = require('./notificationController');
+
+exports.listEvents = async (req, res, next) => {
+  try {
+    const filter = {};
+    if (req.query.category) filter.category = req.query.category;
+    if (req.query.upcoming !== 'false') filter.date = { $gte: new Date() };
+    const events = await Event.find(filter)
+      .populate('createdBy', 'name')
+      .sort({ date: 1 });
+    res.json(events);
+  } catch (err) { next(err); }
+};
+
+exports.createEvent = async (req, res, next) => {
+  try {
+    const { title, description, date, endDate, location, online, meetLink, organizer, category, image, registrationOpen, maxAttendees } = req.body;
+    if (!title || !date) return res.status(400).json({ message: 'Title and date are required' });
+    const event = await Event.create({
+      title, description, date, endDate, location, online, meetLink, organizer, category,
+      image, registrationOpen, maxAttendees,
+      createdBy: req.user.userId,
+    });
+    res.status(201).json(event);
+  } catch (err) { next(err); }
+};
+
+exports.updateEvent = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ message: 'Not found' });
+    if (!event.createdBy.equals(req.user.userId) && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorised' });
+    }
+    Object.assign(event, req.body);
+    await event.save();
+    res.json(event);
+  } catch (err) { next(err); }
+};
+
+exports.deleteEvent = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ message: 'Not found' });
+    if (!event.createdBy.equals(req.user.userId) && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorised' });
+    }
+    await event.deleteOne();
+    res.json({ message: 'Deleted' });
+  } catch (err) { next(err); }
+};
+
+exports.rsvpEvent = async (req, res, next) => {
+  try {
+    const { status } = req.body;
+    const rsvp = await EventRSVP.findOneAndUpdate(
+      { event: req.params.id, user: req.user.userId },
+      { status: status || 'going' },
+      { upsert: true, new: true }
+    );
+    if ((status || 'going') === 'going') {
+      const event = await Event.findById(req.params.id).select('title createdBy').lean();
+      if (event) {
+        notify({ user: event.createdBy, type: 'rsvp', actor: req.user.userId,
+          title: 'Someone is going to your event',
+          body: event.title,
+          link: '/community/events',
+        }).catch(() => {});
+      }
+    }
+    res.json(rsvp);
+  } catch (err) { next(err); }
+};
+
+exports.getMyRSVPs = async (req, res, next) => {
+  try {
+    const rsvps = await EventRSVP.find({ user: req.user.userId, status: { $ne: 'not-going' } })
+      .populate({ path: 'event', populate: { path: 'createdBy', select: 'name' } })
+      .sort({ createdAt: -1 });
+    res.json(rsvps);
+  } catch (err) { next(err); }
+};
+
+exports.getEventAttendees = async (req, res, next) => {
+  try {
+    const attendees = await EventRSVP.find({ event: req.params.id })
+      .populate('user', 'name avatar')
+      .sort({ createdAt: 1 });
+    res.json(attendees);
+  } catch (err) { next(err); }
+};

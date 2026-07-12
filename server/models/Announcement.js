@@ -8,6 +8,7 @@ const announcementSchema = new mongoose.Schema(
     pinned: { type: Boolean, default: false },
     emailed: { type: Boolean, default: false },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    contentItem: { type: mongoose.Schema.Types.ObjectId, ref: 'ContentItem' },
   },
   { timestamps: true }
 );

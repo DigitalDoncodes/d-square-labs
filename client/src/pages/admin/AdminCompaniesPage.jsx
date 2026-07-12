@@ -6,6 +6,7 @@ import { Briefcase, Plus, ExternalLink, Trash2 } from 'lucide-react';
 import { listCompanies, createCompany, deleteCompany } from '../../api/companies';
 import { SECTORS } from '../../utils/companies';
 import { AdminShell, inputClass } from './shared';
+import ConfirmModal from '../../components/common/ConfirmModal';
 
 const lines = (s) =>
   (s || '')
@@ -24,6 +25,7 @@ const parseQuestions = (s) =>
 
 export default function AdminCompaniesPage() {
   const [companies, setCompanies] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const { register, handleSubmit, reset, formState } = useForm();
 
   const load = () => listCompanies().then((res) => setCompanies(res.data));
@@ -57,7 +59,6 @@ export default function AdminCompaniesPage() {
   };
 
   const onDelete = async (id) => {
-    if (!window.confirm('Delete this company card?')) return;
     try {
       await deleteCompany(id);
       toast.success('Company deleted');
@@ -129,7 +130,7 @@ export default function AdminCompaniesPage() {
                   <Link to={`/companies/${c.slug}`} aria-label="View card" className="rounded p-1 text-gray-400 hover:text-indigo-500">
                     <ExternalLink className="h-4 w-4" />
                   </Link>
-                  <button onClick={() => onDelete(c._id)} aria-label="Delete card" className="rounded p-1 text-gray-400 hover:text-red-500">
+                  <button onClick={() => setConfirmDeleteId(c._id)} aria-label="Delete card" className="rounded p-1 text-gray-400 hover:text-red-500">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -139,6 +140,15 @@ export default function AdminCompaniesPage() {
           </ul>
         </div>
       </div>
+      <ConfirmModal
+        open={!!confirmDeleteId}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={() => onDelete(confirmDeleteId)}
+        title="Delete company card"
+        message="This company card and all its prep content will be permanently deleted."
+        danger
+        confirmLabel="Delete"
+      />
     </AdminShell>
   );
 }

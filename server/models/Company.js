@@ -36,6 +36,11 @@ const companySchema = new mongoose.Schema(
 
     views: { type: Number, default: 0 },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+
+    // AI enrichment tracking
+    aiEnrichedAt:              { type: Date },
+    aiEnrichedBy:              { type: String },
+    aiQuestionsGeneratedAt:    { type: Date },
   },
   { timestamps: true }
 );

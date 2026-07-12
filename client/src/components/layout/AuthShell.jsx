@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import Logo from '../common/Logo';
 
 // Premium auth background: soft animated gradient blobs behind a glass card.
@@ -30,6 +31,13 @@ export default function AuthShell({ subtitle, children }) {
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>
         </div>
         <div className="glass rounded-2xl p-6 shadow-xl shadow-indigo-500/5">{children}</div>
+        <p className="mt-5 text-center text-[11px] text-gray-400 dark:text-gray-500">
+          By continuing you agree to our{' '}
+          <Link to="/terms" className="hover:text-gray-600 hover:underline dark:hover:text-gray-300">Terms</Link>
+          {' '}and{' '}
+          <Link to="/privacy" className="hover:text-gray-600 hover:underline dark:hover:text-gray-300">Privacy Policy</Link>.
+          No tracking. No ads. Your data belongs to you.
+        </p>
       </motion.div>
     </div>
   );

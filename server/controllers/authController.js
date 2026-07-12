@@ -13,6 +13,7 @@ const JournalEntry = require('../models/JournalEntry');
 const Announcement = require('../models/Announcement');
 const { sendWelcomeEmail, sendPasswordResetEmail } = require('../config/mailer');
 const logActivity = require('../utils/logActivity');
+const cloudinary = require('../config/cloudinary');
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD = 8;
@@ -47,7 +48,7 @@ const uniqueReferralCode = async (name) => {
 
 const signToken = (user) =>
   jwt.sign(
-    { userId: user._id, name: user.name, email: user.email, role: user.role || 'member' },
+    { userId: user._id, name: user.name, email: user.email, role: user.role || 'member', tier: user.tier || 'free' },
     process.env.JWT_SECRET,
     { expiresIn: '7d' }
   );
@@ -326,6 +327,28 @@ exports.deleteAccount = async (req, res, next) => {
     await User.deleteOne({ _id: userId });
     logActivity('account_deleted', `${user.name} deleted their account and all data`, user);
     res.json({ message: 'Your account and all your data have been deleted' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.uploadAvatar = async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+    const b64 = req.file.buffer.toString('base64');
+    const dataUri = `data:${req.file.mimetype};base64,${b64}`;
+    const result = await cloudinary.uploader.upload(dataUri, {
+      folder: 'datad/avatars',
+      public_id: `user_${req.user.userId}`,
+      overwrite: true,
+      transformation: [{ width: 256, height: 256, crop: 'fill', gravity: 'face' }],
+    });
+    const user = await User.findByIdAndUpdate(
+      req.user.userId,
+      { avatarUrl: result.secure_url },
+      { new: true }
+    ).select('-password -resetTokenHash -resetTokenExpires');
+    res.json({ avatarUrl: result.secure_url, user });
   } catch (err) {
     next(err);
   }

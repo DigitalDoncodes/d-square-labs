@@ -2,10 +2,105 @@ import { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Eye, Plus, Save, Trash2 } from 'lucide-react';
+import { Eye, Plus, Save, Trash2, Sparkles, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { getMyResume, saveResume } from '../api/resume';
+import { reviewResume } from '../api/ai';
 import { useAuth } from '../context/AuthContext';
-import Loader from '../components/common/Loader';
+import { FeedSkeleton } from '../components/common/Skeleton';
+import TierGate from '../components/common/TierGate';
+import AIBadge from '../components/common/AIBadge';
+import CrownBadge from '../components/common/CrownBadge';
+
+function AIReviewPanel() {
+  const [state, setState] = useState('idle');
+  const [result, setResult] = useState(null);
+  const [open, setOpen] = useState(true);
+
+  const run = async () => {
+    setState('loading');
+    try {
+      const res = await reviewResume();
+      setResult(res.data);
+      setState('done');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'AI review failed');
+      setState('error');
+    }
+  };
+
+  if (state === 'idle') {
+    return (
+      <button
+        type="button"
+        onClick={run}
+        className="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-100 dark:border-violet-800/60 dark:bg-violet-900/30 dark:text-violet-300 dark:hover:bg-violet-900/50"
+      >
+        <Sparkles className="h-4 w-4" /> Review with AI
+      </button>
+    );
+  }
+
+  if (state === 'loading') {
+    return (
+      <div className="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-600 dark:border-violet-800/60 dark:bg-violet-900/30 dark:text-violet-300">
+        <Loader2 className="h-4 w-4 animate-spin" /> Analysing your resume…
+      </div>
+    );
+  }
+
+  if (state === 'error') {
+    return (
+      <button
+        type="button"
+        onClick={run}
+        className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-100 dark:border-rose-800/60 dark:bg-rose-900/30"
+      >
+        <Sparkles className="h-4 w-4" /> Retry AI review
+      </button>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-violet-200 bg-violet-50 dark:border-violet-800/60 dark:bg-violet-900/20">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between px-4 py-3"
+      >
+        <span className="flex items-center gap-2 text-sm font-semibold text-violet-700 dark:text-violet-300">
+          <Sparkles className="h-4 w-4" /> AI Review
+          <AIBadge provider={result?._meta?.provider} confidence={result?._meta?.confidence} />
+        </span>
+        {open ? <ChevronUp className="h-4 w-4 text-violet-500" /> : <ChevronDown className="h-4 w-4 text-violet-500" />}
+      </button>
+
+      {open && (
+        <div className="border-t border-violet-200/70 px-4 pb-4 pt-3 dark:border-violet-800/40">
+          <p className="mb-4 text-sm text-gray-700 dark:text-gray-200">{result.overallImpression}</p>
+
+          {result.improvements?.length > 0 && (
+            <>
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-violet-600 dark:text-violet-400">
+                Suggested improvements
+              </p>
+              <div className="space-y-3">
+                {result.improvements.map((item, i) => (
+                  <div key={i} className="rounded-lg border border-violet-100 bg-white p-3 dark:border-violet-900/40 dark:bg-gray-900/50">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-violet-600 dark:text-violet-400">
+                      {item.area}
+                    </p>
+                    <p className="mb-1 text-sm text-gray-700 dark:text-gray-300">{item.issue}</p>
+                    <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300">→ {item.fix}</p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const inputClass =
   'w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
@@ -118,7 +213,7 @@ export default function ResumePage() {
     }
   };
 
-  if (!loaded) return <Loader />;
+  if (!loaded) return <div className="mx-auto max-w-3xl px-4 py-6"><FeedSkeleton count={6} /></div>;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
@@ -131,7 +226,7 @@ export default function ResumePage() {
         </div>
         <div className="flex gap-2">
           <Link
-            to="/resume/preview"
+            to="/career/resume/preview"
             className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
           >
             <Eye className="h-4 w-4" /> Preview
@@ -277,6 +372,17 @@ export default function ResumePage() {
           </button>
         </div>
       </form>
+
+      <div className="mt-6">
+        <div className="mb-2 flex items-center gap-2">
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">AI Review</span>
+          <CrownBadge required="pro" />
+        </div>
+        <TierGate required="pro" description="Professional ATS analysis and targeted AI improvements — specific to your resume sections, not generic advice.">
+          <p className="mb-2 text-xs text-gray-400">Save your resume first, then get AI feedback on it.</p>
+          <AIReviewPanel />
+        </TierGate>
+      </div>
     </div>
   );
 }

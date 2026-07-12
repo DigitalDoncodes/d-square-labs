@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema(
     referralUsedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 
     // Profile
+    avatarUrl: { type: String, maxlength: 500, default: '' },
     bio: { type: String, maxlength: 300, default: '' },
     linkedin: { type: String, maxlength: 200, default: '' },
     github: { type: String, maxlength: 200, default: '' },
@@ -24,6 +25,12 @@ const userSchema = new mongoose.Schema(
     // Password reset (hashed token + expiry)
     resetTokenHash: { type: String, default: null },
     resetTokenExpires: { type: Date, default: null },
+
+    // Subscription / tier
+    tier: { type: String, enum: ['free', 'trial', 'pro', 'max'], default: 'free' },
+    trialStartedAt: { type: Date, default: null },
+    tierExpiresAt: { type: Date, default: null },    // null = never expires
+    subscriptionRef: { type: String, default: null }, // last verified payment ref
   },
   { timestamps: true }
 );

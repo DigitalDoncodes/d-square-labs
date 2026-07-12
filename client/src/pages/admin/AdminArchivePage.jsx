@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { Clapperboard, Plus, ExternalLink, Trash2 } from 'lucide-react';
 import { listItems, createItem, deleteItem } from '../../api/entertainment';
 import { AdminShell, inputClass } from './shared';
+import ConfirmModal from '../../components/common/ConfirmModal';
 
 const ARCHIVE_CATEGORIES = [
   'cartoons',
@@ -19,6 +20,7 @@ const ARCHIVE_CATEGORIES = [
 
 export default function AdminArchivePage() {
   const [items, setItems] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const { register, handleSubmit, reset, formState } = useForm();
 
   const load = () => listItems().then((res) => setItems(res.data));
@@ -52,7 +54,6 @@ export default function AdminArchivePage() {
   };
 
   const onDelete = async (id) => {
-    if (!window.confirm('Delete this archive item and all its memories?')) return;
     try {
       await deleteItem(id);
       toast.success('Item deleted');
@@ -138,7 +139,7 @@ export default function AdminArchivePage() {
                     <ExternalLink className="h-4 w-4" />
                   </Link>
                   <button
-                    onClick={() => onDelete(it._id)}
+                    onClick={() => setConfirmDeleteId(it._id)}
                     aria-label="Delete item"
                     className="rounded p-1 text-gray-400 hover:text-red-500"
                   >
@@ -151,6 +152,15 @@ export default function AdminArchivePage() {
           </ul>
         </div>
       </div>
+      <ConfirmModal
+        open={!!confirmDeleteId}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={() => onDelete(confirmDeleteId)}
+        title="Delete archive item"
+        message="This item and all its memories will be permanently deleted."
+        danger
+        confirmLabel="Delete"
+      />
     </AdminShell>
   );
 }

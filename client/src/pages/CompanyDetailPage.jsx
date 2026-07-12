@@ -11,10 +11,13 @@ import {
   ExternalLink,
   MapPin,
   Briefcase,
+  Newspaper,
+  Clock,
 } from 'lucide-react';
-import { getCompany } from '../api/companies';
+import { getCompany, getCompanyNews } from '../api/companies';
 import { sectorMeta, QUESTION_LABELS } from '../utils/companies';
-import Loader from '../components/common/Loader';
+import { FeedSkeleton } from '../components/common/Skeleton';
+import TierGate from '../components/common/TierGate';
 
 function Section({ icon: Icon, title, children }) {
   return (
@@ -34,28 +37,123 @@ const QUESTION_TINTS = {
   guesstimate: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
 };
 
+const SOURCE_COLORS = {
+  'Economic Times':    'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+  'Moneycontrol':      'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  'Business Standard': 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+  'Livemint':          'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+  'Hindu BusinessLine':'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+  'Financial Express': 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
+};
+
+function timeAgo(iso) {
+  if (!iso) return null;
+  const diff = Date.now() - new Date(iso).getTime();
+  const h = Math.floor(diff / 3600000);
+  if (h < 1) return 'just now';
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
+function NewsSection({ articles, loading }) {
+  if (loading) {
+    return (
+      <section className="rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
+        <h2 className="mb-3 flex items-center gap-2 font-semibold">
+          <Newspaper className="h-4 w-4 text-indigo-500" /> Latest news
+        </h2>
+        <div className="space-y-3">
+          {[1,2,3].map(i => (
+            <div key={i} className="animate-pulse space-y-1.5">
+              <div className="h-3.5 w-3/4 rounded bg-gray-100 dark:bg-gray-800" />
+              <div className="h-3 w-1/2 rounded bg-gray-100 dark:bg-gray-800" />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+  if (!articles || articles.length === 0) return null;
+
+  return (
+    <section className="rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
+      <h2 className="mb-4 flex items-center gap-2 font-semibold">
+        <Newspaper className="h-4 w-4 text-indigo-500" /> Latest news
+        <span className="ml-auto text-[10px] font-normal text-gray-400">auto-fetched · updates hourly</span>
+      </h2>
+      <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+        {articles.map((a, i) => (
+          <li key={i} className="group py-3 first:pt-0 last:pb-0">
+            <a
+              href={a.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col gap-1 hover:no-underline"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-sm font-medium leading-snug text-gray-800 group-hover:text-indigo-600 dark:text-gray-200 dark:group-hover:text-indigo-400">
+                  {a.title}
+                </p>
+                <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-300 group-hover:text-indigo-400 dark:text-gray-600" />
+              </div>
+              {a.snippet && (
+                <p className="line-clamp-2 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                  {a.snippet}
+                </p>
+              )}
+              <div className="mt-1 flex items-center gap-2">
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${SOURCE_COLORS[a.source] || 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}>
+                  {a.source}
+                </span>
+                {a.publishedAt && (
+                  <span className="flex items-center gap-0.5 text-[10px] text-gray-400">
+                    <Clock className="h-2.5 w-2.5" /> {timeAgo(a.publishedAt)}
+                  </span>
+                )}
+              </div>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export default function CompanyDetailPage() {
   const { slug } = useParams();
   const [company, setCompany] = useState(null);
+  const [news, setNews] = useState(null);
+  const [newsLoading, setNewsLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     getCompany(slug)
-      .then((res) => setCompany(res.data))
-      .catch(() => setNotFound(true));
+      .then((res) => {
+        setCompany(res.data);
+        // Fetch news once we have the company name
+        setNewsLoading(true);
+        return getCompanyNews(res.data.name);
+      })
+      .then((res) => setNews(res.data))
+      .catch((err) => {
+        if (err?.response?.status === 404) setNotFound(true);
+        setNews([]);
+      })
+      .finally(() => setNewsLoading(false));
   }, [slug]);
 
   if (notFound) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center text-sm text-gray-400">
         Company not found.{' '}
-        <Link to="/companies" className="text-indigo-500 hover:underline">
+        <Link to="/career/companies" className="text-indigo-500 hover:underline">
           Back to companies
         </Link>
       </div>
     );
   }
-  if (!company) return <Loader />;
+  if (!company) return <div className="mx-auto max-w-3xl px-4 py-6"><FeedSkeleton count={4} /></div>;
 
   const meta = sectorMeta(company.sector);
   const MetaIcon = meta.icon;
@@ -63,7 +161,7 @@ export default function CompanyDetailPage() {
   return (
     <div className="animate-in mx-auto max-w-4xl px-4 py-6">
       <Link
-        to="/companies"
+        to="/career/companies"
         className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
       >
         <ArrowLeft className="h-4 w-4" /> All companies
@@ -153,37 +251,46 @@ export default function CompanyDetailPage() {
           )}
         </div>
 
-        {company.interviewQuestions?.length > 0 && (
-          <Section icon={MessageCircleQuestion} title="Questions they actually ask">
-            <ul className="space-y-2.5">
-              {company.interviewQuestions.map((q, i) => (
-                <li key={i} className="flex items-start gap-2.5">
-                  <span
-                    className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                      QUESTION_TINTS[q.category] || QUESTION_TINTS.hr
-                    }`}
-                  >
-                    {QUESTION_LABELS[q.category] || q.category}
-                  </span>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{q.question}</p>
-                </li>
-              ))}
-            </ul>
-          </Section>
-        )}
+        <TierGate
+          required="pro"
+          description="See real interview questions, hiring rounds, salary ranges, and expert prep tips — curated for every company."
+        >
+          <>
+          {company.interviewQuestions?.length > 0 && (
+            <Section icon={MessageCircleQuestion} title="Questions they actually ask">
+              <ul className="space-y-2.5">
+                {company.interviewQuestions.map((q, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <span
+                      className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                        QUESTION_TINTS[q.category] || QUESTION_TINTS.hr
+                      }`}
+                    >
+                      {QUESTION_LABELS[q.category] || q.category}
+                    </span>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">{q.question}</p>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          )}
 
-        {company.prepTips?.length > 0 && (
-          <Section icon={Lightbulb} title="Prep tips">
-            <ul className="space-y-2">
-              {company.prepTips.map((tip, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
-                  <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
-                  {tip}
-                </li>
-              ))}
-            </ul>
-          </Section>
-        )}
+          {company.prepTips?.length > 0 && (
+            <Section icon={Lightbulb} title="Prep tips">
+              <ul className="space-y-2">
+                {company.prepTips.map((tip, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                    {tip}
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          )}
+          </>
+        </TierGate>
+
+        <NewsSection articles={news} loading={newsLoading} />
       </div>
     </div>
   );

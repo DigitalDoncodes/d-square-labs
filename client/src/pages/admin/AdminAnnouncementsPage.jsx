@@ -6,9 +6,11 @@ import { listAnnouncements, createAnnouncement, deleteAnnouncement } from '../..
 import { formatDate } from '../../utils/dateUtils';
 import Loader from '../../components/common/Loader';
 import { AdminShell, inputClass } from './shared';
+import ConfirmModal from '../../components/common/ConfirmModal';
 
 export default function AdminAnnouncementsPage() {
   const [announcements, setAnnouncements] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const { register, handleSubmit, reset, formState } = useForm();
 
   const load = () => listAnnouncements().then((res) => setAnnouncements(res.data));
@@ -28,7 +30,6 @@ export default function AdminAnnouncementsPage() {
   };
 
   const onDelete = async (id) => {
-    if (!window.confirm('Delete this announcement?')) return;
     await deleteAnnouncement(id);
     load();
   };
@@ -102,7 +103,7 @@ export default function AdminAnnouncementsPage() {
                   <p className="text-xs text-gray-400">{formatDate(a.createdAt)}</p>
                 </div>
                 <button
-                  onClick={() => onDelete(a._id)}
+                  onClick={() => setConfirmDeleteId(a._id)}
                   aria-label="Delete announcement"
                   className="rounded p-1 text-gray-400 hover:text-red-500"
                 >
@@ -113,6 +114,15 @@ export default function AdminAnnouncementsPage() {
           </div>
         </div>
       </div>
+      <ConfirmModal
+        open={!!confirmDeleteId}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={() => onDelete(confirmDeleteId)}
+        title="Delete announcement"
+        message="This announcement will be permanently deleted."
+        danger
+        confirmLabel="Delete"
+      />
     </AdminShell>
   );
 }

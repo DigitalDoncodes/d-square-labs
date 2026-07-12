@@ -2,15 +2,138 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { KeyRound, Moon, ShieldAlert, Sun, Trash2, UserRound, Gift, Copy, MessageCircle } from 'lucide-react';
-import { changePassword, deleteAccount, getMe, updateProfile } from '../api/auth';
+import { Camera, KeyRound, Moon, ShieldAlert, Sun, Trash2, UserRound, Gift, Copy, MessageCircle, CreditCard, Crown, Zap, Star, CheckCircle2, ArrowRight, Smartphone, Wifi, WifiOff, RefreshCw, Download, HardDrive, Clock } from 'lucide-react';
+import { usePWA } from '../context/PWAContext';
+import { changePassword, deleteAccount, getMe, updateProfile, uploadAvatar } from '../api/auth';
 import { whatsappInviteUrl } from '../components/common/InviteCard';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSubscription } from '../context/SubscriptionContext';
+import { Link } from 'react-router-dom';
 import Modal from '../components/common/Modal';
+import useDocumentTitle from '../hooks/useDocumentTitle';
+
+const fmtDate = (d) =>
+  new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+const TIER_META = {
+  free:  { label: 'Free',  icon: Star,         color: 'gray',   badge: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
+  trial: { label: 'Trial', icon: Zap,           color: 'indigo', badge: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' },
+  pro:   { label: 'Pro',   icon: Zap,           color: 'amber',  badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
+  max:   { label: 'Max',   icon: Crown,         color: 'purple', badge: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
+};
+
+const TIER_BENEFITS = {
+  free:  ['Notes (create & read)', 'Resume builder (manual)', 'Planner & journal', 'Finance tracker', 'Company list (browse)', 'Community & gallery'],
+  trial: ['Everything in Pro for 7 days', 'AI note summarization', 'AI resume review', 'Company prep cards', 'Semantic search', 'AI planner suggestions'],
+  pro:   ['AI note summarization', 'AI resume review & feedback', 'Company prep cards (full detail)', 'Daily personalized AI briefing', 'Interview question bank', 'Daily MBA cases', 'AI planner suggestions', 'Semantic search', 'Career readiness score'],
+  max:   ['Everything in Pro', 'AI career advisor (deep strategy)', 'Priority AI processing', 'Semantic search across notes + companies', 'Multi-company comparison', 'Priority support'],
+};
+
+function SubscriptionCard() {
+  const { tier, tierExpiresAt, daysLeft, trialUsed } = useSubscription();
+  const meta = TIER_META[tier] || TIER_META.free;
+  const Icon = meta.icon;
+  const benefits = TIER_BENEFITS[tier] || TIER_BENEFITS.free;
+  const isActive = tier !== 'free';
+  const urgentExpiry = daysLeft !== null && daysLeft <= 3;
+
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+      <h2 className="mb-4 flex items-center gap-2 font-semibold">
+        <CreditCard className="h-4 w-4" /> Subscription
+      </h2>
+
+      {/* Plan header */}
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className={`flex h-10 w-10 items-center justify-center rounded-full ${meta.badge}`}>
+            <Icon className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold">DATAD {meta.label}</p>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${meta.badge}`}>{meta.label}</span>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {tier === 'free' ? 'Basic access — no AI features' :
+               tier === 'trial' ? 'Full Pro access for 7 days' :
+               tier === 'pro' ? 'AI placement prep tools' : 'Full AI suite + priority access'}
+            </p>
+          </div>
+        </div>
+        {(tier === 'free' || tier === 'trial') && (
+          <Link
+            to="/subscribe"
+            className="shrink-0 rounded-xl bg-amber-500 px-3 py-2 text-xs font-bold text-white hover:bg-amber-600"
+          >
+            Upgrade
+          </Link>
+        )}
+      </div>
+
+      {/* Status details */}
+      <div className="mb-4 divide-y divide-gray-100 rounded-xl border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
+        <div className="flex items-center justify-between px-4 py-2.5 text-sm">
+          <span className="text-gray-500 dark:text-gray-400">Status</span>
+          <span className={`font-medium ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-400'}`}>
+            {isActive ? '● Active' : '○ Free plan'}
+          </span>
+        </div>
+        {tier === 'trial' && (
+          <div className="flex items-center justify-between px-4 py-2.5 text-sm">
+            <span className="text-gray-500 dark:text-gray-400">Trial started</span>
+            <span className="font-medium">{trialUsed ? 'Yes' : '—'}</span>
+          </div>
+        )}
+        {tierExpiresAt && (
+          <>
+            <div className="flex items-center justify-between px-4 py-2.5 text-sm">
+              <span className="text-gray-500 dark:text-gray-400">
+                {tier === 'trial' ? 'Trial expires' : 'Next billing date'}
+              </span>
+              <span className={`font-medium ${urgentExpiry ? 'text-amber-600 dark:text-amber-400' : ''}`}>
+                {fmtDate(tierExpiresAt)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between px-4 py-2.5 text-sm">
+              <span className="text-gray-500 dark:text-gray-400">Days remaining</span>
+              <span className={`font-semibold ${urgentExpiry ? 'text-amber-600 dark:text-amber-400' : 'text-gray-800 dark:text-gray-200'}`}>
+                {daysLeft} day{daysLeft === 1 ? '' : 's'}
+                {urgentExpiry && ' ⚠'}
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Benefits */}
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+        {tier === 'free' ? 'Included in Free' : 'Your benefits'}
+      </p>
+      <ul className="mb-4 grid gap-1 sm:grid-cols-2">
+        {benefits.map((b) => (
+          <li key={b} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" /> {b}
+          </li>
+        ))}
+      </ul>
+
+      <div className="flex flex-wrap gap-2">
+        <Link
+          to="/subscribe"
+          className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:border-indigo-300 hover:text-indigo-600 dark:border-gray-700 dark:text-gray-300 dark:hover:border-indigo-700"
+        >
+          <ArrowRight className="h-3.5 w-3.5" />
+          {tier === 'free' ? 'View upgrade plans' : 'Manage subscription'}
+        </Link>
+      </div>
+    </section>
+  );
+}
 
 const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700';
+  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 function Card({ title, icon: Icon, danger, children }) {
   return (
@@ -29,13 +152,167 @@ function Card({ title, icon: Icon, danger, children }) {
   );
 }
 
+function fmtBytes(bytes) {
+  if (!bytes) return '—';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function fmtTime(date) {
+  if (!date) return 'Never';
+  const d = new Date(date);
+  const now = new Date();
+  const diff = Math.floor((now - d) / 1000);
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
+function AppSection() {
+  const {
+    installed,
+    isOnline,
+    syncing,
+    lastSynced,
+    cacheSize,
+    updateAvailable,
+    showInstallPrompt,
+    deferredPrompt,
+    installApp,
+    applyUpdate,
+    clearCache,
+    requestCacheSize,
+  } = usePWA();
+
+  const [clearing, setClearing] = useState(false);
+
+  useEffect(() => {
+    requestCacheSize();
+  }, [requestCacheSize]);
+
+  const handleClearCache = async () => {
+    setClearing(true);
+    try {
+      await clearCache();
+      toast.success('Cache cleared');
+      setTimeout(() => requestCacheSize(), 500);
+    } catch {
+      toast.error('Could not clear cache');
+    } finally {
+      setClearing(false);
+    }
+  };
+
+  const VERSION = '1.0.0';
+
+  const row = 'flex items-center justify-between px-4 py-2.5 text-sm';
+
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+      <h2 className="mb-4 flex items-center gap-2 font-semibold">
+        <Smartphone className="h-4 w-4" /> App
+      </h2>
+
+      <div className="mb-4 divide-y divide-gray-100 rounded-xl border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
+        <div className={row}>
+          <span className="text-gray-500 dark:text-gray-400">Version</span>
+          <span className="font-mono text-xs font-medium">v{VERSION}</span>
+        </div>
+        <div className={row}>
+          <span className="text-gray-500 dark:text-gray-400">Installed</span>
+          <span className={`text-xs font-semibold ${installed ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'}`}>
+            {installed ? '● Installed' : '○ Browser tab'}
+          </span>
+        </div>
+        <div className={row}>
+          <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+            {isOnline ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
+            Connection
+          </span>
+          <span className={`text-xs font-semibold ${isOnline ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-500'}`}>
+            {isOnline ? 'Online' : 'Offline'}
+          </span>
+        </div>
+        <div className={row}>
+          <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+            <RefreshCw className="h-3.5 w-3.5" />
+            Sync status
+          </span>
+          <span className="text-xs font-medium">
+            {syncing ? (
+              <span className="flex items-center gap-1 text-indigo-500">
+                <RefreshCw className="h-3 w-3 animate-spin" /> Syncing…
+              </span>
+            ) : 'Up to date'}
+          </span>
+        </div>
+        <div className={row}>
+          <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+            <Clock className="h-3.5 w-3.5" />
+            Last synced
+          </span>
+          <span className="text-xs font-medium">{fmtTime(lastSynced)}</span>
+        </div>
+        <div className={row}>
+          <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+            <HardDrive className="h-3.5 w-3.5" />
+            Cache size
+          </span>
+          <span className="text-xs font-medium">{fmtBytes(cacheSize)}</span>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={handleClearCache}
+          disabled={clearing}
+          className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:border-red-300 hover:text-red-600 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          {clearing ? 'Clearing…' : 'Clear cache'}
+        </button>
+
+        {updateAvailable && (
+          <button
+            onClick={applyUpdate}
+            className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Update now
+          </button>
+        )}
+
+        {!installed && deferredPrompt && (
+          <button
+            onClick={installApp}
+            className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Install app
+          </button>
+        )}
+
+        {!installed && !deferredPrompt && (
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            To install on iPhone: tap the Share button in Safari, then &ldquo;Add to Home Screen&rdquo;.
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export default function SettingsPage() {
+  useDocumentTitle('Settings');
   const { user, login, logout } = useAuth();
   const { dark, toggle } = useTheme();
   const navigate = useNavigate();
   const pwForm = useForm();
   const profileForm = useForm();
   const [me, setMe] = useState(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -62,6 +339,24 @@ export default function SettingsPage() {
       toast.success('Profile updated');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update profile');
+    }
+  };
+
+  const onAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('avatar', file);
+    setAvatarUploading(true);
+    try {
+      const res = await uploadAvatar(fd);
+      setMe((prev) => ({ ...prev, avatarUrl: res.data.avatarUrl }));
+      toast.success('Photo updated');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Upload failed');
+    } finally {
+      setAvatarUploading(false);
+      e.target.value = '';
     }
   };
 
@@ -111,7 +406,40 @@ export default function SettingsPage() {
           </button>
         </Card>
 
+        <AppSection />
+
         <Card title="Profile" icon={UserRound}>
+          {/* Avatar picker */}
+          <div className="mb-4 flex items-center gap-4">
+            <label className="group relative cursor-pointer">
+              <div className="relative h-16 w-16 overflow-hidden rounded-full bg-indigo-100 dark:bg-indigo-900/40">
+                {me?.avatarUrl ? (
+                  <img src={me.avatarUrl} alt="Profile" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                    {(me?.name || user?.name || '?')[0].toUpperCase()}
+                  </div>
+                )}
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                  {avatarUploading
+                    ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    : <Camera className="h-5 w-5 text-white" />
+                  }
+                </div>
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={onAvatarChange}
+                disabled={avatarUploading}
+              />
+            </label>
+            <div>
+              <p className="text-sm font-medium">{me?.name || user?.name}</p>
+              <p className="text-xs text-gray-400">Click photo to change</p>
+            </div>
+          </div>
           <form onSubmit={profileForm.handleSubmit(onSaveProfile)} className="space-y-3">
             <input
               placeholder="Name"
@@ -151,6 +479,8 @@ export default function SettingsPage() {
           </form>
         </Card>
 
+        <SubscriptionCard />
+
         <Card title="Referral code" icon={Gift}>
           <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
             Your personal one-time invite: exactly <strong>one</strong> batchmate can register
@@ -189,7 +519,7 @@ export default function SettingsPage() {
               </div>
             )
           ) : (
-            <p className="text-sm text-gray-400">Loading…</p>
+            <div className="h-6 w-48 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
           )}
         </Card>
 

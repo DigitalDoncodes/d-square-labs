@@ -7,11 +7,12 @@ import {
   createJournalEntry,
   updateJournalEntry,
   deleteJournalEntry,
-} from '../api/admin';
+} from '../api/journal';
 import { formatDate } from '../utils/dateUtils';
-import Loader from '../components/common/Loader';
+import { FeedSkeleton } from '../components/common/Skeleton';
 import EmptyState from '../components/common/EmptyState';
 import Modal from '../components/common/Modal';
+import ConfirmModal from '../components/common/ConfirmModal';
 
 const MOODS = [
   { value: 'great', label: '😄 Great' },
@@ -24,12 +25,13 @@ const MOODS = [
 const moodEmoji = (mood) => MOODS.find((m) => m.value === mood)?.label.split(' ')[0] || '🙂';
 
 const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700';
+  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 export default function JournalPage() {
   const [entries, setEntries] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null); // entry _id to delete
   const { register, handleSubmit, reset, formState } = useForm();
 
   const load = () => listJournal().then((res) => setEntries(res.data));
@@ -76,7 +78,6 @@ export default function JournalPage() {
   };
 
   const onDelete = async (id) => {
-    if (!window.confirm('Delete this entry forever?')) return;
     await deleteJournalEntry(id);
     toast.success('Entry deleted');
     load();
@@ -96,11 +97,11 @@ export default function JournalPage() {
         </button>
       </div>
       <p className="mb-5 flex items-center gap-1 text-xs text-gray-400">
-        <Lock className="h-3 w-3" /> Completely private — only the admin account can ever see this.
+        <Lock className="h-3 w-3" /> Completely private — only you can ever see this.
       </p>
 
       {!entries ? (
-        <Loader />
+        <FeedSkeleton count={4} />
       ) : entries.length === 0 ? (
         <EmptyState
           icon={BookLock}
@@ -130,7 +131,7 @@ export default function JournalPage() {
                     <Pencil className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => onDelete(entry._id)}
+                    onClick={() => setConfirmDelete(entry._id)}
                     aria-label="Delete entry"
                     className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30"
                   >
@@ -145,6 +146,16 @@ export default function JournalPage() {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        open={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={() => onDelete(confirmDelete)}
+        title="Delete journal entry"
+        message="This entry will be permanently deleted and cannot be recovered."
+        danger
+        confirmLabel="Delete"
+      />
 
       <Modal
         open={modalOpen}

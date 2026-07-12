@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { MessageSquare, Heart, Send, Pin, User } from 'lucide-react';
 
 const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700';
+  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 export default function MemoryStream({ memories = [], itemId, onAddMemory }) {
   const memoryList = memories;

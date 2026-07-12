@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import {
   BookLock,
@@ -6,15 +7,23 @@ import {
   Camera,
   CalendarDays,
   Crown,
+  CreditCard,
   Megaphone,
   Users,
   Clapperboard,
   ScrollText,
   Gift,
   Briefcase,
+  BrainCircuit,
+  Bot,
   ChevronRight,
+  Activity,
+  DollarSign,
+  Clock,
+  Sparkles,
 } from 'lucide-react';
 import { getStats, listStudents } from '../api/admin';
+import { getMeta, updateMeta } from '../api/meta';
 import { useAuth } from '../context/AuthContext';
 import Loader from '../components/common/Loader';
 import { AnimatedNumber, Stagger, StaggerItem } from '../components/common/motion';
@@ -55,21 +64,93 @@ function NavCard({ to, icon: Icon, title, description, badge }) {
   );
 }
 
+function PlacementDateForm() {
+  const [form, setForm] = useState({ placementDate: '', batchName: '' });
+  const [saving, setSaving] = useState(false);
+  const loaded = useRef(false);
+
+  useEffect(() => {
+    if (loaded.current) return;
+    loaded.current = true;
+    getMeta().then((res) => {
+      setForm({
+        placementDate: res.data.placementDate ? res.data.placementDate.slice(0, 10) : '',
+        batchName: res.data.batchName || '',
+      });
+    }).catch(() => {});
+  }, []);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await updateMeta(form);
+      toast.success('Placement date saved');
+    } catch {
+      toast.error('Could not save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSave} className="mb-6 rounded-2xl border border-indigo-200/80 bg-indigo-50/50 p-5 dark:border-indigo-800/60 dark:bg-indigo-900/20">
+      <p className="mb-3 text-sm font-semibold">Placement season settings</p>
+      <div className="flex flex-wrap gap-3">
+        <div className="flex-1 min-w-[160px]">
+          <label className="mb-1 block text-xs text-gray-500">Placement date</label>
+          <input
+            type="date"
+            value={form.placementDate}
+            onChange={(e) => setForm((f) => ({ ...f, placementDate: e.target.value }))}
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none dark:border-gray-700 dark:bg-gray-900"
+          />
+        </div>
+        <div className="flex-1 min-w-[200px]">
+          <label className="mb-1 block text-xs text-gray-500">Batch name (optional)</label>
+          <input
+            type="text"
+            maxLength={100}
+            placeholder="e.g. MBA 2024–26"
+            value={form.batchName}
+            onChange={(e) => setForm((f) => ({ ...f, batchName: e.target.value }))}
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none dark:border-gray-700 dark:bg-gray-900"
+          />
+        </div>
+        <div className="flex items-end">
+          <button
+            disabled={saving}
+            className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </form>
+  );
+}
+
 export default function AdminPage() {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [pending, setPending] = useState(0);
 
   useEffect(() => {
-    getStats().then((res) => setStats(res.data));
-    listStudents().then((res) =>
-      setPending(res.data.filter((s) => s.status === 'pending').length)
-    );
+    getStats().then((res) => {
+      setStats(res.data);
+      setPending(res.data.pendingApprovals ?? 0);
+    });
   }, []);
 
   if (!stats) return <Loader />;
 
   const sections = [
+    {
+      to: '/admin/studio',
+      icon: Sparkles,
+      title: 'Content Studio',
+      description: 'Upload anything — AI files it in the right module',
+    },
     {
       to: '/admin/students',
       icon: Users,
@@ -104,13 +185,38 @@ export default function AdminPage() {
       description: 'Publish recruiter pages — process, questions, salaries',
     },
     {
+      to: '/admin/cases',
+      icon: BrainCircuit,
+      title: 'Daily MBA cases',
+      description: 'Publish the daily case that anchors the morning habit',
+    },
+    {
       to: '/admin/archive',
       icon: Clapperboard,
       title: 'Nostalgia Archive',
       description: 'Publish and manage entertainment content',
     },
     {
-      to: '/journal',
+      to: '/admin/automation',
+      icon: Bot,
+      title: 'AI Automation',
+      description: 'Monitor and trigger AI content generation jobs',
+    },
+    {
+      to: '/admin/ai-center',
+      icon: Bot,
+      title: 'AI Center',
+      description: 'Live AI usage, cost tracking and scheduler health',
+    },
+    {
+      to: '/admin/subscriptions',
+      icon: CreditCard,
+      title: 'Subscriptions',
+      description: 'Review payment requests and manage user tiers',
+      badge: stats?.pendingSubscriptions ?? 0,
+    },
+    {
+      to: '/me/journal',
       icon: BookLock,
       title: 'Journal',
       description: 'Your private diary — visible only to you',
@@ -126,12 +232,46 @@ export default function AdminPage() {
         Welcome back, {user?.name?.split(' ')[0]} — here's your platform at a glance.
       </p>
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile icon={Users} label="Students" value={stats.students} />
+      {/* Primary stats */}
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatTile icon={Users} label="Total students" value={stats.students} />
         <StatTile icon={BookOpen} label="Notes" value={stats.notes} />
         <StatTile icon={Camera} label="Photos" value={stats.photos} />
         <StatTile icon={CalendarDays} label="Tasks" value={stats.tasks} />
       </div>
+
+      {/* Operational stats */}
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-2xl border border-gray-200/80 bg-white p-4 dark:border-gray-800/80 dark:bg-gray-900">
+          <div className="flex items-center gap-2 text-xs text-gray-400">
+            <Activity className="h-4 w-4 text-emerald-500" /> Active (7d)
+          </div>
+          <AnimatedNumber value={stats.activeUsers ?? 0} className="mt-1 block text-2xl font-bold tabular-nums" />
+        </div>
+        <div className={`rounded-2xl border p-4 ${(stats.pendingApprovals ?? 0) > 0 ? 'border-amber-300 bg-amber-50 dark:border-amber-700/60 dark:bg-amber-900/20' : 'border-gray-200/80 bg-white dark:border-gray-800/80 dark:bg-gray-900'}`}>
+          <div className="flex items-center gap-2 text-xs text-gray-400">
+            <Clock className={`h-4 w-4 ${(stats.pendingApprovals ?? 0) > 0 ? 'text-amber-500' : 'text-gray-400'}`} /> Pending approvals
+          </div>
+          <AnimatedNumber value={stats.pendingApprovals ?? 0} className={`mt-1 block text-2xl font-bold tabular-nums ${(stats.pendingApprovals ?? 0) > 0 ? 'text-amber-600 dark:text-amber-400' : ''}`} />
+        </div>
+        <div className={`rounded-2xl border p-4 ${(stats.pendingSubscriptions ?? 0) > 0 ? 'border-indigo-300 bg-indigo-50 dark:border-indigo-700/60 dark:bg-indigo-900/20' : 'border-gray-200/80 bg-white dark:border-gray-800/80 dark:bg-gray-900'}`}>
+          <div className="flex items-center gap-2 text-xs text-gray-400">
+            <CreditCard className={`h-4 w-4 ${(stats.pendingSubscriptions ?? 0) > 0 ? 'text-indigo-500' : 'text-gray-400'}`} /> Pending payments
+          </div>
+          <AnimatedNumber value={stats.pendingSubscriptions ?? 0} className={`mt-1 block text-2xl font-bold tabular-nums ${(stats.pendingSubscriptions ?? 0) > 0 ? 'text-indigo-600 dark:text-indigo-400' : ''}`} />
+        </div>
+        <div className="rounded-2xl border border-gray-200/80 bg-white p-4 dark:border-gray-800/80 dark:bg-gray-900">
+          <div className="flex items-center gap-2 text-xs text-gray-400">
+            <DollarSign className="h-4 w-4 text-purple-500" /> AI cost (30d)
+          </div>
+          <p className="mt-1 text-2xl font-bold tabular-nums">${stats.aiCost30d ?? '0.00'}</p>
+          {stats.aiJobCount30d > 0 && (
+            <p className="mt-0.5 text-xs text-gray-400">{stats.aiJobCount30d} jobs run</p>
+          )}
+        </div>
+      </div>
+
+      <PlacementDateForm />
 
       <Stagger className="grid gap-3 sm:grid-cols-2">
         {sections.map((s) => (

@@ -1,5 +1,11 @@
 const Company = require('../models/Company');
 const CompanyRead = require('../models/CompanyRead');
+const User = require('../models/User');
+
+const TIER_RANK = { free: 0, trial: 1, pro: 2, max: 3 };
+
+// Fields requiring pro access — not sent to free users
+const PREMIUM_FIELDS = ['interviewQuestions', 'prepTips', 'rounds', 'salaryRange'];
 
 const slugify = (name) =>
   name
@@ -27,19 +33,56 @@ exports.listCompanies = async (req, res, next) => {
 
 exports.getCompanyBySlug = async (req, res, next) => {
   try {
-    const company = await Company.findOneAndUpdate(
-      { slug: req.params.slug },
-      { $inc: { views: 1 } },
-      { returnDocument: 'after' }
-    ).lean();
+    const [company, dbUser] = await Promise.all([
+      Company.findOneAndUpdate(
+        { slug: req.params.slug },
+        { $inc: { views: 1 } },
+        { returnDocument: 'after' }
+      ).lean(),
+      User.findById(req.user.userId).select('tier tierExpiresAt').lean(),
+    ]);
     if (!company) return res.status(404).json({ message: 'Company not found' });
-    // Mark this card as studied by the viewer (feeds the readiness score).
+
+    // Mark studied (feeds readiness score) for all users
     CompanyRead.updateOne(
       { user: req.user.userId, company: company._id },
       { $setOnInsert: { user: req.user.userId, company: company._id } },
       { upsert: true }
     ).catch(() => {});
+
+    // Determine effective tier (auto-expire)
+    let tier = dbUser?.tier || 'free';
+    if (dbUser?.tierExpiresAt && new Date() > new Date(dbUser.tierExpiresAt)) tier = 'free';
+
+    // Strip premium prep content for free users; they still see overview/roles
+    if ((TIER_RANK[tier] ?? 0) < TIER_RANK.pro) {
+      const stripped = { ...company };
+      PREMIUM_FIELDS.forEach((f) => delete stripped[f]);
+      return res.json({ ...stripped, _prepLocked: true });
+    }
+
     res.json(company);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Aggregated interview question bank across all companies — grouped by category.
+exports.listQuestions = async (req, res, next) => {
+  try {
+    const companies = await Company.find({ 'interviewQuestions.0': { $exists: true } })
+      .select('name slug interviewQuestions')
+      .lean();
+
+    const bank = {};
+    companies.forEach((c) => {
+      c.interviewQuestions.forEach((q) => {
+        const cat = q.category || 'hr';
+        if (!bank[cat]) bank[cat] = [];
+        bank[cat].push({ question: q.question, company: c.name, companySlug: c.slug });
+      });
+    });
+    res.json(bank);
   } catch (err) {
     next(err);
   }

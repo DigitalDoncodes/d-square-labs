@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ExternalLink, GraduationCap, Heart, Mail, Phone, Sparkles, Brain, Code2 } from 'lucide-react';
+import { ExternalLink, GraduationCap, Mail, Phone, Sparkles, Brain, Code2 } from 'lucide-react';
 import Logo, { DatadMark } from '../components/common/Logo';
 
 // Public page — reachable without an account.
@@ -96,8 +96,8 @@ export default function CreatorPage() {
             <GraduationCap className="mx-auto mb-2 h-6 w-6 text-indigo-500" />
             <h2 className="font-semibold">Want in?</h2>
             <p className="mx-auto mt-1 max-w-md text-sm text-gray-500 dark:text-gray-400">
-              DATAD is free for the batch. Create an account to explore, or chip in to keep it
-              running.
+              DATAD is free for the batch. Create an account to explore, or become an early
+              supporter and help shape what it becomes.
             </p>
             <div className="mt-4 flex justify-center gap-3">
               <Link
@@ -110,7 +110,7 @@ export default function CreatorPage() {
                 to="/support"
                 className="flex items-center gap-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
               >
-                <Heart className="h-4 w-4 text-rose-500" /> Support
+                <Sparkles className="h-4 w-4 text-indigo-500" /> Back DATAD
               </Link>
             </div>
           </div>

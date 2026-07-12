@@ -66,7 +66,7 @@ export default function EntertainmentDetailPage() {
   return (
     <div className="animate-in mx-auto max-w-5xl px-4 py-6">
       <Link
-        to="/entertainment"
+        to="/community/archive"
         className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
       >
         <ArrowLeft className="h-4 w-4" /> Back to archive

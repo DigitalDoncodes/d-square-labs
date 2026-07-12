@@ -1,6 +1,6 @@
 import React from 'react';
 import { Sparkles, Calendar, Heart, ArrowRight } from 'lucide-react';
-import { Link } from 'reactrouter-dom';
+import { Link } from 'react-router-dom';
 
 export default function EntertainmentDashboardWidget() {
   return (
@@ -35,7 +35,7 @@ export default function EntertainmentDashboardWidget() {
       </div>
 
       <Link
-        to="/entertainment/cartoons/dexters-laboratory"
+        to="/community/archive/cartoons/dexters-laboratory"
         className="mt-4 flex items-center justify-center gap-2 text-xs font-semibold text-purple-400 hover:text-purple-300 w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 rounded-lg transition-colors"
       >
         <span>Relive Memory</span>

@@ -13,7 +13,7 @@ import { getMe } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import { CATEGORIES, TOPICS, categoriesForInterests } from '../utils/intelligence';
 import { formatDateTime } from '../utils/dateUtils';
-import Loader from '../components/common/Loader';
+import { CardGridSkeleton } from '../components/common/Skeleton';
 import EmptyState from '../components/common/EmptyState';
 import Modal from '../components/common/Modal';
 import IntelligenceCard from '../components/intelligence/IntelligenceCard';
@@ -93,9 +93,14 @@ export default function IntelligencePage() {
 
   // "For you" filters the live feed to the categories behind followed topics.
   const forYouCats = categoriesForInterests(interests);
+  const hasInterests = interests.length > 0;
   let shown = articles || [];
   if (view === 'foryou') {
-    shown = forYouCats.size ? shown.filter((a) => forYouCats.has(a.category)) : shown;
+    if (!hasInterests) {
+      shown = []; // show onboarding state, not all articles
+    } else {
+      shown = forYouCats.size ? shown.filter((a) => forYouCats.has(a.category)) : shown;
+    }
   }
   // Newest story becomes the highlighted "Top story".
   const topStory = view === 'all' && !category && shown.length ? shown[0] : null;
@@ -166,17 +171,33 @@ export default function IntelligencePage() {
 
       {/* Feed */}
       {!articles ? (
-        <Loader />
+        <CardGridSkeleton count={6} cols="grid-cols-1 sm:grid-cols-2" />
       ) : shown.length === 0 ? (
         <EmptyState
-          icon={view === 'saved' ? Bookmark : Newspaper}
-          title={view === 'saved' ? 'No saved stories yet' : 'No stories yet'}
+          icon={view === 'saved' ? Bookmark : view === 'foryou' && !hasInterests ? Star : Newspaper}
+          title={
+            view === 'saved'
+              ? 'No saved stories yet'
+              : view === 'foryou' && !hasInterests
+                ? 'Your personalised feed is empty'
+                : 'No stories yet'
+          }
           subtitle={
             view === 'saved'
               ? 'Bookmark stories to build your prep reading list'
-              : view === 'foryou'
-                ? 'Follow a few topics to personalise your feed'
+              : view === 'foryou' && !hasInterests
+                ? 'Follow a few topics and we\'ll show you news that matches your interests.'
                 : 'Fresh news is being pulled — check back in a moment'
+          }
+          action={
+            view === 'foryou' && !hasInterests ? (
+              <button
+                onClick={() => setTopicsOpen(true)}
+                className="mt-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              >
+                Choose topics
+              </button>
+            ) : undefined
           }
         />
       ) : (

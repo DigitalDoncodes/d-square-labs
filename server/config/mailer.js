@@ -1,29 +1,31 @@
-// Brevo (Sendinblue) transactional email via HTTP API — no SDK needed.
-const BREVO_URL = 'https://api.brevo.com/v3/smtp/email';
+// Resend transactional email via HTTP API — no SDK needed.
+const RESEND_URL = 'https://api.resend.com/emails';
 
-const enabled = () => Boolean(process.env.BREVO_API_KEY && process.env.MAIL_FROM);
+const enabled = () => Boolean(process.env.RESEND_API_KEY && process.env.MAIL_FROM);
 
 const send = async ({ to, subject, html }) => {
   if (!enabled()) {
-    console.warn('Mailer disabled: BREVO_API_KEY or MAIL_FROM not set');
+    console.warn('Mailer disabled: RESEND_API_KEY or MAIL_FROM not set');
     return;
   }
-  const res = await fetch(BREVO_URL, {
+  // Resend expects `to` as an array of strings ("Name <email>" or plain email)
+  const toAddresses = to.map((r) => (r.name ? `${r.name} <${r.email}>` : r.email));
+  const res = await fetch(RESEND_URL, {
     method: 'POST',
     headers: {
-      'api-key': process.env.BREVO_API_KEY,
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      sender: { name: 'DATAD', email: process.env.MAIL_FROM },
-      to,
+      from: `DATAD <${process.env.MAIL_FROM}>`,
+      to: toAddresses,
       subject,
-      htmlContent: html,
+      html,
     }),
   });
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`Brevo ${res.status}: ${body}`);
+    throw new Error(`Resend ${res.status}: ${body}`);
   }
 };
 

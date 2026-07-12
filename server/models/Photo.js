@@ -7,6 +7,7 @@ const photoSchema = new mongoose.Schema(
     publicId: { type: String, required: true },
     caption: { type: String, trim: true, maxlength: 300 },
     uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    contentItem: { type: mongoose.Schema.Types.ObjectId, ref: 'ContentItem' },
   },
   { timestamps: true }
 );

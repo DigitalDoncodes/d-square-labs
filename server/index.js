@@ -68,6 +68,47 @@ app.use('/api/intelligence', require('./routes/intelligenceRoutes'));
 app.use('/api/entertainment', entertainmentRoutes);
 app.use('/api/companies', require('./routes/companyRoutes'));
 app.use('/api/readiness', require('./routes/readinessRoutes'));
+app.use('/api/journal', require('./routes/journalRoutes'));
+app.use('/api/chat', require('./routes/chatRoutes'));
+app.use('/api/daily-case', require('./routes/dailyCaseRoutes'));
+app.use('/api/posts', require('./routes/postRoutes'));
+app.use('/api/ai', require('./routes/aiRoutes'));
+app.use('/api/placements', require('./routes/placementRoutes'));
+app.use('/api/internships', require('./routes/internshipRoutes'));
+app.use('/api/skills', require('./routes/skillRoutes'));
+app.use('/api/resources', require('./routes/resourceRoutes'));
+app.use('/api/projects', require('./routes/projectRoutes'));
+app.use('/api/study-tools', require('./routes/studyToolsRoutes'));
+app.use('/api/feed', require('./routes/feedRoutes'));
+app.use('/api/directory', require('./routes/directoryRoutes'));
+app.use('/api/events', require('./routes/eventRoutes'));
+app.use('/api/marketplace', require('./routes/marketplaceRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+
+app.use('/api/subscription', require('./routes/subscriptionRoutes'));
+
+// Content Studio — centralized publishing engine.
+// Rollback: set STUDIO_ENABLED=false to hide it (per-module uploads unaffected).
+if (process.env.STUDIO_ENABLED !== 'false') {
+  app.use('/api/studio', require('./routes/studioRoutes'));
+}
+
+// New AI-generated content routes
+app.use('/api/briefing', require('./routes/briefingRoutes'));
+app.use('/api/reflection', require('./routes/reflectionRoutes'));
+app.use('/api/resume-tip', require('./routes/resumeTipRoutes'));
+app.use('/api/automation', require('./routes/automationRoutes'));
+
+// Public read for placement countdown (available to all authenticated members).
+const { generalLimiter: _gl } = require('./middleware/rateLimiters');
+const verifyToken = require('./middleware/verifyToken');
+const SiteMeta = require('./models/SiteMeta');
+app.get('/api/meta', verifyToken, async (req, res, next) => {
+  try {
+    const meta = await SiteMeta.findOne({ key: 'main' }).select('placementDate batchName').lean();
+    res.json(meta || {});
+  } catch (err) { next(err); }
+});
 app.use('/api', (req, res) => res.status(404).json({ message: 'Route not found' }));
 
 // Serve the built React app from this same server (single ngrok tunnel /
@@ -84,15 +125,12 @@ if (fs.existsSync(clientDist)) {
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-const { startNewsRefresh } = require('./services/newsFetcher');
-const { startMarketRefresh } = require('./services/marketFetcher');
+const { register: registerSchedulers } = require('./schedulers');
 
 connectDB()
   .then(() => {
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-    // Pull live news (every 30 min) and live market data (every 15 min) on boot.
-    startNewsRefresh(30);
-    startMarketRefresh(15);
+    registerSchedulers();
   })
   .catch((err) => {
     console.error('Failed to connect to MongoDB:', err.message);

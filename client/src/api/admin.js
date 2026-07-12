@@ -15,3 +15,9 @@ export const deleteJournalEntry = (id) => api.delete(`/admin/journal/${id}`);
 export const createAnnouncement = (data) => api.post('/admin/announcements', data);
 export const deleteAnnouncement = (id) => api.delete(`/admin/announcements/${id}`);
 export const listAnnouncements = () => api.get('/announcements');
+
+// Subscription management
+export const listSubscriptionUsers    = ()              => api.get('/admin/subscriptions/users');
+export const listSubscriptionRequests = (status)        => api.get('/admin/subscriptions', { params: status ? { status } : {} });
+export const updateUserTier           = (id, data)      => api.patch(`/admin/subscriptions/users/${id}/tier`, data);
+export const reviewSubscriptionRequest= (id, data)      => api.patch(`/admin/subscriptions/${id}/review`, data);

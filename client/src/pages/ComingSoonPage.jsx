@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Check, Heart } from 'lucide-react';
+import { ArrowLeft, Check, Zap } from 'lucide-react';
 
 export default function ComingSoonPage({ feature }) {
   const Icon = feature.icon;
@@ -43,7 +43,7 @@ export default function ComingSoonPage({ feature }) {
           to="/support"
           className="flex items-center gap-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
         >
-          <Heart className="h-4 w-4" /> Speed it up — support
+          <Zap className="h-4 w-4" /> Back the roadmap
         </Link>
       </div>
     </div>
