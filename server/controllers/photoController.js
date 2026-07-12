@@ -1,6 +1,8 @@
+const crypto = require('crypto');
 const Photo = require('../models/Photo');
 const Album = require('../models/Album');
 const cloudinary = require('../config/cloudinary');
+const publishService = require('../services/publishing/publishService');
 
 exports.uploadPhoto = async (req, res, next) => {
   try {
@@ -14,12 +16,24 @@ exports.uploadPhoto = async (req, res, next) => {
       folder: 'datad/photos',
     });
 
-    const photo = await Photo.create({
-      album: albumId,
-      url: result.secure_url,
-      publicId: result.public_id,
-      caption,
-      uploadedBy: req.user.userId,
+    // Record creation goes through the central publishing engine.
+    const { target: photo } = await publishService.publishDirect({
+      file: {
+        originalName: req.file.originalname,
+        url: result.secure_url,
+        publicId: result.public_id,
+        resourceType: result.resource_type,
+        mime: req.file.mimetype,
+        type: 'image',
+        size: req.file.size,
+        hash: crypto.createHash('sha256').update(req.file.buffer).digest('hex'),
+      },
+      destinationKey: 'gallery',
+      meta: {
+        title: caption || req.file.originalname,
+        extra: { albumId, caption: caption || '' },
+      },
+      user: req.user,
     });
     res.status(201).json(photo);
   } catch (err) {

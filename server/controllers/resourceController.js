@@ -1,6 +1,9 @@
+const crypto = require('crypto');
 const Resource = require('../models/Resource');
 const cloudinary = require('../config/cloudinary');
 const docUpload = require('../middleware/docUpload');
+const studioUpload = require('../middleware/studioUpload');
+const publishService = require('../services/publishing/publishService');
 
 exports.list = async (req, res, next) => {
   try {
@@ -68,17 +71,26 @@ exports.uploadFile = async (req, res, next) => {
       public_id: `${Date.now()}-${req.file.originalname.replace(/[^a-z0-9]/gi, '_')}`,
     });
 
-    const fileType = docUpload.mimeToType[req.file.mimetype] || 'link';
-    const fileSizeKB = Math.round(req.file.size / 1024);
-    const fileSize = fileSizeKB > 1024 ? `${(fileSizeKB / 1024).toFixed(1)} MB` : `${fileSizeKB} KB`;
-
-    const resource = await Resource.create({
-      title, subject, semester, professor,
-      type: fileType,
-      url: result.secure_url,
-      fileSize,
-      tags: tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
-      uploadedBy: req.user.userId,
+    // Delegate record creation to the central publishing engine (Content
+    // Studio) so this upload shows up in Recent Uploads and dedupe checks.
+    const { target: resource } = await publishService.publishDirect({
+      file: {
+        originalName: req.file.originalname,
+        url: result.secure_url,
+        publicId: result.public_id,
+        resourceType: result.resource_type,
+        mime: req.file.mimetype,
+        type: studioUpload.detectType(req.file) || 'text',
+        size: req.file.size,
+        hash: crypto.createHash('sha256').update(req.file.buffer).digest('hex'),
+      },
+      destinationKey: 'resources',
+      meta: {
+        title, subject, semester,
+        tags: tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
+        extra: { professor, resourceType: docUpload.mimeToType[req.file.mimetype] || 'link' },
+      },
+      user: req.user,
     });
     res.status(201).json(resource);
   } catch (err) { next(err); }

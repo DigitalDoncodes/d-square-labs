@@ -9,6 +9,7 @@ const SubscriptionRequest = require('../models/SubscriptionRequest');
 const { sendAnnouncementEmail, sendAccountApprovedEmail, sendWelcomeEmail } = require('../config/mailer');
 const ActivityLog = require('../models/ActivityLog');
 const logActivity = require('../utils/logActivity');
+const publishService = require('../services/publishing/publishService');
 
 // ---- Overview ----
 
@@ -131,12 +132,16 @@ exports.createAnnouncement = async (req, res, next) => {
     if (!title || !body) {
       return res.status(400).json({ message: 'Title and body are required' });
     }
-    const announcement = await Announcement.create({
-      title,
-      body,
-      priority,
-      pinned: Boolean(pinned),
-      createdBy: req.user.userId,
+    // Record creation goes through the central publishing engine; the
+    // verbatim body is passed via extra so it is stored unmodified.
+    const { target: announcement } = await publishService.publishDirect({
+      destinationKey: 'announcements',
+      meta: {
+        title,
+        description: body.slice(0, 2000),
+        extra: { body, priority, pinned: Boolean(pinned) },
+      },
+      user: req.user,
     });
     if (sendEmail) {
       const recipients = await User.find({ role: { $ne: 'admin' } }).select('name email');

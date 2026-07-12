@@ -39,10 +39,12 @@ const destinations = {
       title: item.meta.title,
       subject: item.meta.subject,
       semester: item.meta.semester,
-      content: [
+      // Direct publishes (module forms) pass verbatim content via extra;
+      // studio uploads compose content from the description + attachment.
+      content: item.meta.extra?.content ?? [
         item.meta.description,
         item.analysis?.summary && `\n## AI Summary\n${item.analysis.summary}`,
-        `\n[Attached file: ${item.file.originalName}](${item.file.url})`,
+        item.file?.url && `\n[Attached file: ${item.file.originalName}](${item.file.url})`,
       ].filter(Boolean).join('\n'),
       author: user.userId,
       contentItem: item._id,
@@ -61,7 +63,7 @@ const destinations = {
       subject: item.meta.subject,
       semester: item.meta.semester,
       professor: item.meta.extra?.professor,
-      type: FILE_TYPE_TO_RESOURCE_TYPE[item.file.type] || 'link',
+      type: item.meta.extra?.resourceType || FILE_TYPE_TO_RESOURCE_TYPE[item.file.type] || 'link',
       url: item.file.url,
       fileSize: formatSize(item.file.size),
       tags: item.meta.tags || [],
@@ -81,8 +83,11 @@ const destinations = {
     ],
     map: (item, user) => ({
       title: item.meta.title,
-      body: [item.meta.description, `\nAttachment: ${item.file.url}`].join('\n'),
+      body: item.meta.extra?.body
+        ?? [item.meta.description, item.file?.url && `\nAttachment: ${item.file.url}`]
+          .filter(Boolean).join('\n'),
       priority: item.meta.extra?.priority === 'important' ? 'important' : 'normal',
+      pinned: Boolean(item.meta.extra?.pinned),
       createdBy: user.userId,
       contentItem: item._id,
     }),
@@ -100,7 +105,7 @@ const destinations = {
       album: item.meta.extra?.albumId,
       url: item.file.url,
       publicId: item.file.publicId,
-      caption: item.meta.title,
+      caption: item.meta.extra?.caption ?? item.meta.title,
       uploadedBy: user.userId,
       contentItem: item._id,
     }),

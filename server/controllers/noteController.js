@@ -1,4 +1,5 @@
 const Note = require('../models/Note');
+const publishService = require('../services/publishing/publishService');
 
 exports.listNotes = async (req, res, next) => {
   try {
@@ -29,12 +30,18 @@ exports.createNote = async (req, res, next) => {
     if (!title || !subject) {
       return res.status(400).json({ message: 'Title and subject are required' });
     }
-    const note = await Note.create({
-      title,
-      subject,
-      semester,
-      content,
-      author: req.user.userId,
+    // Record creation goes through the central publishing engine; the
+    // verbatim content is passed via extra so it is stored unmodified.
+    const { target: note } = await publishService.publishDirect({
+      destinationKey: 'notes',
+      meta: {
+        title,
+        subject,
+        semester,
+        description: (content || '').slice(0, 2000),
+        extra: { content: content || '' },
+      },
+      user: req.user,
     });
     res.status(201).json(note);
   } catch (err) {

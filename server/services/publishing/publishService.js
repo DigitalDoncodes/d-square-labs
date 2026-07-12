@@ -5,11 +5,11 @@ const logActivity = require('../../utils/logActivity');
 
 /**
  * Publish a reviewed ContentItem: create the target record via the
- * destination registry, link back, log. Idempotent — publishing an
- * already-published item returns it unchanged.
+ * destination registry, link back, log. Returns { item, target }.
+ * Idempotent — an already-published item returns unchanged (target null).
  */
 async function publish(item, user, { resolution } = {}) {
-  if (item.status === 'published') return item;
+  if (item.status === 'published') return { item, target: null };
   const key = item.destination?.key;
   if (!key) throw Object.assign(new Error('No destination selected'), { status: 400 });
   const dest = registry.get(key);
@@ -48,13 +48,14 @@ async function publish(item, user, { resolution } = {}) {
     targetId: target._id.toString(),
   });
 
-  return item;
+  return { item, target };
 }
 
 /**
  * Backwards-compatibility entry point for existing module controllers
- * (Phase 2): creates a ContentItem in published state around an upload
- * that already happened, skipping AI review.
+ * (Phase 2): creates a ContentItem already published around an upload
+ * (or text-only record) that skipped AI review. Returns { item, target }
+ * so callers can respond with the target record, exactly as before.
  */
 async function publishDirect({ file, destinationKey, meta, user }) {
   const dest = registry.get(destinationKey);
@@ -65,7 +66,13 @@ async function publishDirect({ file, destinationKey, meta, user }) {
     destination: { key: destinationKey, targetModel: dest.model },
     createdBy: user.userId,
   });
-  return publish(item, user);
+  try {
+    return await publish(item, user);
+  } catch (err) {
+    // Don't leave an orphan studio item if the target validation fails.
+    await item.deleteOne().catch(() => {});
+    throw err;
+  }
 }
 
 /** Cron entry: publish every scheduled item that is due. */

@@ -73,7 +73,7 @@ exports.publish = async (req, res, next) => {
   try {
     const item = await ContentItem.findById(req.params.id);
     if (!item) return res.status(404).json({ message: 'Not found' });
-    const published = await publishService.publish(item, req.user, {
+    const { item: published } = await publishService.publish(item, req.user, {
       resolution: req.body?.resolution, // replace | version | undefined
     });
     res.json(published);
