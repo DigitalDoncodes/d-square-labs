@@ -142,10 +142,13 @@ async function analyze(itemId, buffer) {
       visibility: 'members',
       extra: {},
     };
-    item.destination = {
-      key: ai.suggestedDestination,
-      targetModel: registry.get(ai.suggestedDestination).model,
-    };
+    // Respect a destination pinned at upload time (deep-linked uploads).
+    if (!item.destination?.key) {
+      item.destination = {
+        key: ai.suggestedDestination,
+        targetModel: registry.get(ai.suggestedDestination).model,
+      };
+    }
 
     // Embedding + near-duplicate detection (best-effort).
     try {

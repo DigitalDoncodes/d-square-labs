@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { FileText, FileSpreadsheet, Link2, Video, Download, Search, Plus, ExternalLink, Upload } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { FileText, FileSpreadsheet, Link2, Video, Download, Search, Plus, ExternalLink, Upload, Sparkles } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
 import { listResources, createResource, uploadResourceFile, deleteResource, downloadResource } from '../../api/resources';
 import { FeedSkeleton } from '../../components/common/Skeleton';
@@ -162,6 +163,15 @@ export default function ResourcesPage() {
       )}
 
       <Modal open={showAdd} onClose={closeModal} title="Add Resource">
+        {user?.role === 'admin' && (
+          <Link
+            to="/admin/studio?dest=resources"
+            className="mb-4 flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-950/70"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Admin tip: upload via the Content Studio for AI-filled metadata →
+          </Link>
+        )}
         {/* Tab switcher */}
         <div className="mb-4 flex rounded-xl border border-gray-200 p-1 dark:border-gray-700">
           {[['link', 'Link / URL'], ['file', 'Upload File']].map(([key, label]) => (

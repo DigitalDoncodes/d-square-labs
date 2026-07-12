@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { Megaphone, Pin, Mail, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Megaphone, Pin, Mail, Trash2, Sparkles } from 'lucide-react';
 import { listAnnouncements, createAnnouncement, deleteAnnouncement } from '../../api/admin';
 import { formatDate } from '../../utils/dateUtils';
 import Loader from '../../components/common/Loader';
@@ -42,6 +43,13 @@ export default function AdminAnnouncementsPage() {
       icon={Megaphone}
       subtitle="Post to the dashboard — optionally emailed to every member"
     >
+      <Link
+        to="/admin/studio?dest=announcements"
+        className="mb-4 flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-950/70"
+      >
+        <Sparkles className="h-4 w-4" />
+        Have a file to announce? Upload it via the Content Studio →
+      </Link>
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
           <form onSubmit={handleSubmit(onCreate)} className="space-y-3">

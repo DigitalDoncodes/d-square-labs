@@ -10,9 +10,12 @@ const POPULATE_DUP = { path: 'duplicateOf', select: 'meta.title analysis.title f
 exports.upload = async (req, res, next) => {
   try {
     if (!req.files?.length) return res.status(400).json({ message: 'No files provided' });
+    const destinationKey = req.body?.dest && registry.destinations[req.body.dest]
+      ? req.body.dest
+      : undefined;
     const items = [];
     for (const file of req.files) {
-      items.push(await ingestService.ingestFile(file, req.user));
+      items.push(await ingestService.ingestFile(file, req.user, { destinationKey }));
     }
     res.status(201).json(items);
   } catch (err) { next(err); }

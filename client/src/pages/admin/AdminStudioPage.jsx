@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Sparkles, UploadCloud, FileText, Image as ImageIcon, Film, Music,
   FileArchive, File, Loader2, AlertTriangle, CheckCircle2, Clock, PenLine,
@@ -55,6 +55,8 @@ function StatusPill({ status }) {
 
 export default function AdminStudioPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const dest = searchParams.get('dest') || '';
   const inputRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -85,8 +87,10 @@ export default function AdminStudioPage() {
     setUploading(true);
     setProgress(0);
     try {
-      const res = await uploadFiles(files, (e) =>
-        setProgress(e.total ? Math.round((e.loaded / e.total) * 100) : 0)
+      const res = await uploadFiles(
+        files,
+        (e) => setProgress(e.total ? Math.round((e.loaded / e.total) * 100) : 0),
+        dest
       );
       if (res.data.length === 1) {
         navigate(`/admin/studio/${res.data[0]._id}`);
@@ -107,6 +111,18 @@ export default function AdminStudioPage() {
       icon={Sparkles}
       subtitle="Upload anything — AI analyses it and suggests where it belongs."
     >
+      {dest && (
+        <div className="mb-3 flex items-center gap-2 rounded-xl bg-indigo-50 px-3 py-2 text-sm text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300">
+          <Sparkles className="h-4 w-4" />
+          New uploads will publish to <strong>{dest}</strong>.
+          <button
+            onClick={() => setSearchParams({})}
+            className="ml-auto text-xs underline"
+          >
+            Let AI decide instead
+          </button>
+        </div>
+      )}
       {/* Dropzone */}
       <div
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}

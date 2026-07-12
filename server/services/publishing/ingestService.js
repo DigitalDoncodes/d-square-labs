@@ -20,7 +20,7 @@ function uploadToCloudinary(buffer, options) {
  * Ingest one multer file: hash → dedupe check → Cloudinary → ContentItem.
  * Analysis is kicked off asynchronously; the caller responds immediately.
  */
-async function ingestFile(file, user) {
+async function ingestFile(file, user, { destinationKey } = {}) {
   const hash = crypto.createHash('sha256').update(file.buffer).digest('hex');
   const type = studioUpload.detectType(file);
   const exact = await duplicateService.findExact(hash);
@@ -47,6 +47,11 @@ async function ingestFile(file, user) {
     },
     duplicateOf: exact ? exact._id : undefined,
     duplicateKind: exact ? 'exact' : undefined,
+    // Deep links (/admin/studio?dest=X) pin the destination up front;
+    // analysis then only fills metadata and keeps this choice.
+    destination: destinationKey
+      ? { key: destinationKey, targetModel: require('./destinationRegistry').get(destinationKey).model }
+      : undefined,
     createdBy: user.userId,
   });
 

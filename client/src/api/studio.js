@@ -1,7 +1,8 @@
 import api from './axios';
 
-export const uploadFiles = (files, onProgress) => {
+export const uploadFiles = (files, onProgress, dest) => {
   const form = new FormData();
+  if (dest) form.append('dest', dest);
   for (const f of files) form.append('files', f);
   return api.post('/studio/uploads', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
