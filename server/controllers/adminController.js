@@ -7,6 +7,7 @@ const JournalEntry = require('../models/JournalEntry');
 const AutomationLog = require('../models/AutomationLog');
 const SubscriptionRequest = require('../models/SubscriptionRequest');
 const { sendAnnouncementEmail, sendAccountApprovedEmail, sendWelcomeEmail } = require('../config/mailer');
+const { notify } = require('./notificationController');
 const ActivityLog = require('../models/ActivityLog');
 const logActivity = require('../utils/logActivity');
 const publishService = require('../services/publishing/publishService');
@@ -143,6 +144,14 @@ exports.createAnnouncement = async (req, res, next) => {
       },
       user: req.user,
     });
+    // In-app notification to all non-admin users (fire-and-forget)
+    User.find({ role: { $ne: 'admin' } }).select('_id').lean().then((users) => {
+      const notifPromises = users.map((u) =>
+        notify({ user: u._id, type: 'announcement', title: announcement.title, body: body.slice(0, 120), link: '/community/announcements', actor: req.user.userId })
+      );
+      Promise.allSettled(notifPromises).catch(() => {});
+    }).catch(() => {});
+
     if (sendEmail) {
       const recipients = await User.find({ role: { $ne: 'admin' } }).select('name email');
       if (recipients.length) {

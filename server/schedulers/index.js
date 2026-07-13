@@ -15,6 +15,7 @@ const { enrichCompanies }           = require('../automation/companies/enrichCom
 const { generateInterviewQuestions }= require('../automation/interviews/generateInterviewQuestions');
 const { moderatePosts }             = require('../automation/moderation/moderatePosts');
 const { generateWeeklyNewsletter }  = require('../automation/newsletter/generateWeeklyNewsletter');
+const { sendPlannerReminders }      = require('../automation/planner/plannerReminders');
 
 // Existing services (kept running via cron instead of setInterval)
 const { refreshNews }   = require('../services/newsFetcher');
@@ -57,6 +58,9 @@ function register() {
 
   // ── 8am Sunday: weekly newsletter ───────────────────────────────────────────
   cron.schedule(s.newsletter, safe('weekly-newsletter', generateWeeklyNewsletter));
+
+  // ── 8am daily: planner due-date reminders ───────────────────────────────────
+  cron.schedule('0 8 * * *', safe('planner-reminders', sendPlannerReminders));
 
   // ── Every minute: publish scheduled Content Studio items ───────────────────
   if (process.env.STUDIO_ENABLED !== 'false') {

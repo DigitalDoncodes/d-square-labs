@@ -1,5 +1,7 @@
 const Post = require('../models/Post');
 const Reply = require('../models/Reply');
+const User = require('../models/User');
+const { notify } = require('./notificationController');
 
 // ── Posts ──────────────────────────────────────────────────────────────────
 
@@ -100,6 +102,9 @@ exports.toggleLikePost = async (req, res, next) => {
     if (idx === -1) post.likes.push(uid);
     else post.likes.splice(idx, 1);
     await post.save();
+    if (idx === -1 && String(post.author) !== uid) {
+      notify({ user: post.author, type: 'reaction', title: `${req.user.name} liked your post`, body: (post.title || post.body || '').slice(0, 80), link: '/community/feed', actor: uid }).catch(() => {});
+    }
     res.json({ likes: post.likes.length, liked: idx === -1 });
   } catch (err) { next(err); }
 };
@@ -110,9 +115,13 @@ exports.createReply = async (req, res, next) => {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ message: 'Post not found' });
-    const reply = await Reply.create({ post: post._id, body: req.body.body, author: req.user.userId });
+    const uid = req.user.userId;
+    const reply = await Reply.create({ post: post._id, body: req.body.body, author: uid });
     await reply.populate('author', 'name');
     await Post.findByIdAndUpdate(post._id, { $inc: { replyCount: 1 } });
+    if (String(post.author) !== uid) {
+      notify({ user: post.author, type: 'reaction', title: `${req.user.name} replied to your post`, body: req.body.body.slice(0, 80), link: '/community/feed', actor: uid }).catch(() => {});
+    }
     res.status(201).json(reply);
   } catch (err) { next(err); }
 };
@@ -139,6 +148,9 @@ exports.toggleLikeReply = async (req, res, next) => {
     if (idx === -1) reply.likes.push(uid);
     else reply.likes.splice(idx, 1);
     await reply.save();
+    if (idx === -1 && String(reply.author) !== uid) {
+      notify({ user: reply.author, type: 'reaction', title: `${req.user.name} liked your reply`, body: reply.body.slice(0, 80), link: '/community/feed', actor: uid }).catch(() => {});
+    }
     res.json({ likes: reply.likes.length, liked: idx === -1 });
   } catch (err) { next(err); }
 };
