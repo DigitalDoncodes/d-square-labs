@@ -1,5 +1,8 @@
 const Note = require('../models/Note');
 const publishService = require('../services/publishing/publishService');
+const cloudinary = require('../config/cloudinary');
+const docUpload = require('../middleware/docUpload');
+const { Readable } = require('stream');
 
 exports.listNotes = async (req, res, next) => {
   try {
@@ -24,25 +27,48 @@ exports.getNote = async (req, res, next) => {
   }
 };
 
+exports.uploadAttachment = async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No file provided' });
+    const mimeType = req.file.mimetype;
+    const fileType = docUpload.mimeToType[mimeType] || (mimeType.startsWith('image/') ? 'image' : 'file');
+    const resourceType = mimeType.startsWith('image/') || mimeType.startsWith('video/') ? 'auto' : 'raw';
+    const stream = Readable.from(req.file.buffer);
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { resource_type: resourceType, folder: 'datad/note-attachments', use_filename: true, access_mode: 'public' },
+      (err, result) => {
+        if (err) return next(err);
+        res.json({ url: result.secure_url, name: req.file.originalname, fileType, size: req.file.size });
+      }
+    );
+    stream.pipe(uploadStream);
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.createNote = async (req, res, next) => {
   try {
-    const { title, subject, semester, content } = req.body;
+    const { title, subject, semester, content, customSubject, attachments } = req.body;
     if (!title || !subject) {
       return res.status(400).json({ message: 'Title and subject are required' });
     }
-    // Record creation goes through the central publishing engine; the
-    // verbatim content is passed via extra so it is stored unmodified.
+    const resolvedSubject = subject === 'Other' && customSubject ? customSubject : subject;
     const { target: note } = await publishService.publishDirect({
       destinationKey: 'notes',
       meta: {
         title,
-        subject,
+        subject: resolvedSubject,
         semester,
         description: (content || '').slice(0, 2000),
-        extra: { content: content || '' },
+        extra: { content: content || '', customSubject: customSubject || '', attachments: attachments || [] },
       },
       user: req.user,
     });
+    // Save attachments separately since publishDirect may not handle them
+    if (attachments && attachments.length) {
+      await Note.findByIdAndUpdate(note._id, { attachments, customSubject: customSubject || '' });
+    }
     res.status(201).json(note);
   } catch (err) {
     next(err);
@@ -56,8 +82,9 @@ exports.updateNote = async (req, res, next) => {
     if (!note.author.equals(req.user.userId)) {
       return res.status(403).json({ message: 'Only the author can edit this note' });
     }
-    const { title, subject, semester, content } = req.body;
-    Object.assign(note, { title, subject, semester, content });
+    const { title, subject, semester, content, customSubject, attachments } = req.body;
+    const resolvedSubject = subject === 'Other' && customSubject ? customSubject : subject;
+    Object.assign(note, { title, subject: resolvedSubject, semester, content, customSubject: customSubject || '', attachments: attachments || note.attachments });
     await note.save();
     res.json(note);
   } catch (err) {

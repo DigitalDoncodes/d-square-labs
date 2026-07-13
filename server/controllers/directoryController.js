@@ -8,7 +8,7 @@ exports.getDirectory = async (req, res, next) => {
     if (req.query.skill) filter.skills = new RegExp(req.query.skill, 'i');
 
     let profiles = await UserProfile.find(filter)
-      .populate('user', 'name avatar email')
+      .populate('user', 'name avatar email rollNumber')
       .sort({ createdAt: -1 });
 
     if (req.query.search) {

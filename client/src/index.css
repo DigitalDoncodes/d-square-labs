@@ -2,65 +2,127 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── DATAD design system ──────────────────────────────────────────────
+   Calm, flat, dark-first. Neutral surfaces come from the gray token
+   scale (tailwind.config.js). Color communicates meaning only:
+   indigo = action · emerald = success · amber = warning · rose = danger.
+   Motion: 150–250ms, ease-out, subtle. Typography carries hierarchy. */
+
 @layer base {
   body {
-    @apply text-gray-900 dark:text-gray-100 antialiased;
-    background-color: #f7f8fb;
-    background-image:
-      radial-gradient(60rem 60rem at 110% -10%, rgba(99, 102, 241, 0.08), transparent 60%),
-      radial-gradient(50rem 50rem at -10% 10%, rgba(59, 130, 246, 0.07), transparent 55%);
-    background-attachment: fixed;
+    @apply bg-gray-50 text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11'; /* Inter: open digits & alternates */
+    text-rendering: optimizeLegibility;
   }
-  .dark body {
-    background-color: #0a0a0f;
-    background-image:
-      radial-gradient(60rem 60rem at 110% -10%, rgba(99, 102, 241, 0.14), transparent 60%),
-      radial-gradient(50rem 50rem at -10% 10%, rgba(59, 130, 246, 0.10), transparent 55%);
+
+  /* Typography scale — headings are tight and confident, never shouty. */
+  h1, h2, h3 {
+    @apply tracking-tight;
+  }
+
+  /* Keyboard focus is always visible; mouse focus stays quiet. */
+  :focus-visible {
+    outline: 2px solid theme('colors.indigo.500');
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Quiet, consistent scrollbars. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.gray.300') transparent;
+  }
+  .dark * {
+    scrollbar-color: theme('colors.gray.700') transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-gray-300 dark:bg-gray-700;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
   }
 }
 
 @layer components {
-  /* Surfaces that lift on hover — the core "premium card" feel. */
+  /* Standard raised surface. Hairline border, no shadow at rest. */
+  .card {
+    @apply rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900;
+  }
+
+  /* Interactive surfaces respond with a whisper of depth — no lift, no glow.
+     (box-shadow, so it never fights the element's own border utilities) */
   .card-hover {
-    @apply transition-all duration-200;
+    @apply transition-shadow duration-150 ease-out;
   }
   .card-hover:hover {
-    @apply -translate-y-0.5 shadow-lg shadow-indigo-500/5;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+  .dark .card-hover:hover {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07);
   }
 
-  /* Frosted-glass panel (nav, overlays). */
+  /* Button system — one primary, one secondary, one ghost. */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-indigo-500 disabled:opacity-50;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors duration-150 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-800;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium text-gray-500 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200;
+  }
+
+  /* Input system. */
+  .input {
+    @apply w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-900 placeholder:text-gray-400 transition-colors duration-150 focus:border-indigo-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-indigo-500;
+  }
+
+  /* Solid overlay surface (nav bars, sticky headers). Barely translucent —
+     enough to feel layered, never frosted-glass decorative. */
   .glass {
-    @apply border border-white/40 bg-white/70 backdrop-blur-xl dark:border-white/10 dark:bg-gray-950/60;
+    @apply border border-gray-200/80 bg-gray-50/90 backdrop-blur-md dark:border-gray-800/80 dark:bg-gray-950/90;
   }
 
-  /* Brand gradient text. */
+  /* Formerly a gradient; now a single accent. Color = meaning, not decoration. */
   .gradient-text {
-    @apply bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent dark:from-indigo-400 dark:to-blue-400;
+    @apply text-indigo-600 dark:text-indigo-400;
   }
 
   /* Skeleton shimmer — matches card surface so it blends in. */
   .skeleton {
-    @apply relative overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800;
+    @apply relative overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800/60;
   }
   .skeleton::after {
     content: '';
     @apply absolute inset-0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
-    animation: shimmer 1.6s ease-in-out infinite;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: shimmer 1.4s ease-out infinite;
     transform: translateX(-100%);
   }
   .dark .skeleton::after {
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
   }
 
-  /* Tap target helper — ensures 44px minimum for mobile accessibility. */
+  /* Tap target helper — 44px minimum for mobile accessibility. */
   .tap-target {
-    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+    @apply flex min-h-[44px] min-w-[44px] items-center justify-center;
   }
 
-  /* Premium pulse — for live / AI-active indicators. */
+  /* Live / AI-active indicator. */
   .pulse-indigo {
     animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Toast surface (react-hot-toast). */
+  .datad-toast {
+    @apply !rounded-xl !border !border-gray-200 !bg-white !text-sm !font-medium !text-gray-900 !shadow-lg !shadow-black/5 dark:!border-gray-800 dark:!bg-gray-900 dark:!text-gray-100;
   }
 }
 
@@ -73,12 +135,11 @@
   50% { opacity: 0.5; }
 }
 
-/* CSS-driven entrance animations — compositor-based and always settle to the
-   visible end state (fill-mode both), so content is never stuck invisible. */
+/* Entrance animation — short, ease-out, always settles visible. */
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -87,18 +148,18 @@
 }
 
 .animate-in {
-  animation: fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: fade-up 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .stagger > * {
-  animation: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: fade-up 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-.stagger > *:nth-child(1) { animation-delay: 0.03s; }
-.stagger > *:nth-child(2) { animation-delay: 0.09s; }
-.stagger > *:nth-child(3) { animation-delay: 0.15s; }
-.stagger > *:nth-child(4) { animation-delay: 0.21s; }
-.stagger > *:nth-child(5) { animation-delay: 0.27s; }
-.stagger > *:nth-child(6) { animation-delay: 0.33s; }
+.stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.stagger > *:nth-child(2) { animation-delay: 0.05s; }
+.stagger > *:nth-child(3) { animation-delay: 0.08s; }
+.stagger > *:nth-child(4) { animation-delay: 0.11s; }
+.stagger > *:nth-child(5) { animation-delay: 0.14s; }
+.stagger > *:nth-child(6) { animation-delay: 0.17s; }
 
 /* Respect reduced-motion preferences. */
 @media (prefers-reduced-motion: reduce) {
@@ -139,12 +200,6 @@ body {
 /* Momentum-based scrolling inside overflow containers on iOS. */
 .scroll-ios {
   -webkit-overflow-scrolling: touch;
-}
-
-/* Remove focus ring on non-keyboard focus (mouse/touch) while keeping
-   keyboard navigation accessible. */
-:focus:not(:focus-visible) {
-  outline: none;
 }
 
 /* Minimum 44×44 pt touch targets (Apple HIG / WCAG 2.5.5). */

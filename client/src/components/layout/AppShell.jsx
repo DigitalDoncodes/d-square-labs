@@ -11,6 +11,9 @@ import {
   Info,
   ChevronDown,
   Zap,
+  HeartHandshake,
+  Settings,
+  Gem,
 } from 'lucide-react';
 import { DatadMark } from '../common/Logo';
 import { useAuth } from '../../context/AuthContext';
@@ -37,7 +40,8 @@ const TIER_BADGE_STYLE = {
   pro:   'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
   max:   'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
 };
-import { WORKSPACES } from '../../utils/workspaces';
+import { useLocation } from 'react-router-dom';
+import { WORKSPACES, WORKSPACE_TABS } from '../../utils/workspaces';
 import CommandPalette from '../common/CommandPalette';
 import NotificationBell from '../common/NotificationBell';
 import ChatBot from '../chat/ChatBot';
@@ -45,11 +49,13 @@ import Footer from './Footer';
 
 const AdminIcon = Crown;
 
+// Linear/Notion-style rail: the selected page is obvious through weight and
+// surface, not a loud colored pill; hover is a whisper.
 const railLink = ({ isActive }) =>
-  `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+  `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150 ${
     isActive
-      ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
-      : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+      ? 'bg-gray-200/60 font-semibold text-gray-900 dark:bg-gray-800/80 dark:text-gray-100'
+      : 'font-medium text-gray-500 hover:bg-gray-200/40 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/50 dark:hover:text-gray-100'
   }`;
 
 function AvatarMenu() {
@@ -86,8 +92,8 @@ function AvatarMenu() {
 
   return (
     <div className="relative flex items-center gap-2" ref={ref}>
-      <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${TIER_BADGE_STYLE[tier] || TIER_BADGE_STYLE.free}`}>
-        {tier === 'max' ? '★ ' : tier === 'pro' ? '⚡ ' : tier === 'trial' ? '⚡ ' : ''}{tier}
+      <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${TIER_BADGE_STYLE[tier] || TIER_BADGE_STYLE.free}`}>
+        {tier}
       </span>
       <button
         onClick={() => setOpen((o) => !o)}
@@ -120,6 +126,9 @@ function AvatarMenu() {
           <NavLink to="/me/journal" onClick={() => setOpen(false)} className={item}>
             <BookLock className="h-4 w-4 text-indigo-500" /> Journal
           </NavLink>
+          <NavLink to="/me/wellbeing" onClick={() => setOpen(false)} className={item}>
+            <HeartHandshake className="h-4 w-4 text-indigo-500" /> Feeling stressed? Reach out
+          </NavLink>
           <NavLink to="/support" onClick={() => setOpen(false)} className={item}>
             <Sparkles className="h-4 w-4 text-indigo-500" /> Back DATAD
           </NavLink>
@@ -148,7 +157,9 @@ function AvatarMenu() {
 export default function AppShell({ children }) {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const location = useLocation();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [collapsedKey, setCollapsedKey] = useState(null);
 
   // Global ⌘K / Ctrl+K.
   useEffect(() => {
@@ -179,11 +190,53 @@ export default function AppShell({ children }) {
           <kbd className="ml-auto rounded border border-gray-200 px-1.5 py-0.5 text-[10px] dark:border-gray-700">⌘K</kbd>
         </button>
         <nav className="flex flex-col gap-1">
-          {WORKSPACES.map((w) => (
-            <NavLink key={w.key} to={w.to} end={w.end} className={railLink}>
-              <w.icon className="h-[18px] w-[18px]" /> {w.label}
-            </NavLink>
-          ))}
+          {WORKSPACES.map((w) => {
+            const isActive = w.key === 'me'
+              ? location.pathname.startsWith('/me') &&
+                !location.pathname.startsWith('/me/finance') &&
+                !location.pathname.startsWith('/me/wellbeing')
+              : w.end
+              ? location.pathname === w.to
+              : location.pathname.startsWith(w.to);
+            const subTabs = WORKSPACE_TABS[w.key];
+
+            const subLinkClass = ({ isActive: a }) =>
+              `rounded-md px-2 py-1.5 text-xs transition-colors ${
+                a
+                  ? 'bg-gray-200/60 font-semibold text-gray-900 dark:bg-gray-800/80 dark:text-gray-100'
+                  : 'text-gray-500 hover:bg-gray-200/40 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800/50 dark:hover:text-gray-100'
+              }`;
+
+            const showSub = isActive && subTabs && collapsedKey !== w.key;
+
+            return (
+              <div key={w.key}>
+                <NavLink
+                  to={w.to}
+                  end={w.end}
+                  onClick={() => {
+                    if (isActive && subTabs) {
+                      setCollapsedKey(collapsedKey === w.key ? null : w.key);
+                    } else {
+                      setCollapsedKey(null);
+                    }
+                  }}
+                  className={railLink}
+                >
+                  <w.icon className="h-[18px] w-[18px]" /> {w.label}
+                </NavLink>
+                {showSub && (
+                  <div className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-gray-200/80 pl-3 dark:border-gray-800/80">
+                    {subTabs.map((t) => (
+                      <NavLink key={t.to} to={t.to} end={t.end} className={subLinkClass}>
+                        {t.label}
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
           {isAdmin && (
             <>
               <div className="mx-2 my-2 border-t border-gray-200/70 dark:border-gray-800/70" />
@@ -194,7 +247,27 @@ export default function AppShell({ children }) {
             </>
           )}
         </nav>
-        <p className="mt-auto px-2 text-[11px] text-gray-400">Your student OS — every day, one place.</p>
+        <div className="mt-auto space-y-1">
+          <NavLink
+            to="/subscribe"
+            className={({ isActive }) =>
+              `flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+                isActive
+                  ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400'
+                  : 'text-gray-500 hover:bg-gray-200/40 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800/50 dark:hover:text-gray-200'
+              }`
+            }
+          >
+            <Gem className="h-3.5 w-3.5 shrink-0 text-indigo-500" /> Upgrade plan
+          </NavLink>
+          <NavLink
+            to="/me/wellbeing"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-gray-400 transition-colors hover:bg-gray-200/40 hover:text-gray-600 dark:hover:bg-gray-800/50 dark:hover:text-gray-300"
+          >
+            <HeartHandshake className="h-3.5 w-3.5 shrink-0" /> Feeling stressed? Reach out
+          </NavLink>
+          <p className="px-2 pt-1 text-[11px] text-gray-400">Your student OS — every day, one place.</p>
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -212,6 +285,9 @@ export default function AppShell({ children }) {
               <Search className="h-5 w-5" />
             </button>
             <NotificationBell />
+            <NavLink to="/me/settings" aria-label="Settings" className={({ isActive }) => `rounded-lg p-2 transition-colors ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}`}>
+              <Settings className="h-5 w-5" />
+            </NavLink>
             <AvatarMenu />
           </div>
         </header>

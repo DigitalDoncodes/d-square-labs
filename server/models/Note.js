@@ -8,6 +8,14 @@ const noteSchema = new mongoose.Schema(
     content: { type: String, default: '', maxlength: 20000 },
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     contentItem: { type: mongoose.Schema.Types.ObjectId, ref: 'ContentItem' },
+    // Attachments: files uploaded or links pasted by the author
+    attachments: [{
+      name: { type: String, required: true, maxlength: 200 },
+      url: { type: String, required: true, maxlength: 1000 },
+      fileType: { type: String, default: 'link', maxlength: 50 }, // 'link', 'pdf', 'doc', 'excel', etc.
+      size: { type: Number, default: 0 },
+    }],
+    customSubject: { type: String, default: '', trim: true, maxlength: 80 },
   },
   { timestamps: true }
 );

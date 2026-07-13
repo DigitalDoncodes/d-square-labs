@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
-import { BrainCircuit, CheckCircle2, Flame, ChevronDown, Loader2 } from 'lucide-react';
+import {
+  BrainCircuit, CheckCircle2, Flame, ChevronDown, Loader2,
+  BookOpen, Target, Lightbulb, Clock,
+} from 'lucide-react';
 import { getTodayCase, solveCase } from '../../api/dailyCase';
 import AIBadge from '../common/AIBadge';
 
@@ -13,12 +16,32 @@ const CATEGORY_LABEL = {
   other: 'Case',
 };
 
-// The daily habit anchor: read a mini case, think, reveal the framework.
+const CATEGORY_COLOR = {
+  strategy: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  marketing: 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300',
+  operations: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  finance: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+  hr: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+  guesstimate: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  other: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+};
+
+const THINK_TIPS = {
+  strategy: ['Map the value chain', 'Identify competitive moat', 'Use Porter\'s Five Forces'],
+  marketing: ['Segment → Target → Position', 'Consider 4 P\'s', 'Think customer lifetime value'],
+  finance: ['Check cash flow first', 'Consider NPV / IRR', 'Look at debt-equity ratio'],
+  operations: ['Identify the bottleneck', 'Think throughput, not efficiency', 'Apply TOC or Lean'],
+  hr: ['Consider culture fit vs. skill', 'Look at retention drivers', 'Think incentive design'],
+  guesstimate: ['Structure top-down', 'Sanity check with a proxy', 'Estimate then validate'],
+  other: ['Break the problem into parts', 'State your assumptions', 'Think about trade-offs'],
+};
+
 export default function DailyCaseCard() {
   const [data, setData] = useState(null);
   const [expanded, setExpanded] = useState(false);
   const [framework, setFramework] = useState('');
   const [solving, setSolving] = useState(false);
+  const [thinkRevealed, setThinkRevealed] = useState(false);
 
   useEffect(() => {
     getTodayCase()
@@ -31,6 +54,7 @@ export default function DailyCaseCard() {
 
   if (!data?.case) return null;
   const { case: c, solved, streak } = data;
+  const tips = THINK_TIPS[c.category] || THINK_TIPS.other;
 
   const handleSolve = async () => {
     if (solving) return;
@@ -47,10 +71,11 @@ export default function DailyCaseCard() {
   };
 
   return (
-    <div className="card-hover mb-4 rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 font-semibold">
-          <BrainCircuit className="h-4 w-4 text-indigo-500" /> Daily MBA case
+    <div id="daily-case" className="scroll-mt-20 rounded-2xl border border-gray-200/80 bg-white dark:border-gray-800/80 dark:bg-gray-900 overflow-hidden">
+      {/* Header bar */}
+      <div className="flex items-center justify-between gap-2 border-b border-gray-100 dark:border-gray-800 px-5 py-3">
+        <h2 className="flex items-center gap-2 font-semibold text-sm">
+          <BrainCircuit className="h-4 w-4 text-indigo-500" /> Daily MBA Case
         </h2>
         <div className="flex items-center gap-2">
           {streak > 0 && (
@@ -58,56 +83,103 @@ export default function DailyCaseCard() {
               <Flame className="h-3 w-3" /> {streak}-day streak
             </span>
           )}
-          <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
+          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${CATEGORY_COLOR[c.category] || CATEGORY_COLOR.other}`}>
             {CATEGORY_LABEL[c.category] || 'Case'}
+          </span>
+          <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+            <Clock className="h-3 w-3" /> ~5 min
           </span>
         </div>
       </div>
 
-      <p className="font-semibold">{c.title}</p>
-      <p className={`mt-1 whitespace-pre-wrap text-sm text-gray-600 dark:text-gray-300 ${expanded ? '' : 'line-clamp-3'}`}>
-        {c.scenario}
-      </p>
-      {!expanded && c.scenario.length > 220 && (
-        <button onClick={() => setExpanded(true)} className="mt-1 flex items-center gap-0.5 text-xs font-medium text-indigo-600 dark:text-indigo-400">
-          Read full case <ChevronDown className="h-3 w-3" />
-        </button>
-      )}
+      <div className="p-5 space-y-4">
+        {/* How to use this section */}
+        <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 p-3 flex items-start gap-2.5">
+          <BookOpen className="h-4 w-4 text-indigo-500 mt-0.5 shrink-0" />
+          <div className="text-xs text-indigo-700 dark:text-indigo-300 space-y-0.5">
+            <p className="font-semibold">How to use this case</p>
+            <p className="text-indigo-600/80 dark:text-indigo-400">Read the scenario → form your answer → then reveal the expert framework. Don't skip ahead — the learning is in the thinking.</p>
+          </div>
+        </div>
 
-      <p className="mt-3 rounded-xl bg-gradient-to-br from-indigo-500/10 to-blue-500/10 p-3 text-sm font-medium">
-        🎯 {c.question}
-      </p>
-
-      {solved ? (
-        <div className="mt-3">
-          <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2 className="h-4 w-4" /> Solved — nice thinking!
+        {/* Case scenario */}
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Scenario</p>
+          <p className="font-semibold text-sm">{c.title}</p>
+          <p className={`mt-1.5 whitespace-pre-wrap text-sm text-gray-600 dark:text-gray-300 ${expanded ? '' : 'line-clamp-4'}`}>
+            {c.scenario}
           </p>
-          {framework && (
-            <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm dark:border-emerald-800/60 dark:bg-emerald-900/20">
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
-                  Suggested framework
-                </p>
-                <AIBadge provider="AI" />
-              </div>
-              <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-200">{framework}</p>
-            </div>
+          {!expanded && c.scenario.length > 220 && (
+            <button onClick={() => setExpanded(true)} className="mt-1 flex items-center gap-0.5 text-xs font-medium text-indigo-600 dark:text-indigo-400">
+              Read full case <ChevronDown className="h-3 w-3" />
+            </button>
           )}
         </div>
-      ) : (
-        <button
-          onClick={handleSolve}
-          disabled={solving}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-70"
-        >
-          {solving ? (
-            <><Loader2 className="h-4 w-4 animate-spin" /> Revealing framework…</>
-          ) : (
-            "I've thought it through — reveal the framework"
-          )}
-        </button>
-      )}
+
+        {/* Question */}
+        <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40 p-3">
+          <div className="flex items-center gap-2 mb-1">
+            <Target className="h-3.5 w-3.5 text-amber-500" />
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">Your challenge</span>
+          </div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{c.question}</p>
+        </div>
+
+        {/* Think hints */}
+        {!solved && (
+          <div>
+            <button
+              onClick={() => setThinkRevealed((v) => !v)}
+              className="flex items-center gap-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:underline"
+            >
+              <Lightbulb className="h-3.5 w-3.5" />
+              {thinkRevealed ? 'Hide thinking hints' : 'Need a nudge? Show thinking hints'}
+            </button>
+            {thinkRevealed && (
+              <ul className="mt-2 space-y-1 pl-1">
+                {tips.map((tip, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-purple-400" />
+                    {tip}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {/* Solve / solved */}
+        {solved ? (
+          <div>
+            <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="h-4 w-4" /> Solved — nice thinking!
+            </p>
+            {framework && (
+              <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm dark:border-emerald-800/60 dark:bg-emerald-900/20">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+                    Expert framework
+                  </p>
+                  <AIBadge provider="AI" />
+                </div>
+                <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-200 leading-relaxed">{framework}</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={handleSolve}
+            disabled={solving}
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-70"
+          >
+            {solving ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Revealing framework…</>
+            ) : (
+              "I've thought it through — reveal the framework"
+            )}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

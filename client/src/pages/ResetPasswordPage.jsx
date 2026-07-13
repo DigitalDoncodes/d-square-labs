@@ -75,7 +75,7 @@ export default function ResetPasswordPage() {
         <button
           type="submit"
           disabled={formState.isSubmitting}
-          className="w-full rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-indigo-500/40 hover:brightness-110 disabled:opacity-50"
+          className="w-full rounded-xl bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-indigo-500 disabled:opacity-50"
         >
           {formState.isSubmitting ? 'Resetting…' : 'Reset password'}
         </button>

@@ -1,18 +1,85 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, ArrowRight } from 'lucide-react';
-import { listTasks } from '../../api/tasks';
+import { CalendarDays, ArrowRight, Plus, X } from 'lucide-react';
+import { listTasks, createTask } from '../../api/tasks';
 import { daysUntil, formatDate } from '../../utils/dateUtils';
 import { FeedSkeleton } from '../../components/common/Skeleton';
 import EmptyState from '../../components/common/EmptyState';
 import { Page } from '../../components/common/motion';
+import toast from 'react-hot-toast';
+import { TASK_TYPES } from '../../utils/constants';
 
-const ACADEMIC_TYPES = ['case-study', 'exam', 'deadline'];
-const TYPE_LABEL = { 'case-study': 'Case study', exam: 'Exam', deadline: 'Deadline' };
+const ACADEMIC_TYPES = ['case-study', 'exam', 'deadline', 'other'];
+const TYPE_LABEL = { 'case-study': 'Case study', exam: 'Exam', deadline: 'Deadline', 'interview-prep': 'Interview Prep', other: 'Task' };
 
-// Academic view over the shared Task model — editing stays in Me → Planner.
+const inputClass = 'w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
+
+function NewAssignmentModal({ onClose, onCreated }) {
+  const [form, setForm] = useState({ title: '', type: 'deadline', subject: '', dueDate: '', description: '' });
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!form.title.trim()) { toast.error('Title is required'); return; }
+    setSaving(true);
+    try {
+      const res = await createTask({ ...form, status: 'pending' });
+      onCreated(res.data);
+      toast.success('Assignment added');
+      onClose();
+    } catch {
+      toast.error('Failed to create assignment');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-semibold">New self-planned assignment</h2>
+          <button onClick={onClose} className="rounded-lg p-1 hover:bg-gray-100 dark:hover:bg-gray-800"><X className="h-4 w-4" /></button>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Title *</label>
+            <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={inputClass} placeholder="e.g. Marketing Case Analysis" />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">Type</label>
+              <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className={inputClass}>
+                {TASK_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">Due date</label>
+              <input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} className={inputClass} />
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Subject (optional)</label>
+            <input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} className={inputClass} placeholder="e.g. Marketing" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Notes (optional)</label>
+            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className={inputClass} placeholder="What do you need to prepare?" />
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end gap-2">
+          <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">Cancel</button>
+          <button onClick={handleSave} disabled={saving} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+            {saving ? 'Adding…' : 'Add assignment'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AssignmentsPage() {
   const [tasks, setTasks] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     listTasks().then((res) =>
@@ -31,32 +98,44 @@ export default function AssignmentsPage() {
 
   return (
     <Page className="mx-auto max-w-5xl px-4 py-6">
+      {showModal && (
+        <NewAssignmentModal
+          onClose={() => setShowModal(false)}
+          onCreated={(t) => setTasks((prev) => [t, ...prev].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)))}
+        />
+      )}
+
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">Assignments</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Case studies, exams and deadlines for the batch</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Case studies, exams and self-planned tasks</p>
         </div>
-        <Link to="/me/planner" className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400">
-          Manage in Planner <ArrowRight className="h-3 w-3" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          >
+            <Plus className="h-4 w-4" /> New assignment
+          </button>
+          <Link to="/me/planner" className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+            Planner <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
       </div>
 
       {open.length === 0 && done.length === 0 ? (
-        <EmptyState icon={CalendarDays} title="No assignments yet" subtitle="Add case studies and exams from the Planner." />
+        <EmptyState icon={CalendarDays} title="No assignments yet" subtitle="Add a new assignment or add case studies and exams from the Planner." action={{ label: 'New assignment', onClick: () => setShowModal(true) }} />
       ) : (
         <>
           <ul className="space-y-2">
             {open.map((t) => {
               const days = daysUntil(t.dueDate);
               return (
-                <li
-                  key={t._id}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-gray-200/80 bg-white p-4 text-sm dark:border-gray-800/80 dark:bg-gray-900"
-                >
+                <li key={t._id} className="flex items-center justify-between gap-3 rounded-2xl border border-gray-200/80 bg-white p-4 text-sm dark:border-gray-800/80 dark:bg-gray-900">
                   <div className="min-w-0">
                     <p className="truncate font-medium">{t.title}</p>
                     <p className="text-xs text-gray-400">
-                      {TYPE_LABEL[t.type]}
+                      {TYPE_LABEL[t.type] || t.type}
                       {t.subject ? ` · ${t.subject}` : ''}
                     </p>
                   </div>

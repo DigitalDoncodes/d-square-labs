@@ -23,12 +23,16 @@ const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 const NotesListPage = lazy(() => import('./pages/NotesListPage'));
 const NoteDetailPage = lazy(() => import('./pages/NoteDetailPage'));
 const NoteEditorPage = lazy(() => import('./pages/NoteEditorPage'));
-const AlbumsListPage = lazy(() => import('./pages/AlbumsListPage'));
 const PlannerPage = lazy(() => import('./pages/PlannerPage'));
-const FinancePage = lazy(() => import('./pages/FinancePage'));
+const FinanceHubPage        = lazy(() => import('./pages/me/FinanceHubPage'));
+const FinanceOverviewPage   = lazy(() => import('./pages/me/FinanceOverviewPage'));
+const FinanceTrackerPage    = lazy(() => import('./pages/me/FinanceTrackerPage'));
+const FinanceCalculatorPage = lazy(() => import('./pages/me/FinanceCalculatorPage'));
+const FinanceLearnPage      = lazy(() => import('./pages/me/FinanceLearnPage'));
 const IntelligencePage = lazy(() => import('./pages/IntelligencePage'));
 const ResumePage = lazy(() => import('./pages/ResumePage'));
 const ResumePreviewPage = lazy(() => import('./pages/ResumePreviewPage'));
@@ -52,32 +56,32 @@ const JournalPage = lazy(() => import('./pages/JournalPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
-const EntertainmentPage = lazy(() => import('./pages/EntertainmentPage'));
 const EntertainmentDetailPage = lazy(() => import('./pages/EntertainmentDetailPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const SubscribePage = lazy(() => import('./pages/SubscribePage'));
 const AdminSubscriptionsPage = lazy(() => import('./pages/admin/AdminSubscriptionsPage'));
 const StudyHubPage = lazy(() => import('./pages/study/StudyHubPage'));
-const AssignmentsPage = lazy(() => import('./pages/study/AssignmentsPage'));
-const CareerHubPage = lazy(() => import('./pages/career/CareerHubPage'));
+const WellbeingPage         = lazy(() => import('./pages/me/WellbeingPage'));
+const WellbeingStudyPage    = lazy(() => import('./pages/me/WellbeingStudyPage'));
+const WellbeingMemoryPage   = lazy(() => import('./pages/me/WellbeingMemoryPage'));
+const WellbeingRoutinesPage = lazy(() => import('./pages/me/WellbeingRoutinesPage'));
+const WellbeingSupportPage  = lazy(() => import('./pages/me/WellbeingSupportPage'));
+const WorkPage = lazy(() => import('./pages/study/WorkPage'));
 const ReadinessPage = lazy(() => import('./pages/career/ReadinessPage'));
+const OpportunitiesPage = lazy(() => import('./pages/career/OpportunitiesPage'));
 const InterviewQuestionsPage = lazy(() => import('./pages/career/InterviewQuestionsPage'));
 const CommunityHubPage  = lazy(() => import('./pages/community/CommunityHubPage'));
 const AnnouncementsPage = lazy(() => import('./pages/community/AnnouncementsPage'));
-const DiscussionsPage   = lazy(() => import('./pages/community/DiscussionsPage'));
-const FeedPage          = lazy(() => import('./pages/community/FeedPage'));
+const StreamPage        = lazy(() => import('./pages/community/StreamPage'));
+const MemoriesPage      = lazy(() => import('./pages/community/MemoriesPage'));
 const DirectoryPage     = lazy(() => import('./pages/community/DirectoryPage'));
 const EventsPage        = lazy(() => import('./pages/community/EventsPage'));
 const MarketplacePage   = lazy(() => import('./pages/community/MarketplacePage'));
 const MeHubPage         = lazy(() => import('./pages/me/MeHubPage'));
 const SubjectPage       = lazy(() => import('./pages/study/SubjectPage'));
 const ResourcesPage     = lazy(() => import('./pages/study/ResourcesPage'));
-const ProjectsPage      = lazy(() => import('./pages/study/ProjectsPage'));
-const AIToolsPage       = lazy(() => import('./pages/study/AIToolsPage'));
 const StudyToolsPage    = lazy(() => import('./pages/study/StudyToolsPage'));
-const PlacementsPage    = lazy(() => import('./pages/career/PlacementsPage'));
-const InternshipsPage   = lazy(() => import('./pages/career/InternshipsPage'));
 const SkillExchangePage = lazy(() => import('./pages/career/SkillExchangePage'));
 const AdminAICenterPage = lazy(() => import('./pages/admin/AdminAICenterPage'));
 
@@ -98,6 +102,21 @@ function AppLayout() {
       </AppShell>
       </SubscriptionProvider>
     </ProtectedRoute>
+  );
+}
+
+// "/" — the startup page for visitors; the daily dashboard once logged in.
+function HomeGate() {
+  const { user } = useAuth();
+  if (!user) return <LandingPage />;
+  return (
+    <SubscriptionProvider>
+      <AppShell>
+        <ErrorBoundary>
+          <DashboardPage />
+        </ErrorBoundary>
+      </AppShell>
+    </SubscriptionProvider>
   );
 }
 
@@ -122,7 +141,15 @@ export default function App() {
           <BrowserRouter>
             <OfflineBanner />
             <UpdateBanner />
-            <Toaster position="top-center" />
+            <Toaster
+              position="top-center"
+              toastOptions={{
+                className: 'datad-toast',
+                duration: 3500,
+                success: { iconTheme: { primary: '#10b981', secondary: '#fff' } },
+                error: { iconTheme: { primary: '#f43f5e', secondary: '#fff' } },
+              }}
+            />
           <Suspense fallback={<Loader />}>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
@@ -133,8 +160,9 @@ export default function App() {
               <Route path="/about" element={<AboutPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
+              {/* "/" is the public landing for visitors, the dashboard once logged in */}
+              <Route path="/" element={<HomeGate />} />
               <Route element={<AppLayout />}>
-                <Route path="/" element={<DashboardPage />} />
                 <Route path="/briefing" element={<IntelligencePage />} />
 
                 <Route path="/study" element={<WorkspaceLayout workspace="study" title="Study" />}>
@@ -143,49 +171,73 @@ export default function App() {
                   <Route path="notes/new" element={<NoteEditorPage />} />
                   <Route path="notes/:id" element={<NoteDetailPage />} />
                   <Route path="notes/:id/edit" element={<NoteEditorPage />} />
-                  <Route path="assignments" element={<AssignmentsPage />} />
+                  <Route path="work" element={<WorkPage />} />
                   <Route path="subject" element={<SubjectPage />} />
                   <Route path="resources" element={<ResourcesPage />} />
-                  <Route path="projects" element={<ProjectsPage />} />
-                  <Route path="ai-tools" element={<AIToolsPage />} />
-                  <Route path="study-tools" element={<StudyToolsPage />} />
+                  <Route path="focus" element={<StudyToolsPage />} />
+                  {/* Merged/dissolved tabs — old URLs keep working */}
+                  <Route path="assignments" element={<Navigate to="/study/work" replace />} />
+                  <Route path="projects" element={<Navigate to="/study/work?view=projects" replace />} />
+                  <Route path="study-tools" element={<Navigate to="/study/focus" replace />} />
+                  <Route path="ai-tools" element={<Navigate to="/study/notes" replace />} />
                   {soonRoutes('study')}
                 </Route>
 
                 <Route path="/career" element={<WorkspaceLayout workspace="career" title="Career" />}>
-                  <Route index element={<CareerHubPage />} />
+                  {/* Readiness IS the overview: score + what to do today */}
+                  <Route index element={<ReadinessPage />} />
                   <Route path="resume" element={<ResumePage />} />
                   <Route path="resume/preview" element={<ResumePreviewPage />} />
                   <Route path="companies" element={<CompaniesPage />} />
                   <Route path="companies/:slug" element={<CompanyDetailPage />} />
                   <Route path="questions" element={<InterviewQuestionsPage />} />
-                  <Route path="readiness" element={<ReadinessPage />} />
-                  <Route path="placements" element={<PlacementsPage />} />
-                  <Route path="internships" element={<InternshipsPage />} />
-                  <Route path="skills" element={<SkillExchangePage />} />
+                  <Route path="opportunities" element={<OpportunitiesPage />} />
+                  {/* Merged/moved tabs — old URLs keep working */}
+                  <Route path="readiness" element={<Navigate to="/career" replace />} />
+                  <Route path="placements" element={<Navigate to="/career/opportunities" replace />} />
+                  <Route path="internships" element={<Navigate to="/career/opportunities?view=internships" replace />} />
+                  <Route path="skills" element={<Navigate to="/community/skills" replace />} />
                   {soonRoutes('career')}
                 </Route>
 
                 <Route path="/community" element={<WorkspaceLayout workspace="community" title="Community" />}>
                   <Route index element={<CommunityHubPage />} />
                   <Route path="announcements" element={<AnnouncementsPage />} />
-                  <Route path="discussions" element={<DiscussionsPage />} />
-                  <Route path="gallery" element={<AlbumsListPage />} />
-                  <Route path="archive" element={<EntertainmentPage />} />
+                  <Route path="feed" element={<StreamPage />} />
+                  <Route path="memories" element={<MemoriesPage />} />
                   <Route path="archive/:category/:slug" element={<EntertainmentDetailPage />} />
-                  <Route path="feed" element={<FeedPage />} />
                   <Route path="directory" element={<DirectoryPage />} />
                   <Route path="events" element={<EventsPage />} />
+                  {/* No top tab — reachable from the Community overview */}
                   <Route path="marketplace" element={<MarketplacePage />} />
+                  <Route path="skills" element={<SkillExchangePage />} />
+                  {/* Merged tabs — old URLs keep working */}
+                  <Route path="discussions" element={<Navigate to="/community/feed?view=discussions" replace />} />
+                  <Route path="gallery" element={<Navigate to="/community/memories" replace />} />
+                  <Route path="archive" element={<Navigate to="/community/memories?view=archive" replace />} />
                   {soonRoutes('community')}
                 </Route>
 
-                <Route path="/me" element={<WorkspaceLayout workspace="me" title="Me" />}>
+                <Route path="/me" element={<WorkspaceLayout workspace="me" title="Life" />}>
                   <Route index element={<MeHubPage />} />
                   <Route path="planner" element={<PlannerPage />} />
-                  <Route path="finance" element={<FinancePage />} />
                   <Route path="settings" element={<SettingsPage />} />
                   <Route path="journal" element={<JournalPage />} />
+                </Route>
+
+                <Route path="/me/finance" element={<WorkspaceLayout workspace="finance" title="Finance" />}>
+                  <Route index element={<FinanceOverviewPage />} />
+                  <Route path="tracker" element={<FinanceTrackerPage />} />
+                  <Route path="calculator" element={<FinanceCalculatorPage />} />
+                  <Route path="learn" element={<FinanceLearnPage />} />
+                </Route>
+
+                <Route path="/me/wellbeing" element={<WorkspaceLayout workspace="wellbeing" title="Wellbeing" />}>
+                  <Route index element={<WellbeingPage />} />
+                  <Route path="study" element={<WellbeingStudyPage />} />
+                  <Route path="memory" element={<WellbeingMemoryPage />} />
+                  <Route path="routines" element={<WellbeingRoutinesPage />} />
+                  <Route path="support" element={<WellbeingSupportPage />} />
                 </Route>
 
                 <Route path="/subscribe" element={<SubscribePage />} />

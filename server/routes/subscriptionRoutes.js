@@ -61,7 +61,21 @@ router.get('/me', verifyToken, async (req, res, next) => {
       User.findByIdAndUpdate(req.user.userId, { tier: 'free', tierExpiresAt: null }).catch(() => {});
     }
 
-    res.json({ tier, tierExpiresAt, trialUsed: !!user?.trialStartedAt, requests });
+    // Today's metered AI usage so the client can show "X of Y AI actions".
+    const aiQuota = require('../middleware/aiQuota');
+    const AiUsage = require('../models/AiUsage');
+    const limit = aiQuota.DAILY_LIMIT[tier] ?? 0;
+    const usage = limit
+      ? await AiUsage.findOne({ user: req.user.userId, dateKey: aiQuota.todayKey() }).select('count').lean()
+      : null;
+
+    res.json({
+      tier,
+      tierExpiresAt,
+      trialUsed: !!user?.trialStartedAt,
+      requests,
+      aiUsage: { used: usage?.count || 0, limit },
+    });
   } catch (err) {
     next(err);
   }
@@ -77,7 +91,8 @@ router.post('/trial', verifyToken, async (req, res, next) => {
     if (user.trialStartedAt) {
       return res.status(400).json({ message: 'You have already used your free trial.' });
     }
-    if (user.tier !== 'free') {
+    // Legacy accounts predate the tier field — treat missing as 'free'.
+    if ((user.tier || 'free') !== 'free') {
       return res.status(400).json({ message: 'Trial is only available on the free plan. Downgrade first if you want to try again.' });
     }
 

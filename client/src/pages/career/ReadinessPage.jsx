@@ -46,7 +46,7 @@ export default function ReadinessPage() {
       {/* Score breakdown — Pro only */}
       <TierGate
         required="pro"
-        description="See exactly which areas are dragging your score down — strengths, gaps, and a precise action for each dimension."
+        description="See where your score comes from — your strengths, your next steps, and one clear action for each area."
       >
       {!data ? (
         <div className="mt-6 space-y-3">
@@ -109,25 +109,27 @@ export default function ReadinessPage() {
           {/* Needs attention */}
           {weak.length > 0 && (
             <section>
-              <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-rose-600 dark:text-rose-400">
-                <AlertCircle className="h-4 w-4" /> Needs attention
+              <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-indigo-600 dark:text-indigo-400">
+                <Zap className="h-4 w-4" /> Growth opportunities
               </h2>
               <ul className="space-y-2">
                 {weak.map((c) => (
-                  <li key={c.key} className="rounded-xl border border-rose-100 bg-rose-50/60 px-4 py-3 dark:border-rose-900/30 dark:bg-rose-900/10">
+                  <li key={c.key} className="rounded-xl border border-indigo-100 bg-indigo-50/60 px-4 py-3 dark:border-indigo-900/30 dark:bg-indigo-900/10">
                     <div className="mb-1 flex items-center justify-between">
                       <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{c.label}</p>
-                      <span className="text-xs font-semibold text-rose-500">
-                        {c.points}/{c.max} pts
-                      </span>
+                      {c.points > 0 && (
+                        <span className="text-xs font-semibold text-indigo-500">
+                          {c.points}/{c.max} pts
+                        </span>
+                      )}
                     </div>
                     {c.hint && <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">{c.hint}</p>}
                     <p className="mb-2 text-xs text-gray-400 dark:text-gray-500">{HOW_TO_IMPROVE[c.key]}</p>
                     <Link
                       to={COMPONENT_LINKS[c.key] || '/'}
-                      className="inline-flex items-center gap-1 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-700"
+                      className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
                     >
-                      Fix this now <ArrowRight className="h-3 w-3" />
+                      Start here <ArrowRight className="h-3 w-3" />
                     </Link>
                   </li>
                 ))}

@@ -10,6 +10,7 @@ import {
   removeItem, listDestinations,
 } from '../../api/studio';
 import { listAlbums } from '../../api/albums';
+import { listCompanies } from '../../api/companies';
 
 const META_FIELDS = [
   { name: 'title', label: 'Title' },
@@ -43,6 +44,7 @@ export default function AdminStudioReviewPage() {
   const [item, setItem] = useState(null);
   const [destinations, setDestinations] = useState([]);
   const [albums, setAlbums] = useState([]);
+  const [companies, setCompanies] = useState([]);
   const [meta, setMeta] = useState(null);
   const [destKey, setDestKey] = useState('');
   const [tagsText, setTagsText] = useState('');
@@ -66,6 +68,7 @@ export default function AdminStudioReviewPage() {
     load().catch(() => setError('Item not found'));
     listDestinations().then((res) => setDestinations(res.data));
     listAlbums().then((res) => setAlbums(res.data)).catch(() => {});
+    listCompanies().then((res) => setCompanies(res.data)).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -313,12 +316,32 @@ export default function AdminStudioReviewPage() {
 
                 {/* Destination-specific fields */}
                 {destination?.extraFields?.map((f) => (
-                  <div key={f.name}>
+                  <div key={f.name} className={f.type === 'textarea' ? 'sm:col-span-2' : ''}>
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">
                       {f.label}
                       {f.required && <span className="text-rose-500"> *</span>}
                     </label>
-                    {f.type === 'album' ? (
+                    {f.type === 'textarea' ? (
+                      <textarea
+                        rows={4}
+                        className={inputClass}
+                        disabled={!editable}
+                        value={meta.extra?.[f.name] || ''}
+                        onChange={(e) => setMeta({ ...meta, extra: { ...meta.extra, [f.name]: e.target.value } })}
+                      />
+                    ) : f.type === 'company' ? (
+                      <select
+                        className={inputClass}
+                        disabled={!editable}
+                        value={meta.extra?.[f.name] || ''}
+                        onChange={(e) => setMeta({ ...meta, extra: { ...meta.extra, [f.name]: e.target.value } })}
+                      >
+                        <option value="">Select company…</option>
+                        {companies.map((c) => (
+                          <option key={c._id} value={c._id}>{c.name}</option>
+                        ))}
+                      </select>
+                    ) : f.type === 'album' ? (
                       <select
                         className={inputClass}
                         disabled={!editable}

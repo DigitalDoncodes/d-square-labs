@@ -3,7 +3,13 @@ import { createContext, useContext, useEffect, useState } from 'react';
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
-  const [dark, setDark] = useState(() => localStorage.getItem('theme') === 'dark');
+  // Dark-first: new users get the dark theme unless their OS prefers light.
+  // An explicit choice (the in-app toggle) always wins.
+  const [dark, setDark] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved === 'dark';
+    return !window.matchMedia('(prefers-color-scheme: light)').matches;
+  });
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);

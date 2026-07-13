@@ -7,14 +7,29 @@ const Task = require('../models/Task');
 const Resume = require('../models/Resume');
 const SiteMeta = require('../models/SiteMeta');
 const DailyCaseSolve = require('../models/DailyCaseSolve');
-const OpenAI = require('openai');
+const { getProvider } = require('../ai/providers');
+const { routeTask }   = require('../ai/router');
 
 router.use(verifyToken);
 router.use(generalLimiter);
-
-const MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
-const DAILY_QUOTA = 30; // messages per user per day
 const HISTORY_WINDOW = 12; // last N messages sent as context
+
+// Daily message quota per tier — the AI assistant is the "Unlimited AI"
+// value ladder: free gets a taste, paid tiers get room to work.
+const TIER_QUOTA = { free: 10, trial: 30, pro: 100, max: 1000 };
+
+const User = require('../models/User');
+
+// Effective tier with auto-expiry, same rules as middleware/checkTier.
+async function getEffectiveTier(userId) {
+  const user = await User.findById(userId).select('tier tierExpiresAt').lean();
+  let tier = user?.tier || 'free';
+  if (user?.tierExpiresAt && new Date() > new Date(user.tierExpiresAt)) {
+    tier = 'free';
+    User.findByIdAndUpdate(userId, { tier: 'free' }).catch(() => {});
+  }
+  return TIER_QUOTA[tier] !== undefined ? tier : 'free';
+}
 
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
@@ -98,19 +113,30 @@ Persona and rules:
 // POST /api/chat
 router.post('/', async (req, res, next) => {
   try {
-    if (!process.env.GROQ_API_KEY) {
-      return res.status(503).json({ message: 'AI features are not enabled on this server' });
-    }
+    let provider;
+    try { provider = getProvider(routeTask('chat')); }
+    catch { return res.status(503).json({ message: 'AI features are not enabled on this server' }); }
 
     const { message } = req.body;
     if (!message?.trim()) return res.status(400).json({ message: 'Message is required' });
     if (message.length > 2000) return res.status(400).json({ message: 'Message too long (max 2000 chars)' });
 
     const uid = req.user.userId;
-    const { systemPrompt, todayCount } = await buildSystemPrompt(req.user);
+    const [{ systemPrompt, todayCount }, tier] = await Promise.all([
+      buildSystemPrompt(req.user),
+      getEffectiveTier(req.user.userId),
+    ]);
+    const quota = TIER_QUOTA[tier];
 
-    if (todayCount >= DAILY_QUOTA) {
-      return res.status(429).json({ message: `Daily limit reached (${DAILY_QUOTA} messages). Come back tomorrow!` });
+    if (todayCount >= quota) {
+      return res.status(429).json({
+        message:
+          tier === 'free'
+            ? `You've used all ${quota} free messages for today. Upgrade to Pro for a much higher daily limit.`
+            : `Daily limit reached (${quota} messages). Come back tomorrow!`,
+        requiredTier: tier === 'free' ? 'pro' : undefined,
+        upgradeUrl: tier === 'free' ? '/subscribe' : undefined,
+      });
     }
 
     // Load conversation history for continuity.
@@ -125,20 +151,13 @@ router.post('/', async (req, res, next) => {
       { role: 'user', content: message.trim() },
     ];
 
-    const groq = new OpenAI({
-      apiKey: process.env.GROQ_API_KEY,
-      baseURL: 'https://api.groq.com/openai/v1',
-    });
-    const response = await groq.chat.completions.create({
-      model: MODEL,
-      max_tokens: 700,
+    const { text: reply } = await provider.complete({
+      maxTokens: 700,
       messages: [
         { role: 'system', content: systemPrompt },
         ...messages,
       ],
     });
-
-    const reply = response.choices[0].message.content.trim();
 
     // Persist both turns.
     await ChatMessage.insertMany([
@@ -146,7 +165,7 @@ router.post('/', async (req, res, next) => {
       { user: uid, role: 'assistant', content: reply },
     ]);
 
-    const remaining = DAILY_QUOTA - todayCount - 1;
+    const remaining = quota - todayCount - 1;
     res.json({ reply, remaining });
   } catch (err) {
     next(err);
@@ -158,11 +177,12 @@ router.get('/history', async (req, res, next) => {
   try {
     const uid = req.user.userId;
     const today = todayKey();
-    const [messages, todayCount] = await Promise.all([
+    const [messages, todayCount, tier] = await Promise.all([
       ChatMessage.find({ user: uid }).sort({ createdAt: -1 }).limit(30).lean(),
       ChatMessage.countDocuments({ user: uid, role: 'user', createdAt: { $gte: new Date(today) } }),
+      getEffectiveTier(uid),
     ]);
-    res.json({ messages: messages.reverse(), remaining: DAILY_QUOTA - todayCount });
+    res.json({ messages: messages.reverse(), remaining: Math.max(0, TIER_QUOTA[tier] - todayCount) });
   } catch (err) {
     next(err);
   }

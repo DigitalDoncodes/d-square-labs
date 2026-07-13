@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const verifyToken = require('../middleware/verifyToken');
 const checkTier   = require('../middleware/checkTier');
+const checkRole   = require('../middleware/checkRole');
+const aiQuota     = require('../middleware/aiQuota');
 const { generalLimiter } = require('../middleware/rateLimiters');
 const Note    = require('../models/Note');
 const Resume  = require('../models/Resume');
@@ -16,7 +18,7 @@ router.use(generalLimiter);
 
 // ── Summarise Note ────────────────────────────────────────────────────────
 
-router.post('/summarise/:noteId', checkTier('pro'), async (req, res, next) => {
+router.post('/summarise/:noteId', checkTier('trial'), aiQuota, async (req, res, next) => {
   try {
     const note = await Note.findById(req.params.noteId).lean();
     if (!note) return res.status(404).json({ message: 'Note not found' });
@@ -50,7 +52,7 @@ router.post('/summarise/:noteId', checkTier('pro'), async (req, res, next) => {
 
 // ── Review Resume (RAG-enhanced) ──────────────────────────────────────────
 
-router.post('/review-resume', checkTier('pro'), async (req, res, next) => {
+router.post('/review-resume', checkTier('trial'), aiQuota, async (req, res, next) => {
   try {
     const resume = await Resume.findOne({ user: req.user.userId }).lean();
     if (!resume) return res.status(404).json({ message: 'No resume found — build one first' });
@@ -91,7 +93,9 @@ router.post('/review-resume', checkTier('pro'), async (req, res, next) => {
 
 // ── Case Framework (admin helper) ─────────────────────────────────────────
 
-router.post('/case-framework', async (req, res, next) => {
+// Admin authoring tool (AdminCasesPage) — never exposed to students, so it
+// must not be open for any logged-in user to burn AI credits on.
+router.post('/case-framework', checkRole('admin'), async (req, res, next) => {
   try {
     const { title, category, scenario, question } = req.body;
     const { result, meta } = await runPipeline({
@@ -109,7 +113,7 @@ router.post('/case-framework', async (req, res, next) => {
 
 // ── Planner AI Suggestions (RAG-enhanced) ────────────────────────────────
 
-router.post('/planner-suggest', checkTier('pro'), async (req, res, next) => {
+router.post('/planner-suggest', checkTier('trial'), aiQuota, async (req, res, next) => {
   try {
     const [ragCtx, mem] = await Promise.all([
       buildPlannerRAGContext(req.user.userId),
@@ -136,7 +140,7 @@ router.post('/planner-suggest', checkTier('pro'), async (req, res, next) => {
 
 // ── Career Hub Company Advice (RAG-enhanced) ──────────────────────────────
 
-router.post('/career-advice', checkTier('max'), async (req, res, next) => {
+router.post('/career-advice', checkTier('max'), aiQuota, async (req, res, next) => {
   try {
     const { companyId, question } = req.body;
     const [ragCtx, mem] = await Promise.all([
@@ -164,7 +168,7 @@ router.post('/career-advice', checkTier('max'), async (req, res, next) => {
 
 // ── Interview Simulator (Max) ─────────────────────────────────────────────
 
-router.post('/interview-simulator', checkTier('max'), async (req, res, next) => {
+router.post('/interview-simulator', checkTier('max'), aiQuota, async (req, res, next) => {
   try {
     const { role, company, category } = req.body;
     const [ragCtx, mem] = await Promise.all([
@@ -192,7 +196,7 @@ router.post('/interview-simulator', checkTier('max'), async (req, res, next) => 
 
 // ── Company Comparison (Max) ──────────────────────────────────────────────
 
-router.post('/compare-companies', checkTier('max'), async (req, res, next) => {
+router.post('/compare-companies', checkTier('max'), aiQuota, async (req, res, next) => {
   try {
     const { slugA, slugB } = req.body;
     if (!slugA || !slugB) return res.status(400).json({ message: 'Pick two companies to compare' });
@@ -226,7 +230,7 @@ router.post('/compare-companies', checkTier('max'), async (req, res, next) => {
 
 // ── Semantic Search ────────────────────────────────────────────────────────
 
-router.post('/search', checkTier('pro'), async (req, res, next) => {
+router.post('/search', checkTier('trial'), async (req, res, next) => {
   try {
     const { query, collections, limit = 5 } = req.body;
     if (!query?.trim()) return res.status(400).json({ message: 'query is required' });
@@ -246,7 +250,7 @@ router.post('/search', checkTier('pro'), async (req, res, next) => {
 
 // ── Index a document for semantic search (pro+ only — prevents free-tier abuse) ──
 
-router.post('/index/:collection/:docId', checkTier('pro'), async (req, res, next) => {
+router.post('/index/:collection/:docId', checkTier('trial'), async (req, res, next) => {
   try {
     const { collection, docId } = req.params;
     const { text, metadata } = req.body;

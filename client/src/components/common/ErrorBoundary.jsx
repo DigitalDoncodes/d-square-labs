@@ -24,17 +24,26 @@ export default class ErrorBoundary extends Component {
           <AlertTriangle className="h-7 w-7 text-amber-600 dark:text-amber-400" />
         </div>
         <div>
-          <p className="font-semibold text-gray-800 dark:text-gray-100">Something went wrong</p>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            This section couldn't load. Try refreshing the page.
+          <p className="font-semibold text-gray-800 dark:text-gray-100">This section hit an unexpected error</p>
+          <p className="mt-1 max-w-sm text-sm text-gray-500 dark:text-gray-400">
+            The rest of DATAD is fine and none of your data was lost — this section just failed to
+            render, usually after a flaky network response. Refreshing almost always fixes it.
           </p>
         </div>
-        <button
-          onClick={() => window.location.reload()}
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-        >
-          Refresh
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => window.location.reload()}
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          >
+            Refresh this page
+          </button>
+          <a
+            href="/"
+            className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:border-indigo-300 hover:text-indigo-600 dark:border-gray-700 dark:text-gray-300"
+          >
+            Go to dashboard
+          </a>
+        </div>
       </div>
     );
   }

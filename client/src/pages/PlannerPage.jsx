@@ -216,15 +216,7 @@ export default function PlannerPage() {
           icon={CalendarDays}
           title="No tasks yet"
           subtitle="Add deadlines, case studies and exam prep so nothing slips through the cracks"
-          cta={{ label: 'Add your first task', to: '#' }}
-          action={
-            <button
-              onClick={() => setModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-            >
-              Add first task
-            </button>
-          }
+          cta={{ label: 'Add your first task', onClick: () => setModalOpen(true) }}
         />
       ) : (
         <div className="space-y-2">

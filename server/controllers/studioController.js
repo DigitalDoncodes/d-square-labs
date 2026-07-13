@@ -74,7 +74,9 @@ exports.update = async (req, res, next) => {
 
 exports.publish = async (req, res, next) => {
   try {
-    const item = await ContentItem.findById(req.params.id);
+    // ocrText is select:false but some destinations (interview-questions)
+    // extract content from it at publish time.
+    const item = await ContentItem.findById(req.params.id).select('+analysis.ocrText');
     if (!item) return res.status(404).json({ message: 'Not found' });
     const { item: published } = await publishService.publish(item, req.user, {
       resolution: req.body?.resolution, // replace | version | undefined

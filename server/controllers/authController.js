@@ -55,7 +55,7 @@ const signToken = (user) =>
 
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password, referralCode } = req.body;
+    const { name, email, password, referralCode, rollNumber } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email and password are required' });
     }
@@ -102,6 +102,7 @@ exports.register = async (req, res, next) => {
         password: hashed,
         role: isAdminEmail(email) ? 'admin' : 'member',
         status: approved ? 'approved' : 'pending',
+        rollNumber: rollNumber ? String(rollNumber).trim() : '',
         referralCode: await uniqueReferralCode(name),
         referredBy: referrer ? referrer._id : null,
       });

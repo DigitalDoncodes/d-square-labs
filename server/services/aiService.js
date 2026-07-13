@@ -1,36 +1,25 @@
-// Central AI service — all Groq calls go through here.
-const OpenAI = require('openai');
+/**
+ * Central AI service.
+ * Each function picks the best provider for its task via the router —
+ * no hardcoded provider names here.
+ */
+const { getProvider } = require('../ai/providers');
+const { routeTask }   = require('../ai/router');
 
-const MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
-
-let _client = null;
-const client = () => {
-  if (!_client) {
-    _client = new OpenAI({
-      apiKey: process.env.GROQ_API_KEY,
-      baseURL: 'https://api.groq.com/openai/v1',
-    });
-  }
-  return _client;
-};
-
-const enabled = () => Boolean(process.env.GROQ_API_KEY);
-
-function extractText(response) {
-  return response.choices[0].message.content.trim();
+function call(taskName) {
+  return getProvider(routeTask(taskName));
 }
 
 function stripFences(raw) {
   return raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
 }
 
-// ── Note summarizer ──────────────────────────────────────────────────────────
+// ── Note summarizer ───────────────────────────────────────────────────────────
+// Task: fast — routed to Groq / Gemini
 exports.summariseNote = async ({ title, subject, content }) => {
-  if (!enabled()) throw new Error('AI not configured');
-
-  const response = await client().chat.completions.create({
-    model: MODEL,
-    max_tokens: 600,
+  const p = call('summarise-note');
+  const { text } = await p.complete({
+    maxTokens: 600,
     messages: [
       {
         role: 'system',
@@ -53,31 +42,30 @@ Reply in this exact JSON format and nothing else:
       },
     ],
   });
-
-  return JSON.parse(stripFences(extractText(response)));
+  return JSON.parse(stripFences(text));
 };
 
-// ── Resume reviewer ──────────────────────────────────────────────────────────
+// ── Resume reviewer ───────────────────────────────────────────────────────────
+// Task: powerful — routed to Anthropic / OpenAI
 exports.reviewResume = async (resume) => {
-  if (!enabled()) throw new Error('AI not configured');
-
-  const p = resume.personal || {};
+  const p = call('review-resume');
+  const r = resume;
+  const pr = r.personal || {};
   const lines = [
-    `Name: ${p.fullName || '(blank)'}`,
-    `Email: ${p.email || '(blank)'}  Phone: ${p.phone || '(blank)'}`,
-    `LinkedIn: ${p.linkedin || '(none)'}  Website: ${p.website || '(none)'}`,
-    `Summary: ${resume.summary || '(none)'}`,
-    `Education: ${(resume.education || []).map((e) => `${e.degree} @ ${e.institution} (${e.years}, ${e.score})`).join('; ') || '(none)'}`,
-    `Experience: ${(resume.experience || []).map((e) => `${e.role} @ ${e.organization} (${e.duration})`).join('; ') || '(none)'}`,
-    `Projects: ${(resume.projects || []).map((e) => e.title).join(', ') || '(none)'}`,
-    `Skills: ${(resume.skills || []).join(', ') || '(none)'}`,
-    `Certifications: ${(resume.certifications || []).map((c) => c.name).join(', ') || '(none)'}`,
-    `Achievements: ${(resume.achievements || []).join('; ') || '(none)'}`,
+    `Name: ${pr.fullName || '(blank)'}`,
+    `Email: ${pr.email || '(blank)'}  Phone: ${pr.phone || '(blank)'}`,
+    `LinkedIn: ${pr.linkedin || '(none)'}  Website: ${pr.website || '(none)'}`,
+    `Summary: ${r.summary || '(none)'}`,
+    `Education: ${(r.education || []).map((e) => `${e.degree} @ ${e.institution} (${e.years}, ${e.score})`).join('; ') || '(none)'}`,
+    `Experience: ${(r.experience || []).map((e) => `${e.role} @ ${e.organization} (${e.duration})`).join('; ') || '(none)'}`,
+    `Projects: ${(r.projects || []).map((e) => e.title).join(', ') || '(none)'}`,
+    `Skills: ${(r.skills || []).join(', ') || '(none)'}`,
+    `Certifications: ${(r.certifications || []).map((c) => c.name).join(', ') || '(none)'}`,
+    `Achievements: ${(r.achievements || []).join('; ') || '(none)'}`,
   ];
 
-  const response = await client().chat.completions.create({
-    model: MODEL,
-    max_tokens: 700,
+  const { text } = await p.complete({
+    maxTokens: 700,
     messages: [
       {
         role: 'system',
@@ -94,17 +82,15 @@ Reply in this exact JSON format and nothing else:
       },
     ],
   });
-
-  return JSON.parse(stripFences(extractText(response)));
+  return JSON.parse(stripFences(text));
 };
 
-// ── Daily case framework generator ──────────────────────────────────────────
+// ── Daily case framework generator ───────────────────────────────────────────
+// Task: powerful — routed to Anthropic / OpenAI
 exports.generateCaseFramework = async ({ title, category, scenario, question }) => {
-  if (!enabled()) throw new Error('AI not configured');
-
-  const response = await client().chat.completions.create({
-    model: MODEL,
-    max_tokens: 500,
+  const p = call('case-framework');
+  const { text } = await p.complete({
+    maxTokens: 500,
     messages: [
       {
         role: 'system',
@@ -123,6 +109,5 @@ Reply with plain text only — no JSON, no markdown headers.`,
       },
     ],
   });
-
-  return extractText(response);
+  return text;
 };

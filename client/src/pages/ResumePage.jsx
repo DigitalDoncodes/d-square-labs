@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Eye, Plus, Save, Trash2, Sparkles, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { Eye, Plus, Save, Trash2, Sparkles, ChevronDown, ChevronUp, Loader2, Layout } from 'lucide-react';
 import { getMyResume, saveResume } from '../api/resume';
 import { reviewResume } from '../api/ai';
 import { useAuth } from '../context/AuthContext';
@@ -232,6 +232,13 @@ export default function ResumePage() {
             <Eye className="h-4 w-4" /> Preview
           </Link>
           <button
+            type="button"
+            onClick={() => document.getElementById('resume-templates')?.scrollIntoView({ behavior: 'smooth' })}
+            className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+          >
+            <Layout className="h-4 w-4" /> Templates
+          </button>
+          <button
             form="resume-form"
             type="submit"
             disabled={formState.isSubmitting}
@@ -382,6 +389,51 @@ export default function ResumePage() {
           <p className="mb-2 text-xs text-gray-400">Save your resume first, then get AI feedback on it.</p>
           <AIReviewPanel />
         </TierGate>
+      </div>
+
+      {/* Resume Templates */}
+      <div id="resume-templates" className="mt-8 scroll-mt-6">
+        <div className="mb-4 flex items-center gap-2">
+          <Layout className="h-4 w-4 text-indigo-500" />
+          <h2 className="text-base font-semibold">Resume Design Templates</h2>
+        </div>
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+          Pick a design — your saved resume data will be applied to whichever template you choose when you preview.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            { id: 'classic', label: 'Classic', desc: 'Clean single-column layout — ATS-safe and timeless', color: 'border-indigo-300 dark:border-indigo-700', tag: 'Recommended' },
+            { id: 'modern', label: 'Modern', desc: 'Two-column with sidebar highlights — eye-catching for laterals', color: 'border-purple-300 dark:border-purple-700', tag: 'Premium' },
+            { id: 'minimal', label: 'Minimal', desc: 'Ultra-clean, lots of white space — works great for consultants', color: 'border-gray-300 dark:border-gray-700', tag: null },
+            { id: 'executive', label: 'Executive', desc: 'Bold header with ruled sections — authority at first glance', color: 'border-amber-300 dark:border-amber-700', tag: 'Premium' },
+            { id: 'creative', label: 'Creative', desc: 'Accent-bar design with icons — for marketing and brand roles', color: 'border-rose-300 dark:border-rose-700', tag: 'Premium' },
+            { id: 'academic', label: 'Academic', desc: 'Expanded education section — for research and scholarly roles', color: 'border-emerald-300 dark:border-emerald-700', tag: null },
+          ].map((t) => (
+            <div key={t.id} className={`relative rounded-2xl border-2 ${t.color} bg-white p-5 dark:bg-gray-900 hover:shadow-md transition-shadow cursor-pointer`}>
+              {t.tag && (
+                <span className={`absolute top-3 right-3 rounded-full px-2 py-0.5 text-[10px] font-semibold ${t.tag === 'Recommended' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'}`}>
+                  {t.tag}
+                </span>
+              )}
+              {/* Preview thumbnail placeholder */}
+              <div className="mb-3 h-24 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
+                <div className="space-y-1 w-3/4">
+                  <div className="h-2 rounded bg-gray-300 dark:bg-gray-600 w-full" />
+                  <div className="h-1.5 rounded bg-gray-200 dark:bg-gray-700 w-5/6" />
+                  <div className="h-1.5 rounded bg-gray-200 dark:bg-gray-700 w-4/6" />
+                  <div className="mt-2 h-1 rounded bg-gray-200 dark:bg-gray-700 w-full" />
+                  <div className="h-1 rounded bg-gray-200 dark:bg-gray-700 w-5/6" />
+                </div>
+              </div>
+              <p className="font-semibold text-sm">{t.label}</p>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">{t.desc}</p>
+              <Link to="/career/resume/preview" className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+                Preview with this template <Eye className="h-3 w-3" />
+              </Link>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-gray-400 text-center">Premium templates coming soon — Classic is available now.</p>
       </div>
     </div>
   );

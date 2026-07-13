@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Briefcase, Eye, IndianRupee } from 'lucide-react';
+import { Search, Briefcase, Eye, IndianRupee, MessageCircleQuestion } from 'lucide-react';
 import { listCompanies } from '../api/companies';
 import { SECTORS, sectorMeta } from '../utils/companies';
 import { CardGridSkeleton } from '../components/common/Skeleton';
@@ -39,6 +39,12 @@ export default function CompaniesPage() {
           One page per recruiter: what they do, what they ask, what they pay — everything
           you need before the drive.
         </p>
+        <Link
+          to="/career/questions"
+          className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+        >
+          <MessageCircleQuestion className="h-3.5 w-3.5" /> Browse the full interview question bank
+        </Link>
 
         <form
           onSubmit={(e) => {

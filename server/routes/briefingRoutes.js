@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middleware/verifyToken');
+const checkTier = require('../middleware/checkTier');
 const DailyBriefing = require('../models/DailyBriefing');
 const { getUserMemory } = require('../ai/memory');
 
@@ -13,7 +14,7 @@ const SPEC_SECTIONS = {
   Consulting: ['consulting', 'market', 'leadership', 'economy'],
 };
 
-router.get('/today', verifyToken, async (req, res, next) => {
+router.get('/today', verifyToken, checkTier('trial'), async (req, res, next) => {
   try {
     const dateKey = new Date().toISOString().slice(0, 10);
     const briefing = await DailyBriefing.findOne({ dateKey, status: 'published' }).lean();
@@ -28,7 +29,7 @@ router.get('/today', verifyToken, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.get('/history', verifyToken, async (req, res, next) => {
+router.get('/history', verifyToken, checkTier('trial'), async (req, res, next) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 7, 30);
     const briefings = await DailyBriefing.find({ status: 'published' })

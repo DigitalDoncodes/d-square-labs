@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Megaphone, Camera, Clapperboard, MessageSquare, ArrowRight, Pin } from 'lucide-react';
+import {
+  Megaphone, Camera, Archive, ArrowRight, Pin, ShoppingBag, Award,
+  MessageSquare, Users,
+} from 'lucide-react';
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { listAnnouncements } from '../../api/admin';
 import { listPosts } from '../../api/posts';
@@ -34,31 +37,31 @@ export default function CommunityHubPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Discussions — the main social feed */}
+        {/* Feed preview */}
         <div className="card-hover rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="flex items-center gap-2 font-semibold">
-              <MessageSquare className="h-4 w-4 text-indigo-500" /> Discussions
+              <MessageSquare className="h-4 w-4 text-indigo-500" /> Feed
             </h2>
-            <Link to="/community/discussions" className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400">
-              View all <ArrowRight className="h-3 w-3" />
+            <Link to="/community/feed" className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+              Open <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
           {data.posts.length === 0 ? (
             <div>
-              <p className="text-sm text-gray-400">No discussions yet.</p>
-              <Link to="/community/discussions" className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400">
-                Start the first one <ArrowRight className="h-3 w-3" />
+              <p className="text-sm text-gray-400">Nothing posted yet.</p>
+              <Link to="/community/feed" className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+                Be the first to post <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
           ) : (
             <ul className="space-y-3">
               {data.posts.map((p) => (
                 <li key={p._id}>
-                  <Link to="/community/discussions" className="block text-sm hover:text-indigo-600">
+                  <Link to="/community/feed" className="block text-sm hover:text-indigo-600">
                     <p className="truncate font-medium">{p.title}</p>
                     <p className="text-xs text-gray-400">
-                      {p.author?.name} · {p.replyCount} repl{p.replyCount === 1 ? 'y' : 'ies'} · {formatDate(p.createdAt)}
+                      {p.author?.name} · {formatDate(p.createdAt)}
                     </p>
                   </Link>
                 </li>
@@ -101,11 +104,25 @@ export default function CommunityHubPage() {
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Batch albums and photos</p>
         </Link>
 
-        {/* Archive */}
-        <Link to="/community/archive" className="card-hover block rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
-          <Clapperboard className="mb-2 h-5 w-5 text-indigo-500" />
-          <p className="font-semibold">Nostalgia Archive</p>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Entertainment picks, memories and throwbacks</p>
+        {/* BatchVault (formerly Nostalgia Archive) */}
+        <Link to="/community/memories" className="card-hover block rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
+          <Archive className="mb-2 h-5 w-5 text-purple-500" />
+          <p className="font-semibold">BatchVault</p>
+          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Memories, throwbacks and batch milestones</p>
+        </Link>
+
+        {/* Marketplace */}
+        <Link to="/community/marketplace" className="card-hover block rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
+          <ShoppingBag className="mb-2 h-5 w-5 text-emerald-500" />
+          <p className="font-semibold">Marketplace</p>
+          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Buy, sell and exchange within the batch</p>
+        </Link>
+
+        {/* Skills */}
+        <Link to="/community/skills" className="card-hover block rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
+          <Award className="mb-2 h-5 w-5 text-amber-500" />
+          <p className="font-semibold">Skills Exchange</p>
+          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Teach, learn and collaborate with batchmates</p>
         </Link>
       </div>
 

@@ -29,7 +29,12 @@ export default function NotesListPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold">Notes</h1>
+        <div>
+          <h1 className="text-xl font-bold">Notes</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Your learning, in your own words. If it helps a batchmate too — even better.
+          </p>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -68,7 +73,7 @@ export default function NotesListPage() {
         <EmptyState
           icon={BookOpen}
           title={query || subject ? 'No matching notes' : 'No notes yet'}
-          subtitle={query || subject ? 'Try a different search or subject filter' : 'Be the first to share study notes with your batch'}
+          subtitle={query || subject ? 'Try a different search or subject filter' : 'Start your knowledge repository — write down today’s class in your own words'}
           cta={!query && !subject ? { label: 'Write your first note', to: '/study/notes/new' } : undefined}
         />
       ) : (
@@ -76,7 +81,7 @@ export default function NotesListPage() {
           {visible.map((note) => (
             <Link
               key={note._id}
-              to={`/notes/${note._id}`}
+              to={`/study/notes/${note._id}`}
               className="card-hover rounded-2xl border border-gray-200/80 bg-white p-4 dark:border-gray-800/80 dark:bg-gray-900"
             >
               <div className="mb-2 flex items-center gap-2">

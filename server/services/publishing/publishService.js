@@ -80,7 +80,7 @@ async function publishDue() {
   const due = await ContentItem.find({
     status: 'scheduled',
     scheduledFor: { $lte: new Date() },
-  });
+  }).select('+analysis.ocrText');
   for (const item of due) {
     try {
       const user = { userId: item.createdBy, name: 'Scheduler' };

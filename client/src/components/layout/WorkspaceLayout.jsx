@@ -1,11 +1,13 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { WORKSPACE_TABS } from '../../utils/workspaces';
 
+// Underline tabs (GitHub / Stripe style): the active page reads through a
+// crisp indicator and text weight, not a colored pill.
 const tabClass = ({ isActive }) =>
-  `whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+  `whitespace-nowrap border-b-2 px-3 py-2.5 text-sm transition-colors duration-150 ${
     isActive
-      ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
-      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800'
+      ? 'border-indigo-500 font-semibold text-gray-900 dark:text-gray-100'
+      : 'border-transparent font-medium text-gray-500 hover:border-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:text-gray-100'
   }`;
 
 // Shared shell for a workspace: a secondary tab row; pages render below with
@@ -14,10 +16,10 @@ export default function WorkspaceLayout({ workspace, title, extraTabs = [] }) {
   const tabs = [...(WORKSPACE_TABS[workspace] || []), ...extraTabs];
   return (
     <>
-      <div className="border-b border-gray-200/70 bg-white/50 dark:border-gray-800/70 dark:bg-gray-950/50 print:hidden">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 overflow-x-auto px-4 py-2">
-          <span className="hidden shrink-0 text-sm font-bold sm:block">{title}</span>
-          <div className="flex gap-1">
+      <div className="border-b border-gray-200/70 bg-gray-50/80 dark:border-gray-800/70 dark:bg-gray-950/80 print:hidden">
+        <div className="scroll-ios mx-auto flex max-w-5xl items-center gap-3 overflow-x-auto px-4">
+          <span className="hidden shrink-0 text-sm font-semibold text-gray-900 dark:text-gray-100 sm:block">{title}</span>
+          <div className="flex">
             {tabs.map((t) => (
               <NavLink key={t.to} to={t.to} end={t.end} className={tabClass}>
                 {t.label}

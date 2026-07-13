@@ -1,5 +1,5 @@
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import AuthShell from '../components/layout/AuthShell';
 import { login as loginApi } from '../api/auth';
@@ -12,12 +12,16 @@ export default function LoginPage() {
   const { register, handleSubmit, formState } = useForm();
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Deep link from the landing page or a guarded route: land there after login.
+  const rawNext = searchParams.get('next') || '/';
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/';
 
   const onSubmit = async (data) => {
     try {
       const res = await loginApi(data);
       login(res.data.token);
-      navigate('/');
+      navigate(next, { replace: true });
     } catch (err) {
       if (err.response?.data?.pending) {
         toast(err.response.data.message, { icon: '⏳', duration: 6000 });
@@ -49,7 +53,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={formState.isSubmitting}
-          className="w-full rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-indigo-500/40 hover:brightness-110 disabled:opacity-50"
+          className="w-full rounded-xl bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-indigo-500 disabled:opacity-50"
         >
           {formState.isSubmitting ? 'Logging in…' : 'Log in'}
         </button>

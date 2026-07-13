@@ -33,12 +33,12 @@ const PLANS = [
     color: 'indigo',
     tagline: 'Taste everything before you commit',
     features: [
-      'Full Pro access for 7 days',
-      'AI resume review',
-      'AI note summarization',
+      'Full Pro experience for 7 days',
+      '10 AI actions per day — real AI, honest cap',
+      'AI resume review & note summaries',
+      'AI planner suggestions + daily briefing',
       'Company prep cards + insights',
       'Semantic search across notes',
-      'AI planner suggestions',
       'One-time only — no payment needed',
     ],
     cta: 'Start Free Trial',
@@ -52,6 +52,7 @@ const PLANS = [
     color: 'amber',
     tagline: 'The placement edge every B-schooler needs',
     features: [
+      '75 AI actions per day (fair use)',
       'Unlimited notes + AI summarization',
       'AI resume review & feedback',
       'Company prep cards (process, questions, CTC)',
@@ -75,6 +76,7 @@ const PLANS = [
     tagline: 'For the student who leaves nothing to chance',
     features: [
       'Everything in Pro',
+      '250 AI actions per day + priority queue',
       'AI career advisor — deep strategy conversations',
       'Interview simulator — mock rounds tailored to your resume',
       'AI company comparator — decisive prep verdicts',

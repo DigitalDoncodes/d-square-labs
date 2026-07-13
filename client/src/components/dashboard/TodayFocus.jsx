@@ -1,63 +1,48 @@
 import { Link } from 'react-router-dom';
-import { AlertCircle, Target, Flame, Gauge, Zap, ArrowRight } from 'lucide-react';
+import { Target, Flame, Sparkles, Leaf, ArrowRight } from 'lucide-react';
 
-// Phase 1 — Daily Habit Engine
-// Derives the single most important action from pre-loaded dashboard data.
-// Rules run in priority order; first match wins.
+// Daily Habit Engine — derives the single suggested action from pre-loaded
+// dashboard data. Rules run in priority order; first match wins. Copy stays
+// supportive: no "overdue", "behind", or score-shaming, ever.
 const RULES = [
-  (d) => d.overdue?.length > 0 && {
-    icon: AlertCircle,
-    message: `${d.overdue.length} overdue task${d.overdue.length === 1 ? '' : 's'} need attention.`,
-    sub: d.overdue[0]?.title,
-    to: '/me/planner',
-    severity: 'red',
-  },
   (d) => d.today?.length > 0 && {
     icon: Target,
-    message: `${d.today.length} task${d.today.length === 1 ? '' : 's'} due today — stay focused.`,
+    message: 'One thing for today, whenever you’re ready.',
     sub: d.today[0]?.title,
     to: '/me/planner',
-    severity: 'amber',
+    severity: 'indigo',
   },
-  (d) => d.streak > 0 && !d.caseSolved && {
+  (d) => d.earlier?.length > 0 && {
+    icon: Leaf,
+    message: 'A task from earlier is still open — pick it up when it suits you.',
+    sub: d.earlier[0]?.title,
+    to: '/me/planner',
+    severity: 'indigo',
+  },
+  (d) => d.streak > 0 && !d.caseSolved && d.caseTitle && {
     icon: Flame,
-    message: `Your ${d.streak}-day streak breaks at midnight. Solve today's case now.`,
+    message: `Today's case will keep your ${d.streak}-day streak going.`,
     sub: d.caseTitle,
-    to: '/',
-    severity: 'amber',
-  },
-  (d) => d.resumePct < 40 && {
-    icon: Gauge,
-    message: `Resume is only ${d.resumePct}% complete — recruiters see this first.`,
-    sub: 'Complete your work experience and skills sections',
-    to: '/career/resume',
-    severity: 'red',
-  },
-  (d) => d.readinessScore < 45 && {
-    icon: Gauge,
-    message: `Placement readiness at ${d.readinessScore}/100 — you need to catch up.`,
-    sub: d.nextAction,
-    to: '/career/readiness',
+    to: '/study#daily-case',
     severity: 'amber',
   },
   (d) => !d.caseSolved && d.caseTitle && {
     icon: Target,
-    message: "Today's case study is waiting for you.",
+    message: 'Today’s case study is ready when you are.',
     sub: d.caseTitle,
-    to: '/',
+    to: '/study#daily-case',
     severity: 'indigo',
   },
   () => ({
-    icon: Zap,
-    message: "You're on track. Keep the momentum going.",
-    sub: 'Review your placement readiness score',
-    to: '/career/readiness',
+    icon: Sparkles,
+    message: 'You’re all caught up. Enjoy the space — or wander into something new.',
+    sub: 'Your notes and subjects are a click away',
+    to: '/study',
     severity: 'green',
   }),
 ];
 
 const S = {
-  red:    { wrap: 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800/60',        icon: 'text-red-500',     label: 'text-red-500',     body: 'text-red-800 dark:text-red-200' },
   amber:  { wrap: 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800/60', icon: 'text-amber-500',   label: 'text-amber-500',   body: 'text-amber-800 dark:text-amber-200' },
   indigo: { wrap: 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/20 dark:border-indigo-800/60', icon: 'text-indigo-500', label: 'text-indigo-500', body: 'text-indigo-800 dark:text-indigo-200' },
   green:  { wrap: 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800/60', icon: 'text-emerald-500', label: 'text-emerald-500', body: 'text-emerald-800 dark:text-emerald-200' },
@@ -74,7 +59,7 @@ export default function TodayFocus({ data }) {
   return (
     <Link
       to={focus.to}
-      className={`mb-4 flex items-start gap-3 rounded-2xl border p-4 transition-opacity hover:opacity-90 ${s.wrap}`}
+      className={`flex items-start gap-3 rounded-2xl border p-4 transition-opacity hover:opacity-90 ${s.wrap}`}
     >
       <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${s.icon}`} />
       <div className="min-w-0 flex-1">

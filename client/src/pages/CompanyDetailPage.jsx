@@ -13,6 +13,8 @@ import {
   Briefcase,
   Newspaper,
   Clock,
+  Info,
+  ShieldCheck,
 } from 'lucide-react';
 import { getCompany, getCompanyNews } from '../api/companies';
 import { sectorMeta, QUESTION_LABELS } from '../utils/companies';
@@ -291,6 +293,43 @@ export default function CompanyDetailPage() {
         </TierGate>
 
         <NewsSection articles={news} loading={newsLoading} />
+
+        {/* Data sources disclaimer */}
+        <div className="rounded-2xl border border-gray-200/60 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900/60">
+          <div className="flex items-start gap-2.5">
+            <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5 text-indigo-500" />
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">Data sources &amp; transparency</p>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
+                Company profiles are compiled from publicly available information across these sources:
+              </p>
+              <ul className="flex flex-wrap gap-2 mt-1">
+                {[
+                  { label: 'LinkedIn Jobs', url: 'https://linkedin.com/jobs' },
+                  { label: 'Glassdoor', url: 'https://glassdoor.co.in' },
+                  { label: 'AmbitionBox', url: 'https://ambitionbox.com' },
+                  { label: 'Economic Times', url: 'https://economictimes.indiatimes.com' },
+                  { label: 'Company website', url: company.website || null },
+                  { label: 'Moneycontrol', url: 'https://moneycontrol.com' },
+                ].filter(Boolean).map((s) => s.label && (
+                  <li key={s.label}>
+                    {s.url ? (
+                      <a href={s.url} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 rounded-full bg-white border border-gray-200 dark:border-gray-700 dark:bg-gray-800 px-2.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+                        {s.label} <ExternalLink className="h-2.5 w-2.5" />
+                      </a>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-white border border-gray-200 dark:border-gray-700 dark:bg-gray-800 px-2.5 py-0.5 text-[10px] font-medium text-gray-500">{s.label}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
+                Salary figures are indicative and based on reported data — always verify at the placement drive. Interview questions are sourced from student experiences and public forums.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

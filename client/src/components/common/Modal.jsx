@@ -15,14 +15,14 @@ export default function Modal({ open, onClose, title, children }) {
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]"
       onClick={onClose}
       aria-modal="true"
       role="dialog"
       aria-label={title}
     >
       <div
-        className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900"
+        className="animate-in w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-xl shadow-black/10 dark:border-gray-800 dark:bg-gray-900"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">

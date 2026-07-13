@@ -10,7 +10,7 @@ const make = (windowMinutes, max, message) =>
   });
 
 // Generous ceiling across the whole API — just anti-abuse, not felt in normal use.
-const generalLimiter = make(15, 300, 'Too many requests, please slow down and try again shortly');
+const generalLimiter = make(15, 1000, 'Too many requests, please slow down and try again shortly');
 
 // Strict — brute-force protection on login/register.
 const authLimiter = make(15, 20, 'Too many attempts, please try again later');

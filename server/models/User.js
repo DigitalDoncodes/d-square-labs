@@ -16,6 +16,9 @@ const userSchema = new mongoose.Schema(
     // One-time use: set to the account that redeemed this user's code.
     referralUsedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 
+    // Roll number (no format restrictions — any string)
+    rollNumber: { type: String, default: '', trim: true },
+
     // Profile
     avatarUrl: { type: String, maxlength: 500, default: '' },
     bio: { type: String, maxlength: 300, default: '' },

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { BookOpen, GraduationCap, CalendarDays, ArrowRight, PenSquare } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { BookOpen, GraduationCap, CalendarDays, ArrowRight, PenSquare, Quote } from 'lucide-react';
+import DailyCaseCard from '../../components/dashboard/DailyCaseCard';
 import { listNotes } from '../../api/notes';
 import { listTasks } from '../../api/tasks';
 import { daysUntil, formatDate } from '../../utils/dateUtils';
@@ -11,9 +12,40 @@ import useDocumentTitle from '../../hooks/useDocumentTitle';
 
 const ACADEMIC_TYPES = ['case-study', 'exam', 'deadline'];
 
+const QUOTES = [
+  { text: "The more that you read, the more things you will know.", author: "Dr. Seuss" },
+  { text: "Education is not the filling of a pail, but the lighting of a fire.", author: "W.B. Yeats" },
+  { text: "Live as if you were to die tomorrow. Learn as if you were to live forever.", author: "Mahatma Gandhi" },
+  { text: "The beautiful thing about learning is that no one can take it away from you.", author: "B.B. King" },
+  { text: "An investment in knowledge pays the best interest.", author: "Benjamin Franklin" },
+  { text: "Success is no accident. It is hard work, perseverance, learning, studying…", author: "Pelé" },
+  { text: "Tell me and I forget. Teach me and I remember. Involve me and I learn.", author: "Benjamin Franklin" },
+  { text: "In learning you will teach, and in teaching you will learn.", author: "Phil Collins" },
+  { text: "Study while others are sleeping; work while others are loafing.", author: "William A. Ward" },
+  { text: "The mind is not a vessel to be filled, but a fire to be kindled.", author: "Plutarch" },
+  { text: "Develop a passion for learning. If you do, you will never cease to grow.", author: "Anthony J. D'Angelo" },
+  { text: "Knowledge is power. Information is liberating.", author: "Kofi Annan" },
+];
+
+// Stable per-session pick — changes every page load / refresh.
+function pickDailyQuote() {
+  const seed = Math.floor(Date.now() / 1000); // new every second, but feel free to coarsen
+  return QUOTES[seed % QUOTES.length];
+}
+
 export default function StudyHubPage() {
   useDocumentTitle('Study');
+  const { hash } = useLocation();
   const [data, setData] = useState(null);
+  const quote = useMemo(() => pickDailyQuote(), []);
+
+  useEffect(() => {
+    if (hash === '#daily-case' && data) {
+      requestAnimationFrame(() => {
+        document.getElementById('daily-case')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  }, [hash, data]);
 
   useEffect(() => {
     Promise.allSettled([listNotes(), listTasks()]).then(([notesRes, tasksRes]) => {
@@ -49,6 +81,17 @@ export default function StudyHubPage() {
         >
           <PenSquare className="h-4 w-4" /> New note
         </Link>
+      </div>
+
+      {/* Motivational quote — changes every refresh */}
+      <div className="mb-5 rounded-2xl border border-indigo-200/60 bg-gradient-to-r from-indigo-50 to-purple-50 p-4 dark:border-indigo-800/40 dark:from-indigo-950/40 dark:to-purple-950/40">
+        <div className="flex items-start gap-3">
+          <Quote className="mt-0.5 h-5 w-5 shrink-0 text-indigo-400" />
+          <div>
+            <p className="text-sm font-medium italic text-gray-700 dark:text-gray-200">"{quote.text}"</p>
+            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">— {quote.author}</p>
+          </div>
+        </div>
       </div>
 
       {data.subjects.length > 0 && (
@@ -119,6 +162,17 @@ export default function StudyHubPage() {
             </ul>
           )}
         </div>
+      </div>
+
+      {/* Daily MBA case — enhanced */}
+      <div className="mt-8" id="daily-case">
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Today's MBA case</p>
+          <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+            Daily practice
+          </span>
+        </div>
+        <DailyCaseCard />
       </div>
 
       <UpcomingGrid workspace="study" />
