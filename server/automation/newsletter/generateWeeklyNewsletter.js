@@ -7,6 +7,7 @@ const Company = require('../../models/Company');
 const DailyBriefing = require('../../models/DailyBriefing');
 const User = require('../../models/User');
 const { sendAnnouncementEmail } = require('../../config/mailer');
+const { notifyBulk } = require('../../controllers/notificationController');
 
 function getMondayKey() {
   const d = new Date();
@@ -76,6 +77,7 @@ async function generateWeeklyNewsletter() {
           sentAt: new Date(),
           recipientCount: recipients.length,
         });
+        notifyBulk(recipients.map((r) => r._id), { type: 'announcement', title: `Weekly newsletter: ${result.subject}`, body: result.preheader, link: '/briefing' }).catch(() => {});
       } catch (emailErr) {
         console.error(`[newsletter] Email send failed: ${emailErr.message}`);
         await NewsletterDraft.findByIdAndUpdate(draft._id, { status: 'failed' });

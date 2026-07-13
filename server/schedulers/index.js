@@ -16,6 +16,11 @@ const { generateInterviewQuestions }= require('../automation/interviews/generate
 const { moderatePosts }             = require('../automation/moderation/moderatePosts');
 const { generateWeeklyNewsletter }  = require('../automation/newsletter/generateWeeklyNewsletter');
 const { sendPlannerReminders }      = require('../automation/planner/plannerReminders');
+const { sendOverdueReminders }      = require('../automation/reminders/overdueTasksReminder');
+const { sendRsvpReminders }         = require('../automation/reminders/rsvpEventReminder');
+const { sendTrialExpiryReminders }  = require('../automation/reminders/trialExpiryReminder');
+const { sendJournalNudges }         = require('../automation/reminders/journalNudge');
+const { checkStreakMilestones }     = require('../automation/reminders/streakMilestone');
 
 // Existing services (kept running via cron instead of setInterval)
 const { refreshNews }   = require('../services/newsFetcher');
@@ -59,8 +64,21 @@ function register() {
   // ── 8am Sunday: weekly newsletter ───────────────────────────────────────────
   cron.schedule(s.newsletter, safe('weekly-newsletter', generateWeeklyNewsletter));
 
-  // ── 8am daily: planner due-date reminders ───────────────────────────────────
+  // ── 8am daily: planner due-date reminders + overdue tasks ──────────────────
   cron.schedule('0 8 * * *', safe('planner-reminders', sendPlannerReminders));
+  cron.schedule('0 9 * * *', safe('overdue-tasks', sendOverdueReminders));
+
+  // ── 8am daily: RSVP reminder for events happening tomorrow ──────────────────
+  cron.schedule('0 8 * * *', safe('rsvp-reminder', sendRsvpReminders));
+
+  // ── 7am daily: trial/subscription expiry reminders ──────────────────────────
+  cron.schedule('0 7 * * *', safe('trial-expiry', sendTrialExpiryReminders));
+
+  // ── 10pm daily: journal nudge for users who haven't written in 3 days ───────
+  cron.schedule('0 22 * * *', safe('journal-nudge', sendJournalNudges));
+
+  // ── After daily case (5:30am): streak milestone check ───────────────────────
+  cron.schedule('30 5 * * *', safe('streak-milestone', checkStreakMilestones));
 
   // ── Every minute: publish scheduled Content Studio items ───────────────────
   if (process.env.STUDIO_ENABLED !== 'false') {

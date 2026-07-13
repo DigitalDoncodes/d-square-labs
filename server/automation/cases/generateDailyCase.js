@@ -2,6 +2,8 @@ const { run } = require('../../ai/runner');
 const PROMPTS = require('../../ai/prompts');
 const { runJob } = require('../jobRunner');
 const DailyCase = require('../../models/DailyCase');
+const User = require('../../models/User');
+const { notifyBulk } = require('../../controllers/notificationController');
 
 const CATEGORIES = ['strategy', 'marketing', 'operations', 'finance', 'hr', 'guesstimate'];
 const DIFFICULTIES = ['easy', 'medium', 'hard'];
@@ -56,6 +58,10 @@ async function generateDailyCase() {
       solution: result.solution,
       learningOutcomes: result.learningOutcomes || [],
     });
+
+    User.find({ status: 'approved', role: { $ne: 'admin' } }).select('_id').lean().then((users) => {
+      notifyBulk(users.map((u) => u._id), { type: 'general', title: `Today's case is live: ${result.title}`, body: `${category} · ${difficulty}`, link: '/study' });
+    }).catch(() => {});
 
     return {
       provider: meta.provider,

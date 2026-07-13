@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Expense = require('../models/Expense');
 const Budget = require('../models/Budget');
+const { notify } = require('./notificationController');
 
 const monthRange = (month) => {
   // month is 'YYYY-MM'; defaults to current month
@@ -38,6 +39,24 @@ exports.createExpense = async (req, res, next) => {
       date: date || Date.now(),
       user: req.user.userId,
     });
+    // Budget exceeded alert — only on expenses, only on first crossing
+    if (entry.kind === 'expense') {
+      const { start, end } = monthRange();
+      const [totalAgg, budget] = await Promise.all([
+        Expense.aggregate([
+          { $match: { user: new mongoose.Types.ObjectId(req.user.userId), kind: 'expense', date: { $gte: start, $lt: end } } },
+          { $group: { _id: null, total: { $sum: '$amount' } } },
+        ]),
+        Budget.findOne({ user: req.user.userId }),
+      ]);
+      if (budget) {
+        const total = totalAgg[0]?.total || 0;
+        const prev = total - Number(amount);
+        if (total >= budget.monthlyAmount && prev < budget.monthlyAmount) {
+          notify({ user: req.user.userId, type: 'general', title: 'Monthly budget exceeded', body: `Spent ₹${total.toLocaleString('en-IN')} of ₹${budget.monthlyAmount.toLocaleString('en-IN')} budget`, link: '/me/finance' }).catch(() => {});
+        }
+      }
+    }
     res.status(201).json(entry);
   } catch (err) {
     next(err);

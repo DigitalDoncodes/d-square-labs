@@ -42,3 +42,15 @@ exports.notify = async ({ user, type, title, body, link, actor }) => {
     await Notification.create({ user, type, title, body, link, actor });
   } catch (_) {}
 };
+
+// Bulk helper — one insertMany for broadcasting to many users
+exports.notifyBulk = async (userIds, { type, title, body, link, actor }) => {
+  try {
+    if (!userIds?.length) return;
+    const actorStr = actor ? actor.toString() : null;
+    const docs = userIds
+      .filter((id) => !actorStr || id.toString() !== actorStr)
+      .map((user) => ({ user, type, title, body, link, actor }));
+    if (docs.length) await Notification.insertMany(docs, { ordered: false });
+  } catch (_) {}
+};

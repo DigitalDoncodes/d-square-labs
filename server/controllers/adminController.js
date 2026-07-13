@@ -77,6 +77,7 @@ exports.approveStudent = async (req, res, next) => {
     await user.save();
     sendAccountApprovedEmail(user).catch((err) => console.error('Approval email failed:', err.message));
     sendWelcomeEmail(user).catch((err) => console.error('Welcome email failed:', err.message));
+    notify({ user: user._id, type: 'general', title: `Welcome to DATAD, ${user.name.split(' ')[0]}! Your account has been approved.`, link: '/' }).catch(() => {});
     logActivity('approved', `Admin approved ${user.name}'s account`, user);
     res.json({ message: `${user.name} approved`, user });
   } catch (err) {

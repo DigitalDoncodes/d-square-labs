@@ -4,6 +4,8 @@ const { runJob } = require('../jobRunner');
 const DailyBriefing = require('../../models/DailyBriefing');
 const NewsItem = require('../../models/NewsItem');
 const { getRecentNews } = require('../../ai/retriever');
+const User = require('../../models/User');
+const { notifyBulk } = require('../../controllers/notificationController');
 
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
@@ -46,6 +48,10 @@ async function generateDailyBriefing() {
       confidence: meta.confidence,
       status: meta.status || 'published',
     });
+
+    User.find({ status: 'approved', role: { $ne: 'admin' } }).select('_id').lean().then((users) => {
+      notifyBulk(users.map((u) => u._id), { type: 'general', title: 'Daily briefing is ready', body: result.headline, link: '/briefing' });
+    }).catch(() => {});
 
     return {
       provider: meta.provider,

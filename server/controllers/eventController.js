@@ -1,6 +1,7 @@
 const Event = require('../models/Event');
 const EventRSVP = require('../models/EventRSVP');
-const { notify } = require('./notificationController');
+const User = require('../models/User');
+const { notify, notifyBulk } = require('./notificationController');
 
 exports.listEvents = async (req, res, next) => {
   try {
@@ -23,6 +24,15 @@ exports.createEvent = async (req, res, next) => {
       image, registrationOpen, maxAttendees,
       createdBy: req.user.userId,
     });
+    User.find({ role: { $ne: 'admin' } }).select('_id').lean().then((users) => {
+      notifyBulk(users.map((u) => u._id), {
+        type: 'announcement',
+        title: `New event: ${title}`,
+        body: new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+        link: '/community/events',
+        actor: req.user.userId,
+      });
+    }).catch(() => {});
     res.status(201).json(event);
   } catch (err) { next(err); }
 };

@@ -3,6 +3,17 @@ const Reply = require('../models/Reply');
 const User = require('../models/User');
 const { notify } = require('./notificationController');
 
+async function notifyMentions(text, actorId, actorName, link) {
+  const handles = [...new Set((text.match(/@(\w+)/g) || []).map((m) => m.slice(1).toLowerCase()))];
+  if (!handles.length) return;
+  const users = await User.find({ status: 'approved' }).select('_id name').lean();
+  for (const u of users) {
+    if (handles.includes(u.name.split(' ')[0].toLowerCase()) && String(u._id) !== String(actorId)) {
+      notify({ user: u._id, type: 'mention', title: `${actorName} mentioned you`, body: text.slice(0, 80), link, actor: actorId }).catch(() => {});
+    }
+  }
+}
+
 // ── Posts ──────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 20;
@@ -59,6 +70,7 @@ exports.createPost = async (req, res, next) => {
     const { title, body, tag } = req.body;
     const post = await Post.create({ title, body, tag, author: req.user.userId });
     await post.populate('author', 'name');
+    notifyMentions(`${title || ''} ${body || ''}`, req.user.userId, req.user.name, '/community/feed').catch(() => {});
     res.status(201).json(post);
   } catch (err) { next(err); }
 };
@@ -122,6 +134,7 @@ exports.createReply = async (req, res, next) => {
     if (String(post.author) !== uid) {
       notify({ user: post.author, type: 'reaction', title: `${req.user.name} replied to your post`, body: req.body.body.slice(0, 80), link: '/community/feed', actor: uid }).catch(() => {});
     }
+    notifyMentions(req.body.body, uid, req.user.name, '/community/feed').catch(() => {});
     res.status(201).json(reply);
   } catch (err) { next(err); }
 };

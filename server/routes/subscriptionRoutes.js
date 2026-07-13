@@ -3,6 +3,7 @@ const verifyToken = require('../middleware/verifyToken');
 const { heavyLimiter } = require('../middleware/rateLimiters');
 const SubscriptionRequest = require('../models/SubscriptionRequest');
 const User = require('../models/User');
+const { notify } = require('../controllers/notificationController');
 
 const PRICES = { pro: 299, max: 499 };
 
@@ -103,6 +104,7 @@ router.post('/trial', verifyToken, async (req, res, next) => {
       tierExpiresAt: trialEnd,
     });
 
+    notify({ user: req.user.userId, type: 'subscription', title: '7-day Pro trial activated!', body: `Full access until ${trialEnd.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`, link: '/subscribe' }).catch(() => {});
     res.json({ message: 'Trial activated! You have 7 days of Pro features.', expiresAt: trialEnd });
   } catch (err) {
     next(err);
