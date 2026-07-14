@@ -33,7 +33,7 @@ exports.getMyProfile = async (req, res, next) => {
 
 exports.upsertMyProfile = async (req, res, next) => {
   try {
-    const allowed = ['skills', 'interests', 'clubs', 'languages', 'linkedin', 'github', 'portfolio', 'batch', 'specialization', 'bio', 'lookingFor'];
+    const allowed = ['skills', 'interests', 'clubs', 'languages', 'linkedin', 'github', 'portfolio', 'batch', 'specialization', 'bio', 'lookingFor', 'preMbaDomain'];
     const update = {};
     allowed.forEach((f) => { if (req.body[f] !== undefined) update[f] = req.body[f]; });
     const profile = await UserProfile.findOneAndUpdate(

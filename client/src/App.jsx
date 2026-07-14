@@ -84,6 +84,9 @@ const ResourcesPage     = lazy(() => import('./pages/study/ResourcesPage'));
 const StudyToolsPage    = lazy(() => import('./pages/study/StudyToolsPage'));
 const SkillExchangePage = lazy(() => import('./pages/career/SkillExchangePage'));
 const AdminAICenterPage = lazy(() => import('./pages/admin/AdminAICenterPage'));
+const PivotPage         = lazy(() => import('./pages/career/PivotPage'));
+const StarStoriesPage   = lazy(() => import('./pages/career/StarStoriesPage'));
+const FinanceROIPage    = lazy(() => import('./pages/me/FinanceROIPage'));
 
 function AdminRoute({ children }) {
   const { user } = useAuth();
@@ -197,6 +200,8 @@ export default function App() {
                   <Route path="placements" element={<Navigate to="/career/opportunities" replace />} />
                   <Route path="internships" element={<Navigate to="/career/opportunities?view=internships" replace />} />
                   <Route path="skills" element={<Navigate to="/community/skills" replace />} />
+                  <Route path="pivot" element={<PivotPage />} />
+                  <Route path="stories" element={<StarStoriesPage />} />
                   {soonRoutes('career')}
                 </Route>
 
@@ -230,6 +235,7 @@ export default function App() {
                   <Route path="tracker" element={<FinanceTrackerPage />} />
                   <Route path="calculator" element={<FinanceCalculatorPage />} />
                   <Route path="learn" element={<FinanceLearnPage />} />
+                  <Route path="roi" element={<FinanceROIPage />} />
                 </Route>
 
                 <Route path="/me/wellbeing" element={<WorkspaceLayout workspace="wellbeing" title="Wellbeing" />}>

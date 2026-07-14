@@ -86,6 +86,8 @@ app.use('/api/marketplace', require('./routes/marketplaceRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 
 app.use('/api/subscription', require('./routes/subscriptionRoutes'));
+app.use('/api/star-stories', require('./routes/starStoryRoutes'));
+app.use('/api/pivot', require('./routes/pivotRoutes'));
 
 // Content Studio — centralized publishing engine.
 // Rollback: set STUDIO_ENABLED=false to hide it (per-module uploads unaffected).

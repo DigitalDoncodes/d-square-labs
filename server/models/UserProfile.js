@@ -14,6 +14,7 @@ const userProfileSchema = new mongoose.Schema(
     specialization: { type: String, trim: true },
     bio: { type: String, trim: true, maxlength: 300 },
     lookingFor: { type: String, trim: true },
+    preMbaDomain: { type: String, trim: true, maxlength: 80 },
   },
   { timestamps: true }
 );

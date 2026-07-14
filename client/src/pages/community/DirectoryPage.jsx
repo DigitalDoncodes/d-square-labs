@@ -37,10 +37,14 @@ export default function DirectoryPage() {
     const params = {};
     if (search) params.search = search;
     if (specFilter) params.specialization = specFilter;
-    getDirectory(params).then((r) => setProfiles(r.data)).catch(() => setProfiles([]));
+    getDirectory(params).then((r) => {
+      let list = r.data;
+      if (domainFilter) list = list.filter((p) => p.preMbaDomain === domainFilter);
+      setProfiles(list);
+    }).catch(() => setProfiles([]));
   };
 
-  useEffect(() => { loadDirectory(); }, [search, specFilter]);
+  useEffect(() => { loadDirectory(); }, [search, specFilter, domainFilter]);
   useEffect(() => { getMyProfile().then((r) => setMyProfile(r.data)).catch(() => {}); }, []);
 
   const onSaveProfile = async (data) => {
@@ -50,6 +54,7 @@ export default function DirectoryPage() {
         bio: data.bio, specialization: data.specialization, batch: data.batch,
         skills: arr('skills'), interests: arr('interests'), clubs: arr('clubs'), languages: arr('languages'),
         linkedin: data.linkedin, github: data.github, portfolio: data.portfolio, lookingFor: data.lookingFor,
+        preMbaDomain: data.preMbaDomain || '',
       });
       setMyProfile(res.data);
       toast.success('Profile updated');
@@ -72,12 +77,15 @@ export default function DirectoryPage() {
         github: myProfile.github || '',
         portfolio: myProfile.portfolio || '',
         lookingFor: myProfile.lookingFor || '',
+        preMbaDomain: myProfile.preMbaDomain || '',
       });
     }
     setEditOpen(true);
   };
 
   const specs = [...new Set(profiles?.map((p) => p.specialization).filter(Boolean) || [])];
+  const domains = [...new Set(profiles?.map((p) => p.preMbaDomain).filter(Boolean) || [])];
+  const [domainFilter, setDomainFilter] = useState('');
 
   return (
     <Page className="mx-auto max-w-4xl px-4 py-6">
@@ -101,6 +109,13 @@ export default function DirectoryPage() {
             {specs.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         )}
+        {domains.length > 0 && (
+          <select value={domainFilter} onChange={(e) => setDomainFilter(e.target.value)}
+            className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none dark:border-gray-700 dark:bg-gray-900">
+            <option value="">All backgrounds</option>
+            {domains.map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
+        )}
       </div>
 
       {profiles === null ? <FeedSkeleton count={6} /> : profiles.length === 0 ? (
@@ -116,6 +131,7 @@ export default function DirectoryPage() {
                   <p className="font-semibold">{p.user?.name}</p>
                   {p.user?.rollNumber && <p className="text-[11px] font-mono text-indigo-500 dark:text-indigo-400">{p.user.rollNumber}</p>}
                   {p.specialization && <p className="text-xs text-gray-500">{p.specialization}</p>}
+                  {p.preMbaDomain && <p className="text-[11px] text-amber-600 dark:text-amber-400">ex-{p.preMbaDomain}</p>}
                 </div>
               </div>
               {p.bio && <p className="mb-3 text-sm text-gray-600 dark:text-gray-300 line-clamp-2">{p.bio}</p>}
@@ -168,6 +184,10 @@ export default function DirectoryPage() {
           <input {...register('github')} placeholder="GitHub URL (optional)" className={inputClass} />
           <input {...register('portfolio')} placeholder="Portfolio / website URL (optional)" className={inputClass} />
           <input {...register('lookingFor')} placeholder="Looking for (e.g. study partner, project teammate)" className={inputClass} />
+          <select {...register('preMbaDomain')} className={inputClass}>
+            <option value="">Pre-MBA background (optional)</option>
+            {['IT / Software','Banking / Finance','Consulting','Manufacturing / Ops','Healthcare','FMCG / Retail','Govt / PSU','Media / Content','Startup','Fresher','Other'].map((d) => <option key={d}>{d}</option>)}
+          </select>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setEditOpen(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">Cancel</button>
             <button type="submit" disabled={isSubmitting} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">Save</button>
