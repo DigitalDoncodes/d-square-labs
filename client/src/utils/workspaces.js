@@ -24,6 +24,7 @@ export const WORKSPACE_TABS = {
     { to: '/career/companies', label: 'Companies' },
     { to: '/career/opportunities', label: 'Opportunities' },
     { to: '/career/resume', label: 'Resume' },
+    { to: '/briefing', label: 'Briefing' },
   ],
   community: [
     { to: '/community', label: 'Overview', end: true },
