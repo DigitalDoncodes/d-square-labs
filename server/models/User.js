@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema(
     resetTokenHash: { type: String, default: null },
     resetTokenExpires: { type: Date, default: null },
 
+    // Background
+    studentType: { type: String, enum: ['fresher', 'experienced'], default: 'fresher' },
+    workExYears: { type: Number, min: 0, max: 40, default: null },
+
     // Subscription / tier
     tier: { type: String, enum: ['free', 'trial', 'pro', 'max'], default: 'free' },
     trialStartedAt: { type: Date, default: null },

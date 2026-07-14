@@ -11,6 +11,7 @@ const Budget = require('../models/Budget');
 const Resume = require('../models/Resume');
 const JournalEntry = require('../models/JournalEntry');
 const Announcement = require('../models/Announcement');
+const UserProfile = require('../models/UserProfile');
 const { sendWelcomeEmail, sendPasswordResetEmail } = require('../config/mailer');
 const logActivity = require('../utils/logActivity');
 const cloudinary = require('../config/cloudinary');
@@ -48,14 +49,14 @@ const uniqueReferralCode = async (name) => {
 
 const signToken = (user) =>
   jwt.sign(
-    { userId: user._id, name: user.name, email: user.email, role: user.role || 'member', tier: user.tier || 'free' },
+    { userId: user._id, name: user.name, email: user.email, role: user.role || 'member', tier: user.tier || 'free', studentType: user.studentType || 'fresher' },
     process.env.JWT_SECRET,
     { expiresIn: '7d' }
   );
 
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password, referralCode, rollNumber } = req.body;
+    const { name, email, password, referralCode, rollNumber, studentType, workExYears, preMbaDomain } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email and password are required' });
     }
@@ -105,6 +106,8 @@ exports.register = async (req, res, next) => {
         rollNumber: rollNumber ? String(rollNumber).trim() : '',
         referralCode: await uniqueReferralCode(name),
         referredBy: referrer ? referrer._id : null,
+        studentType: studentType === 'experienced' ? 'experienced' : 'fresher',
+        workExYears: studentType === 'experienced' && workExYears ? Number(workExYears) : null,
       });
     } catch (err) {
       // Release the claimed code if account creation failed for any reason.
@@ -135,6 +138,15 @@ exports.register = async (req, res, next) => {
         pending: true,
         message: 'Account created — an admin will review and approve it shortly.',
       });
+    }
+
+    // Seed UserProfile with preMbaDomain if provided at registration.
+    if (preMbaDomain) {
+      UserProfile.findOneAndUpdate(
+        { user: user._id },
+        { $setOnInsert: { user: user._id }, $set: { preMbaDomain } },
+        { upsert: true, new: true }
+      ).catch(() => {});
     }
 
     // Fire-and-forget: registration must not fail if the mail service is down.
