@@ -164,9 +164,9 @@ export default function AboutPage() {
             return (
               <div key={`bottom-${idx}`} className="flex justify-center">
                 {item.bottomNode ? (
-                  <div onClick={() => revealed && setActiveNode(activeNode?.id === item.bottomNode.id ? null : item.bottomNode)} className={`p-3 sm:p-4 rounded-2xl bg-slate-900/90 border ${item.bottomNode.border} backdrop-blur-md shadow-xl cursor-pointer hover:scale-105 transition-all duration-500 w-full max-w-[190px] ${revealed ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95 pointer-events-none'`}>
+                  <div onClick={() => revealed && setActiveNode(activeNode?.id === item.bottomNode.id ? null : item.bottomNode)} className={`p-3 sm:p-4 rounded-2xl bg-slate-900/90 border ${item.bottomNode.border} backdrop-blur-md shadow-xl cursor-pointer hover:scale-105 transition-all duration-500 w-full max-w-[190px] ${revealed ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95 pointer-events-none'}`}>
                     <div className="flex items-center gap-2 mb-1">
-                      <div className={`p-1.5 rounded-lg ${item.bottomNode.bg}`}><item.bottomNode.icon className="w-3.5 h-3.5" /></div>
+                      <div className={"p-1.5 rounded-lg " + item.bottomNode.bg}><item.bottomNode.icon className="w-3.5 h-3.5" /></div>
                       <span className="text-[11px] font-bold text-white truncate">{item.bottomNode.title}</span>
                     </div>
                     <p className="text-[10px] text-slate-400 line-clamp-2">{item.bottomNode.desc}</p>
@@ -222,11 +222,11 @@ export default function AboutPage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
           {dataFacts.map((fact, i) => (
             <Reveal key={i} delay={i * 80}>
-              <div className={`bg-slate-900/80 border ${fact.bg} rounded-2xl p-6 backdrop-blur-md hover:-translate-y-1 transition-all duration-300`}>
-                <div className={`p-2.5 rounded-xl bg-slate-950/60 w-fit mb-4`}>
-                  <fact.icon className={`w-5 h-5 ${fact.color}`} />
+              <div className={"bg-slate-900/80 border " + fact.bg + " rounded-2xl p-6 backdrop-blur-md hover:-translate-y-1 transition-all duration-300"}>
+                <div className="p-2.5 rounded-xl bg-slate-950/60 w-fit mb-4">
+                  <fact.icon className={"w-5 h-5 " + fact.color} />
                 </div>
-                <div className={`text-2xl sm:text-3xl font-black ${fact.color} mb-1`}>{fact.stat}</div>
+                <div className={"text-2xl sm:text-3xl font-black " + fact.color + " mb-1"}>{fact.stat}</div>
                 <div className="text-xs font-semibold text-slate-300 mb-2">{fact.label}</div>
                 <p className="text-[11px] text-slate-500 leading-relaxed">{fact.desc}</p>
               </div>
@@ -286,10 +286,10 @@ export default function AboutPage() {
         <div className="grid md:grid-cols-3 gap-6">
           {pillars.map((p, idx) => (
             <Reveal key={idx} delay={idx * 120}>
-              <div className={`bg-gradient-to-b ${p.gradient} border ${p.border} p-6 sm:p-8 rounded-3xl backdrop-blur-md shadow-xl hover:-translate-y-1 transition-all duration-300 h-full`}>
+              <div className={"bg-gradient-to-b " + p.gradient + " border " + p.border + " p-6 sm:p-8 rounded-3xl backdrop-blur-md shadow-xl hover:-translate-y-1 transition-all duration-300 h-full"}>
                 <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 w-fit text-purple-400 shadow-md mb-4"><p.icon className="w-5 h-5" /></div>
                 <span className="text-[10px] font-mono uppercase tracking-wider text-purple-400">{p.tagline}</span>
-                <h3 className="text-base font-bold text-white mt-1 mb-3">{p.title}</h2>
+                <h3 className="text-base font-bold text-white mt-1 mb-3">{p.title}</h3>
                 <p className="text-xs text-slate-300 leading-relaxed">{p.description}</p>
               </div>
             </Reveal>
@@ -308,10 +308,10 @@ export default function AboutPage() {
         <div className="space-y-5 relative before:absolute before:inset-0 before:left-6 sm:before:left-1/2 before:-translate-x-px before:w-0.5 before:bg-gradient-to-b before:from-purple-500/50 before:via-cyan-500/50 before:to-transparent">
           {milestones.map((m, idx) => (
             <Reveal key={idx} delay={idx * 100}>
-              <div className={`relative flex items-center gap-6 sm:gap-12 ${idx % 2 === 0 ? 'sm:flex-row-reverse' : ''}`}>
+              <div className={"relative flex items-center gap-6 sm:gap-12 " + (idx % 2 === 0 ? 'sm:flex-row-reverse' : '')}>
                 <div className="absolute left-6 sm:left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-slate-950 border-2 border-purple-400 z-10 shadow-[0_0_10px_rgba(192,132,252,0.8)]" />
                 <div className="ml-12 sm:ml-0 sm:w-1/2 bg-slate-900/60 border border-slate-800 p-5 rounded-2xl backdrop-blur-md hover:border-purple-500/40 transition-all shadow-lg">
-                  <span className="text-[10px] font-bold tracking-widest text-amber-400 uppercase bg-amber-500/10 px-2.5 py=1 rounded-full border border-amber-500/20">{m.when}</span>
+                  <span className="text-[10px] font-bold tracking-widest text-amber-400 uppercase bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">{m.when}</span>
                   <h4 className="text-sm font-bold text-white mt-3">{m.label}</h4>
                   <p className="text-xs text-slate-400 mt-1 leading-relaxed">{m.detail}</p>
                 </div>
