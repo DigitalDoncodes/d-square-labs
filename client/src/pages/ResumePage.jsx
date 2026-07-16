@@ -3,6 +3,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Eye, Plus, Save, Trash2, Sparkles, ChevronDown, ChevronUp, Loader2, Layout } from 'lucide-react';
+import { DAX_CAPABILITY } from '../utils/dax';
 import { getMyResume, saveResume } from '../api/resume';
 import { reviewResume } from '../api/ai';
 import { useAuth } from '../context/AuthContext';
@@ -24,7 +25,7 @@ function AIReviewPanel() {
       setResult(res.data);
       setState('done');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'AI review failed');
+      toast.error(err.response?.data?.message || 'Dax could not review your resume');
       setState('error');
     }
   };
@@ -36,7 +37,7 @@ function AIReviewPanel() {
         onClick={run}
         className="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-100 dark:border-violet-800/60 dark:bg-violet-900/30 dark:text-violet-300 dark:hover:bg-violet-900/50"
       >
-        <Sparkles className="h-4 w-4" /> Review with AI
+        <Sparkles className="h-4 w-4" /> Review with Dax
       </button>
     );
   }
@@ -56,7 +57,7 @@ function AIReviewPanel() {
         onClick={run}
         className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-100 dark:border-rose-800/60 dark:bg-rose-900/30"
       >
-        <Sparkles className="h-4 w-4" /> Retry AI review
+        <Sparkles className="h-4 w-4" /> Ask Dax again
       </button>
     );
   }
@@ -69,7 +70,7 @@ function AIReviewPanel() {
         className="flex w-full items-center justify-between px-4 py-3"
       >
         <span className="flex items-center gap-2 text-sm font-semibold text-violet-700 dark:text-violet-300">
-          <Sparkles className="h-4 w-4" /> AI Review
+          <Sparkles className="h-4 w-4" /> Dax Review
           <AIBadge provider={result?._meta?.provider} confidence={result?._meta?.confidence} />
         </span>
         {open ? <ChevronUp className="h-4 w-4 text-violet-500" /> : <ChevronDown className="h-4 w-4 text-violet-500" />}
@@ -382,11 +383,11 @@ export default function ResumePage() {
 
       <div className="mt-6">
         <div className="mb-2 flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">AI Review</span>
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{DAX_CAPABILITY.resumeReview}</span>
           <CrownBadge required="pro" />
         </div>
-        <TierGate required="pro" description="Professional ATS analysis and targeted AI improvements — specific to your resume sections, not generic advice.">
-          <p className="mb-2 text-xs text-gray-400">Save your resume first, then get AI feedback on it.</p>
+        <TierGate required="pro" description="Professional ATS analysis and targeted improvements from Dax — specific to your resume sections, not generic advice.">
+          <p className="mb-2 text-xs text-gray-400">Save your resume first, then Dax can review it.</p>
           <AIReviewPanel />
         </TierGate>
       </div>

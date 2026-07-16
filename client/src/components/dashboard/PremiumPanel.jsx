@@ -17,7 +17,7 @@ function FreeBanner() {
           You're using DATAD Free
         </p>
         <p className="text-xs text-amber-600/80 dark:text-amber-400/70">
-          Upgrade to Pro for AI Resume Review, Company Intelligence and Unlimited AI
+          Upgrade to Pro for Dax Resume Review, Dax Research and unlimited Dax
         </p>
       </div>
       <span className="shrink-0 rounded-lg bg-amber-500 px-3 py-1 text-xs font-bold text-white">
@@ -40,7 +40,7 @@ function TrialBanner({ tierExpiresAt, daysLeft }) {
               ⚠ Your trial expires in {daysLeft} day{daysLeft === 1 ? '' : 's'}
             </p>
             <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-300">
-              Upgrade now to keep AI Resume Review, Company Intelligence and all Pro features.
+              Upgrade now to keep Dax Resume Review, Dax Research and all Pro features.
             </p>
           </div>
           <Link
@@ -71,7 +71,7 @@ function TrialBanner({ tierExpiresAt, daysLeft }) {
             {daysLeft !== null && <span>Days remaining: <strong>{daysLeft}</strong></span>}
           </div>
           <p className="mt-1 text-xs text-indigo-600/80 dark:text-indigo-400/70">
-            Upgrade before your trial ends to continue using AI features.
+            Upgrade before your trial ends to continue using Dax.
           </p>
         </div>
         <div className="flex shrink-0 flex-col gap-1.5">
@@ -88,12 +88,12 @@ function TrialBanner({ tierExpiresAt, daysLeft }) {
 }
 
 const AI_TOOLS_PRO = [
-  { label: 'Summarise a note',    to: '/study/notes',      desc: 'AI extracts key points' },
-  { label: 'AI Resume Review',    to: '/career/resume',    desc: 'Get specific feedback' },
-  { label: 'Planner Suggestions', to: '/me/planner',       desc: "AI picks today's priorities" },
+  { label: 'Summarise a note',    to: '/study/notes',      desc: 'Dax extracts key points' },
+  { label: 'Dax Resume Review',  to: '/career/resume',    desc: 'Get specific feedback' },
+  { label: 'Dax Planner',        to: '/me/planner',       desc: "Dax picks today's priorities" },
   { label: 'Semantic Search',     to: '/study/notes',      desc: 'Find anything in your notes' },
-  { label: 'Company Prep',        to: '/career/companies', desc: 'AI-enhanced prep cards' },
-  { label: 'Full AI Briefing',    to: '/briefing',         desc: 'Personalized to your goals' },
+  { label: 'Company Prep',        to: '/career/companies', desc: 'Researched by Dax' },
+  { label: 'Full Dax Briefing',  to: '/briefing',         desc: 'Personalized to your goals' },
 ];
 
 function ProPanel({ tierExpiresAt, daysLeft }) {
@@ -102,7 +102,7 @@ function ProPanel({ tierExpiresAt, daysLeft }) {
     <div className="mb-4 rounded-2xl border border-amber-200/80 bg-amber-50 p-5 dark:border-amber-800/50 dark:bg-amber-900/20">
       <div className="mb-3 flex items-center gap-2">
         <Zap className="h-4 w-4 text-amber-500" />
-        <h2 className="font-semibold text-amber-800 dark:text-amber-300">Your AI tools</h2>
+        <h2 className="font-semibold text-amber-800 dark:text-amber-300">What Dax can do for you</h2>
         <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Pro</span>
       </div>
       {tierExpiresAt && (
@@ -132,7 +132,7 @@ function ProPanel({ tierExpiresAt, daysLeft }) {
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold text-purple-700 dark:text-purple-300">Go Max</p>
           <p className="text-[10px] text-purple-600/80 dark:text-purple-400/70">
-            AI Career Advisor · Interview Simulator · Company Comparator · Priority AI
+            Dax Career Coach · Interview Simulator · Company Comparator · Priority access
           </p>
         </div>
         <span className="shrink-0 rounded-lg bg-purple-600 px-3 py-1 text-xs font-bold text-white">
@@ -153,7 +153,7 @@ function MaxPanel({ tierExpiresAt, daysLeft }) {
         <span className="ml-auto rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">Max</span>
       </div>
       <div className="mb-3 flex flex-wrap gap-2">
-        {['All AI Features Enabled', 'Priority AI', 'AI Career Advisor'].map((b) => (
+        {['All of Dax unlocked', 'Priority access', 'Dax Career Coach'].map((b) => (
           <span key={b} className="flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-1 text-xs font-medium text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
             <CheckCircle2 className="h-3 w-3" /> {b}
           </span>
@@ -171,12 +171,12 @@ function MaxPanel({ tierExpiresAt, daysLeft }) {
       )}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {[
-          { label: 'AI Career Advisor',   to: '/study/ai-tools',   desc: 'Deep strategy sessions' },
+          { label: 'Dax Career Coach',   to: '/study/ai-tools',   desc: 'Deep strategy sessions' },
           { label: 'Interview Simulator', to: '/study/ai-tools',   desc: 'Mock rounds, tailored to you' },
           { label: 'Company Comparator',  to: '/study/ai-tools',   desc: 'Two recruiters, one verdict' },
-          { label: 'AI Resume Review',    to: '/career/resume',    desc: 'In-depth analysis' },
+          { label: 'Dax Resume Review',  to: '/career/resume',    desc: 'In-depth analysis' },
           { label: 'Semantic Search',     to: '/study/notes',      desc: 'Notes + company data' },
-          { label: 'Full AI Briefing',    to: '/briefing',         desc: 'Max personalization' },
+          { label: 'Full Dax Briefing',  to: '/briefing',         desc: 'Max personalization' },
         ].map((item) => (
           <Link key={item.label} to={item.to}
             className="rounded-xl border border-purple-200/80 bg-white/70 px-3 py-2.5 hover:bg-white dark:border-purple-800/40 dark:bg-gray-900/50 dark:hover:bg-gray-900">

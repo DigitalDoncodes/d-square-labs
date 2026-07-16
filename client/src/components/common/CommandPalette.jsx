@@ -160,7 +160,7 @@ export default function CommandPalette({ open, onClose }) {
           {results.length === 0 && !aiLoading && <li className="px-3 py-6 text-center text-sm text-gray-400">No matches</li>}
           {aiLoading && results.length === 0 && (
             <li className="flex items-center gap-2 px-4 py-3 text-sm text-gray-400">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Searching with AI…
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Searching with Dax…
             </li>
           )}
           {results.map((item, i) => {
@@ -178,7 +178,7 @@ export default function CommandPalette({ open, onClose }) {
                 >
                   <Icon className={`h-4 w-4 shrink-0 ${item.aiResult ? 'text-purple-500' : 'text-indigo-500'}`} />
                   <span className="truncate">{item.label}</span>
-                  {item.aiResult && <span className="ml-1 shrink-0 rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-medium text-purple-600 dark:bg-purple-900/40 dark:text-purple-300">AI</span>}
+                  {item.aiResult && <span className="ml-1 shrink-0 rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-medium text-purple-600 dark:bg-purple-900/40 dark:text-purple-300">Dax</span>}
                   {item.sub && <span className="ml-auto shrink-0 max-w-[120px] truncate text-xs capitalize text-gray-400">{item.sub}</span>}
                 </button>
               </li>

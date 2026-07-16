@@ -41,7 +41,7 @@ const FEATURES = [
   {
     icon: FileText,
     title: 'Resume builder',
-    desc: 'Build it once, keep it sharp — AI review when you want a second pair of eyes.',
+    desc: 'Build it once, keep it sharp — Dax reviews it when you want a second pair of eyes.',
     to: '/career/resume',
   },
   {
@@ -70,7 +70,7 @@ const FEATURES = [
   },
   {
     icon: Sparkles,
-    title: 'AI where it helps',
+    title: 'Dax, where it helps',
     desc: 'Summaries, plans and guidance appear inside your work — never as homework.',
     to: '/study/notes',
   },

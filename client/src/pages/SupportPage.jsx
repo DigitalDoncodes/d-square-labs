@@ -39,7 +39,7 @@ const COST_LINES = [
   {
     icon: Cpu,
     title: 'AI infrastructure',
-    body: 'GPU time and model API calls behind the AI assistant, resume review, and daily intelligence briefing.',
+    body: 'GPU time and model API calls behind Dax — chat, resume review, and the daily briefing.',
   },
   {
     icon: Server,
@@ -75,9 +75,9 @@ const ROADMAP = [
   { label: 'Career Hub, Companies & Readiness Score', status: 'done' },
   { label: 'Community Discussions & Announcements', status: 'done' },
   { label: 'Daily Case Study & Intelligence Briefing', status: 'done' },
-  { label: 'Journal, Nostalgia Archive & AI Chat', status: 'done' },
+  { label: 'Journal, Nostalgia Archive & Dax Chat', status: 'done' },
   { label: 'Custom domain & stable hosting', status: 'active' },
-  { label: 'AI study assistant & case coach', status: 'next' },
+  { label: 'Dax study companion & case coach', status: 'next' },
   { label: 'Mobile app (PWA)', status: 'next' },
 ];
 

@@ -26,9 +26,9 @@ const TIER_META = {
 
 const TIER_BENEFITS = {
   free:  ['Notes (create & read)', 'Resume builder (manual)', 'Planner & journal', 'Finance tracker', 'Company list (browse)', 'Community & gallery'],
-  trial: ['Everything in Pro for 7 days', 'AI note summarization', 'AI resume review', 'Company prep cards', 'Semantic search', 'AI planner suggestions'],
-  pro:   ['AI note summarization', 'AI resume review & feedback', 'Company prep cards (full detail)', 'Daily personalized AI briefing', 'Interview question bank', 'Daily MBA cases', 'AI planner suggestions', 'Semantic search', 'Career readiness score'],
-  max:   ['Everything in Pro', 'AI career advisor (deep strategy)', 'Priority AI processing', 'Semantic search across notes + companies', 'Multi-company comparison', 'Priority support'],
+  trial: ['Everything in Pro for 7 days', 'Dax Summaries', 'Dax Resume Review', 'Company prep cards', 'Dax Research', 'Dax Planner'],
+  pro:   ['Dax Summaries', 'Dax Resume Review & feedback', 'Company prep cards (full detail)', 'Daily personalized Dax briefing', 'Interview question bank', 'Daily MBA cases', 'Dax Planner', 'Dax Research', 'Career readiness score'],
+  max:   ['Everything in Pro', 'Dax Career Coach (deep strategy)', 'Priority Dax processing', 'Dax Research across notes + companies', 'Multi-company comparison', 'Priority support'],
 };
 
 function SubscriptionCard() {
@@ -57,9 +57,9 @@ function SubscriptionCard() {
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${meta.badge}`}>{meta.label}</span>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {tier === 'free' ? 'Basic access — no AI features' :
+              {tier === 'free' ? 'Basic access — Dax not included' :
                tier === 'trial' ? 'Full Pro access for 7 days' :
-               tier === 'pro' ? 'AI placement prep tools' : 'Full AI suite + priority access'}
+               tier === 'pro' ? 'Dax for placement prep' : 'All of Dax + priority access'}
             </p>
           </div>
         </div>

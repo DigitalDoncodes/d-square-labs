@@ -65,7 +65,7 @@ export default function AdminCasesPage() {
       setForm((f) => ({ ...f, framework: res.data.framework }));
       toast.success('Framework generated');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'AI generation failed');
+      toast.error(err.response?.data?.message || 'Dax could not generate this case');
     } finally {
       setGenerating(false);
     }
@@ -144,10 +144,10 @@ export default function AdminCasesPage() {
               className="flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700 hover:bg-violet-100 disabled:opacity-50 dark:border-violet-800/60 dark:bg-violet-900/30 dark:text-violet-300"
             >
               {generating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-              {generating ? 'Generating…' : 'Generate with AI'}
+              {generating ? 'Dax is writing…' : 'Generate with Dax'}
             </button>
           </div>
-          <textarea rows={4} maxLength={4000} value={form.framework} onChange={set('framework')} placeholder="Write your own or generate with AI above" className={inputClass} />
+          <textarea rows={4} maxLength={4000} value={form.framework} onChange={set('framework')} placeholder="Write your own or generate with Dax above" className={inputClass} />
         </div>
         <button
           disabled={saving}

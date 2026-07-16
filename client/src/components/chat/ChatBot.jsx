@@ -7,7 +7,7 @@ import ConfirmModal from '../common/ConfirmModal';
 import ChatBubble from '../common/ChatBubble';
 import TypingIndicator from '../common/TypingIndicator';
 
-const WELCOME = `Hi! I'm DATAD AI — your academic companion.\n\nAsk me anything: study strategies, career advice, resume tips, or just "what should I focus on today?"`;
+import { DAX, DAX_WELCOME } from '../../utils/dax';
 
 const PROMPT_CHIPS = [
   'What should I focus on today?',
@@ -18,7 +18,7 @@ const PROMPT_CHIPS = [
 export default function ChatBot() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([{ role: 'assistant', content: WELCOME }]);
+  const [messages, setMessages] = useState([{ role: 'assistant', content: DAX_WELCOME }]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [remaining, setRemaining] = useState(null);
@@ -71,7 +71,7 @@ export default function ChatBot() {
 
   const handleClear = async () => {
     await clearChat().catch(() => {});
-    setMessages([{ role: 'assistant', content: WELCOME }]);
+    setMessages([{ role: 'assistant', content: DAX_WELCOME }]);
     setRemaining(null);
   };
 
@@ -87,7 +87,7 @@ export default function ChatBot() {
       {/* Floating button */}
       <button
         onClick={() => setOpen((o) => !o)}
-        aria-label="Open DATAD AI chat"
+        aria-label={`Open ${DAX} chat`}
         className="fixed bottom-24 right-4 z-50 flex h-[52px] w-[52px] items-center justify-center rounded-full bg-indigo-600 shadow-lg shadow-indigo-500/30 transform hover:scale-105 hover:bg-indigo-700 active:scale-95 lg:bottom-6 print:hidden"
       >
         {open
@@ -103,7 +103,7 @@ export default function ChatBot() {
           <div className="flex items-center justify-between border-b border-gray-100 bg-indigo-600 px-4 py-3 dark:border-gray-800">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-white/90" />
-              <span className="text-sm font-semibold text-white">DATAD AI</span>
+              <span className="text-sm font-semibold text-white">{DAX}</span>
               {remaining !== null && (
                 <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] text-white/80">
                   {remaining} left today
@@ -181,7 +181,7 @@ export default function ChatBot() {
               </button>
             </div>
             <p className="mt-1.5 text-center text-[10px] text-gray-400">
-              Shift+Enter for new line · {user?.name?.split(' ')[0]}'s personal AI
+              Shift+Enter for new line · {user?.name?.split(' ')[0]}'s personal {DAX}
             </p>
           </div>
         </div>

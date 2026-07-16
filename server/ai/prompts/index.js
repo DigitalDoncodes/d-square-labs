@@ -1,13 +1,19 @@
 /**
  * All prompt templates in one place.
+ *
+ * Every `system` string is composed through withDaxIdentity() so each
+ * capability speaks as Dax. The text passed in is the specialisation — what
+ * Dax is doing right now — not a separate persona.
  * Each template is a function returning { system, user } strings.
  * Keeping prompts here makes them easy to version, test, and tune.
  */
 
+const { withDaxIdentity } = require('../dax');
+
 const PROMPTS = {
   // ── Daily Case Study ────────────────────────────────────────────────────────
   dailyCase: ({ category, difficulty, dateStr }) => ({
-    system: `You are an expert case interview coach creating daily practice cases for students preparing for campus placements. Write realistic, India-relevant business scenarios.`,
+    system: withDaxIdentity(`You are writing the daily practice case. Draw on deep case-interview coaching experience. Write realistic, India-relevant business scenarios.`),
     user: `Generate a complete daily case study for ${dateStr}.
 
 Category: ${category}
@@ -28,7 +34,7 @@ Return ONLY valid JSON in this exact schema:
 
   // ── Daily Briefing ───────────────────────────────────────────────────────────
   dailyBriefing: ({ dateStr, recentHeadlines }) => ({
-    system: `You are a sharp daily briefing writer. Your audience is students preparing for placements. Be specific, cite numbers, explain business implications.`,
+    system: withDaxIdentity(`You are writing the morning briefing. Be sharp and specific, cite numbers, and explain business implications.`),
     user: `Generate a comprehensive morning briefing for ${dateStr}.
 
 Recent headlines for context:
@@ -55,7 +61,7 @@ Return ONLY valid JSON:
 
   // ── Daily Reflection ─────────────────────────────────────────────────────────
   dailyReflection: ({ dateStr, dayOfWeek }) => ({
-    system: `You are a mindful coach helping students build daily habits. Your reflections are grounded, specific, and actionable — not generic motivational content.`,
+    system: withDaxIdentity(`You are writing today's reflection, helping the student build daily habits. Stay grounded, specific, and actionable — never generic motivational content.`),
     user: `Generate a daily reflection for ${dayOfWeek}, ${dateStr} for a student preparing for campus placements.
 
 Return ONLY valid JSON:
@@ -71,7 +77,7 @@ Return ONLY valid JSON:
 
   // ── Resume Tip ───────────────────────────────────────────────────────────────
   resumeTip: ({ recentTips }) => ({
-    system: `You are a senior placement advisor at a top Indian institution. Generate precise, actionable resume tips for students. Never give generic advice.`,
+    system: withDaxIdentity(`You are reviewing a resume with the judgement of a senior placement advisor at a top Indian institution. Be precise and actionable. Never generic.`),
     user: `Generate ONE fresh, specific resume tip for students targeting campus placements.
 
 Recent tips already given (do NOT repeat these themes):
@@ -89,7 +95,7 @@ Return ONLY valid JSON:
 
   // ── Company Profile Enrichment ────────────────────────────────────────────────
   companyEnrich: ({ name, sector, existingOverview }) => ({
-    system: `You are a placement advisor with deep knowledge of Indian corporate recruiters. Generate accurate, helpful company information for students.`,
+    system: withDaxIdentity(`You are researching a company, drawing on deep knowledge of Indian corporate recruiters. Be accurate and genuinely useful.`),
     user: `Enrich this company profile for placement preparation.
 
 Company: ${name}
@@ -112,7 +118,7 @@ Return ONLY valid JSON:
 
   // ── Interview Questions ───────────────────────────────────────────────────────
   interviewQuestions: ({ companyName, sector, roles }) => ({
-    system: `You are a placement officer who has interviewed hundreds of candidates at Indian companies. Generate realistic interview questions that mirror actual rounds.`,
+    system: withDaxIdentity(`You are preparing interview questions, drawing on having seen hundreds of real candidate interviews at Indian companies. Mirror actual rounds.`),
     user: `Generate interview questions for students targeting ${companyName} (${sector} sector).
 Relevant roles: ${roles?.join(', ') || 'business analyst, management trainee'}
 
@@ -140,7 +146,7 @@ Return ONLY valid JSON:
 
   // ── News Enhancement ──────────────────────────────────────────────────────────
   newsEnhance: ({ articles }) => ({
-    system: `You are a professor framing business news for students preparing for placements. Be concise and insight-dense.`,
+    system: withDaxIdentity(`You are framing business news the way a good professor would. Be concise and insight-dense.`),
     user: `Enhance these news articles for students. For each article, provide relevant framing.
 
 Articles:
@@ -159,7 +165,7 @@ Return ONLY a JSON array, one object per article in the same order:
 
   // ── Discussion Moderation ─────────────────────────────────────────────────────
   moderatePost: ({ title, body }) => ({
-    system: `You are a content moderator for a student community. Be fair but strict about quality.`,
+    system: withDaxIdentity(`You are moderating community content. Be fair but strict about quality.`),
     user: `Moderate this discussion post for a student community.
 
 Title: ${title}
@@ -180,7 +186,7 @@ All scores 0.0-1.0. overall=hide if any score>0.85, review if>0.5, else approve.
 
   // ── Weekly Newsletter ─────────────────────────────────────────────────────────
   weeklyNewsletter: ({ weekStart, topDiscussions, topCompanies, briefingSummary, upcomingDeadlines }) => ({
-    system: `You are the editor of a weekly newsletter for students. Write with energy and insight, not corporate blandness.`,
+    system: withDaxIdentity(`You are editing the weekly newsletter. Write with energy and insight, not corporate blandness.`),
     user: `Generate the weekly DATAD newsletter for the week starting ${weekStart}.
 
 Top discussions this week:

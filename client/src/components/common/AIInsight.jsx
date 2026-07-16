@@ -1,9 +1,10 @@
-// AI Insight banner — used on module pages to surface intelligence.
-// Principle: the AI should explain WHY, not just WHAT.
+// Dax Insights banner — used on module pages to surface intelligence.
+// Principle: Dax should explain WHY, not just WHAT.
 // Shows confidence level and source so users trust the recommendation.
 import { useState } from 'react';
 import { Sparkles, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { DAX_CAPABILITY } from '../../utils/dax';
 
 const CONFIDENCE_LABEL = { high: 'High confidence', medium: 'Based on your data', low: 'Suggested' };
 const CONFIDENCE_COLOR = {
@@ -41,7 +42,7 @@ export default function AIInsight({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-500">AI Insight</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-500">{DAX_CAPABILITY.insights}</p>
             <span className={`text-[10px] font-medium ${CONFIDENCE_COLOR[confidence]}`}>
               · {CONFIDENCE_LABEL[confidence]}
             </span>

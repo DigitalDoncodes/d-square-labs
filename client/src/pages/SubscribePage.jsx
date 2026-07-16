@@ -35,9 +35,9 @@ const PLANS = [
     tagline: 'Taste everything before you commit',
     features: [
       'Full Pro experience for 7 days',
-      '10 AI actions per day — real AI, honest cap',
-      'AI resume review & note summaries',
-      'AI planner suggestions + daily briefing',
+      '10 Dax actions per day — honest cap',
+      'Dax Resume Review & Dax Summaries',
+      'Dax Planner + daily briefing',
       'Company prep cards + insights',
       'Semantic search across notes',
       'One-time only — no payment needed',
@@ -53,12 +53,12 @@ const PLANS = [
     color: 'amber',
     tagline: 'The placement edge every B-schooler needs',
     features: [
-      '75 AI actions per day (fair use)',
-      'Unlimited notes + AI summarization',
-      'AI resume review & feedback',
+      '75 Dax actions per day (fair use)',
+      'Unlimited notes + Dax Summaries',
+      'Dax Resume Review & feedback',
       'Company prep cards (process, questions, CTC)',
-      'Daily personalized AI briefing',
-      'AI planner suggestions',
+      'Daily personalized Dax briefing',
+      'Dax Planner',
       'Interview question bank (full access)',
       'Daily MBA case studies with frameworks',
       'Semantic search across your notes',
@@ -77,11 +77,11 @@ const PLANS = [
     tagline: 'For the student who leaves nothing to chance',
     features: [
       'Everything in Pro',
-      '250 AI actions per day + priority queue',
-      'AI career advisor — deep strategy conversations',
+      '250 Dax actions per day + priority queue',
+      'Dax Career Coach — deep strategy conversations',
       'Interview simulator — mock rounds tailored to your resume',
-      'AI company comparator — decisive prep verdicts',
-      'Priority AI (faster during peak hours)',
+      'Dax company comparator — decisive prep verdicts',
+      'Priority Dax (faster during peak hours)',
       'Semantic search across notes + company data',
       'Early access to new features',
       'Priority support',
@@ -284,7 +284,7 @@ export default function SubscribePage() {
             Upgrade your placement prep
           </h1>
           <p className="mt-3 text-base text-gray-500 dark:text-gray-400">
-            Unlock AI tools, unlimited notes, and career prep built for Indian B-school placements.
+            Unlock Dax, unlimited notes, and career prep built for Indian B-school placements.
           </p>
         </div>
 
@@ -324,7 +324,7 @@ export default function SubscribePage() {
             </p>
             {currentTier === 'pro' && (
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Want more? Upgrade to Max for the AI career advisor and priority AI.
+                Want more? Upgrade to Max for Dax Career Coach and priority access.
               </p>
             )}
           </div>
@@ -347,19 +347,19 @@ export default function SubscribePage() {
             ['Resume builder (manual)',            true,  true,  true ],
             ['Company list (browse)',              true,  true,  true ],
             ['Community & gallery',                true,  true,  true ],
-            ['Notes — AI summarization',           false, true,  true ],
-            ['AI resume review & feedback',        false, true,  true ],
+            ['Notes — Dax Summaries',              false, true,  true ],
+            ['Dax Resume Review & feedback',        false, true,  true ],
             ['Company prep cards (full detail)',   false, true,  true ],
-            ['Daily AI briefing (personalized)',   false, true,  true ],
+            ['Daily Dax briefing (personalized)',  false, true,  true ],
             ['Interview question bank',            false, true,  true ],
             ['Daily MBA case study + framework',   false, true,  true ],
-            ['AI planner suggestions',             false, true,  true ],
+            ['Dax Planner',             false, true,  true ],
             ['Semantic search across notes',       false, true,  true ],
             ['Career readiness score',             false, true,  true ],
-            ['AI career advisor (deep strategy)',  false, false, true ],
+            ['Dax Career Coach (deep strategy)',   false, false, true ],
             ['Interview simulator (mock rounds)',  false, false, true ],
-            ['AI company comparison verdicts',     false, false, true ],
-            ['Priority AI processing',             false, false, true ],
+            ['Dax company comparison verdicts',    false, false, true ],
+            ['Priority Dax processing',            false, false, true ],
           ].map(([label, free, pro, max]) => (
             <div key={label} className="grid grid-cols-5 border-b border-gray-100 px-5 py-2.5 text-sm last:border-0 dark:border-gray-800">
               <span className="col-span-2 text-gray-700 dark:text-gray-300">{label}</span>

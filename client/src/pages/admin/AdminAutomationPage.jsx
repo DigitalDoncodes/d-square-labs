@@ -140,9 +140,9 @@ export default function AdminAutomationPage() {
 
   return (
     <AdminShell
-      title="AI Automation"
+      title="Dax Automation"
       icon={Bot}
-      subtitle="Monitor and manually trigger all scheduled AI jobs"
+      subtitle="Monitor and manually trigger all scheduled Dax jobs"
     >
       {toast && (
         <div className="mb-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">

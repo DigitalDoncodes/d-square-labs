@@ -160,7 +160,7 @@ export default function DailyCaseCard() {
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
                     Expert framework
                   </p>
-                  <AIBadge provider="AI" />
+                  <AIBadge />
                 </div>
                 <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-200 leading-relaxed">{framework}</p>
               </div>

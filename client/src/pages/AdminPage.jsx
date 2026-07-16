@@ -149,7 +149,7 @@ export default function AdminPage() {
       to: '/admin/studio',
       icon: Sparkles,
       title: 'Content Studio',
-      description: 'Upload anything — AI files it in the right module',
+      description: 'Upload anything — Dax files it in the right module',
     },
     {
       to: '/admin/students',
@@ -199,14 +199,14 @@ export default function AdminPage() {
     {
       to: '/admin/automation',
       icon: Bot,
-      title: 'AI Automation',
-      description: 'Monitor and trigger AI content generation jobs',
+      title: 'Dax Automation',
+      description: 'Monitor and trigger Dax content generation jobs',
     },
     {
       to: '/admin/ai-center',
       icon: Bot,
-      title: 'AI Center',
-      description: 'Live AI usage, cost tracking and scheduler health',
+      title: 'Dax Center',
+      description: 'Live Dax usage, cost tracking and scheduler health',
     },
     {
       to: '/admin/subscriptions',
@@ -262,7 +262,7 @@ export default function AdminPage() {
         </div>
         <div className="rounded-2xl border border-gray-200/80 bg-white p-4 dark:border-gray-800/80 dark:bg-gray-900">
           <div className="flex items-center gap-2 text-xs text-gray-400">
-            <DollarSign className="h-4 w-4 text-purple-500" /> AI cost (30d)
+            <DollarSign className="h-4 w-4 text-purple-500" /> Dax cost (30d)
           </div>
           <p className="mt-1 text-2xl font-bold tabular-nums">${stats.aiCost30d ?? '0.00'}</p>
           {stats.aiJobCount30d > 0 && (

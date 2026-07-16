@@ -458,7 +458,7 @@ export default function LivingSurface() {
         </div>
       </div>
 
-      {/* AI INSIGHT — one AI moment */}
+      {/* DAX INSIGHT — one Dax moment */}
       <div className="border-t border-gray-200/60 dark:border-gray-800/60" />
       <div className="py-10">
         {insight ? <InsightCard insight={insight} /> : null}

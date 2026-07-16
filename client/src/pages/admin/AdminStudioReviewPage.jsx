@@ -153,7 +153,7 @@ export default function AdminStudioReviewPage() {
       {analyzing ? (
         <div className="flex flex-col items-center rounded-2xl border border-gray-200 py-14 dark:border-gray-800">
           <Loader2 className="mb-3 h-8 w-8 animate-spin text-indigo-500" />
-          <p className="text-sm font-medium">AI is reading your file…</p>
+          <p className="text-sm font-medium">Dax is reading your file…</p>
           <p className="mt-1 text-xs text-gray-500">Extracting text, generating metadata and picking a destination.</p>
         </div>
       ) : item.status === 'failed' ? (
@@ -194,7 +194,7 @@ export default function AdminStudioReviewPage() {
                 ['Pages', item.file?.pageCount || '—'],
                 ['Language', item.analysis?.language || '—'],
                 ['Handwritten', item.analysis?.handwritten == null ? '—' : item.analysis.handwritten ? 'Likely' : 'No'],
-                ['AI model', item.analysis?.model || '—'],
+                ['Model', item.analysis?.model || '—'],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between py-0.5">
                   <dt className="text-gray-500 dark:text-gray-400">{k}</dt>
@@ -205,7 +205,7 @@ export default function AdminStudioReviewPage() {
             {item.analysis?.summary && (
               <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 text-xs dark:border-indigo-900 dark:bg-indigo-950/30">
                 <p className="mb-1 flex items-center gap-1 font-semibold text-indigo-600 dark:text-indigo-300">
-                  <Sparkles className="h-3 w-3" /> AI summary
+                  <Sparkles className="h-3 w-3" /> Dax summary
                 </p>
                 <p className="text-gray-600 dark:text-gray-300">{item.analysis.summary}</p>
               </div>
@@ -250,7 +250,7 @@ export default function AdminStudioReviewPage() {
                     >
                       {d.label}
                       {item.analysis?.suggestedDestination === d.key && (
-                        <span className="mt-0.5 block text-[10px] font-normal text-indigo-400">AI pick</span>
+                        <span className="mt-0.5 block text-[10px] font-normal text-indigo-400">Dax pick</span>
                       )}
                     </button>
                   );
@@ -423,7 +423,7 @@ export default function AdminStudioReviewPage() {
                 <button
                   onClick={act('reanalyze', async () => { await reanalyzeItem(id); setMeta(null); await load(); })}
                   disabled={!!busy}
-                  title="Re-run AI analysis"
+                  title="Ask Dax to re-analyse"
                   className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:hover:bg-gray-900"
                 >
                   <RefreshCw className="h-4 w-4" />

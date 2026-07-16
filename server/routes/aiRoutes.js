@@ -2,6 +2,7 @@ const router = require('express').Router();
 const verifyToken = require('../middleware/verifyToken');
 const { requireFeature } = require('../subscription/permissionEngine');
 const { FEATURE } = require('../subscription/featureRegistry');
+const { withDaxIdentity } = require('../ai/dax');
 const checkRole   = require('../middleware/checkRole');
 const aiQuota     = require('../middleware/aiQuota');
 const { generalLimiter } = require('../middleware/rateLimiters');
@@ -29,7 +30,7 @@ router.post('/summarise/:noteId', requireFeature(FEATURE.AI_SUMMARISE), aiQuota,
 
     const { result, meta } = await runPipeline({
       task: 'summarise-note',
-      systemPrompt: 'You are a study assistant. Be concise, precise, and practically useful for a student preparing for placements and exams.',
+      systemPrompt: withDaxIdentity('You are helping with study work. Be concise, precise, and practically useful for a student preparing for placements and exams.'),
       userPrompt: `Summarise the following note in three parts:\n1. A 2-3 sentence executive summary.\n2. Five bullet-point key takeaways (each ≤ 15 words).\n3. Relevant business frameworks or concepts mentioned (comma-separated, max 5).\n\nNote title: ${note.title}\nSubject: ${note.subject}\nContent:\n${note.content}\n\nReply in this exact JSON format:\n{"summary":"…","keyPoints":["…","…","…","…","…"],"frameworks":"…"}`,
       memoryContext: formatMemoryContext(mem),
       json: true,
@@ -76,7 +77,7 @@ router.post('/review-resume', requireFeature(FEATURE.AI_RESUME_REVIEW), aiQuota,
 
     const { result, meta } = await runPipeline({
       task: 'review-resume',
-      systemPrompt: 'You are a senior career counsellor specialising in placement preparation. Be direct, specific, and actionable. Never generic.',
+      systemPrompt: withDaxIdentity('You are coaching on career direction, with the judgement of a senior placement counsellor. Be direct, specific, and actionable.'),
       userPrompt: `Review this resume for placement readiness. Give exactly 3 improvements, each tied to a specific gap you can see.\n\n${resumeLines}\n\nReply in this exact JSON format:\n{"overallImpression":"one sentence","improvements":[{"area":"…","issue":"specific problem","fix":"concrete action ≤ 20 words"},{"area":"…","issue":"…","fix":"…"},{"area":"…","issue":"…","fix":"…"}]}`,
       ragContext: ragCtx.contextText,
       memoryContext: formatMemoryContext(mem),
@@ -101,7 +102,7 @@ router.post('/case-framework', checkRole('admin'), async (req, res, next) => {
     const { title, category, scenario, question } = req.body;
     const { result, meta } = await runPipeline({
       task: 'case-framework',
-      systemPrompt: 'You are a case interview coach. Write clear, structured frameworks for students.',
+      systemPrompt: withDaxIdentity('You are coaching a case interview. Write clear, structured frameworks.'),
       userPrompt: `Generate a concise suggested framework (3-5 bullet points, ≤ 200 words total) for this daily case.\n\nCategory: ${category}\nTitle: ${title}\nScenario: ${scenario}\nQuestion: ${question}\n\nReply with plain text only — no JSON, no markdown headers.`,
       json: false,
     });
@@ -123,7 +124,7 @@ router.post('/planner-suggest', requireFeature(FEATURE.AI_PLANNER_SUGGEST), aiQu
 
     const { result, meta } = await runPipeline({
       task: 'planner-suggest',
-      systemPrompt: 'You are a placement advisor. Help prioritize tasks and study plans for students targeting campus placements.',
+      systemPrompt: withDaxIdentity('You are planning the student\u2019s week. Help prioritise tasks and study plans for campus placements.'),
       userPrompt: `Based on this student's current tasks and notes, suggest 3 priority actions for today.\n\nReturn JSON:\n{"priorities":["action 1","action 2","action 3"],"focusArea":"one sentence","motivationalNote":"one sentence"}`,
       ragContext: ragCtx.contextText,
       memoryContext: formatMemoryContext(mem),
@@ -151,7 +152,7 @@ router.post('/career-advice', requireFeature(FEATURE.AI_CAREER_ADVICE), aiQuota,
 
     const { result, meta } = await runPipeline({
       task: 'career-advice',
-      systemPrompt: 'You are an expert placement advisor with deep knowledge of campus recruitment. Give personalized, specific advice based on the student profile and company data provided.',
+      systemPrompt: withDaxIdentity('You are advising on campus recruitment. Give personalised, specific advice grounded in the student profile and company data provided.'),
       userPrompt: `Student question: ${question || 'How should I prepare for this company?'}\n\nReturn JSON:\n{"answer":"detailed 3-4 sentence answer","actionItems":["item 1","item 2","item 3"],"keyFocus":"one sentence on where to concentrate effort"}`,
       ragContext: ragCtx.contextText,
       memoryContext: formatMemoryContext(mem),
@@ -179,7 +180,7 @@ router.post('/interview-simulator', requireFeature(FEATURE.AI_INTERVIEW_SIMULATO
 
     const { result, meta } = await runPipeline({
       task: 'interview-simulator',
-      systemPrompt: 'You are a senior interviewer at a top campus recruiter running a realistic placement mock interview. Be specific and demanding — tailor everything to the student profile provided, never generic.',
+      systemPrompt: withDaxIdentity('You are running a realistic mock interview as a senior interviewer at a top campus recruiter would. Be specific and demanding; tailor everything to the student profile provided.'),
       userPrompt: `Run one round of a mock placement interview.\nTarget role: ${role || 'any campus role'}\nTarget company: ${company || 'a typical campus recruiter'}\nQuestion category: ${category || 'mixed (HR / technical / case)'}\n\nReturn JSON:\n{"question":"one interview question tailored to this student","framework":"the structure or framework a strong answer should follow","idealAnswer":"a model answer outline in 3-4 sentences","followUps":["likely follow-up 1","likely follow-up 2"],"trap":"one sentence on the mistake most candidates make on this question"}`,
       ragContext: ragCtx.contextText,
       memoryContext: formatMemoryContext(mem),
@@ -215,7 +216,7 @@ router.post('/compare-companies', requireFeature(FEATURE.AI_COMPARE_COMPANIES), 
 
     const { result, meta } = await runPipeline({
       task: 'compare-companies',
-      systemPrompt: 'You are a placement advisor comparing campus recruiters for a student. Be decisive and concrete — students need a verdict, not a survey.',
+      systemPrompt: withDaxIdentity('You are comparing campus recruiters. Be decisive and concrete \u2014 the student needs a verdict, not a survey.'),
       userPrompt: `Compare these two recruiters for a student deciding where to focus preparation.\n\nCompany A:\n${brief(a)}\n\nCompany B:\n${brief(b)}\n\nReturn JSON:\n{"verdict":"2-3 sentence overall comparison and recommendation","chooseAIf":"one sentence — the student profile that should prefer ${a.name}","chooseBIf":"one sentence — the student profile that should prefer ${b.name}","prepDifference":"2-3 sentences on how preparation differs between the two"}`,
       memoryContext: formatMemoryContext(mem),
       json: true,

@@ -139,9 +139,9 @@ export default function AdminAICenterPage() {
 
   return (
     <AdminShell
-      title="AI Center"
+      title="Dax Center"
       icon={Sparkles}
-      subtitle="Live AI usage, cost tracking, and scheduler health"
+      subtitle="Live Dax usage, cost tracking, and scheduler health"
     >
       {loading ? (
         <div className="space-y-3">

@@ -23,7 +23,7 @@ function AISummaryPanel({ noteId, hasContent }) {
       setResult(res.data);
       setState('done');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'AI summary failed');
+      toast.error(err.response?.data?.message || 'Dax could not summarise this note');
       setState('error');
     }
   };
@@ -36,7 +36,7 @@ function AISummaryPanel({ noteId, hasContent }) {
         onClick={run}
         className="mt-5 flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:border-indigo-800/60 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
       >
-        <Sparkles className="h-4 w-4" /> Summarise with AI
+        <Sparkles className="h-4 w-4" /> Summarise with Dax
       </button>
     );
   }
@@ -67,7 +67,7 @@ function AISummaryPanel({ noteId, hasContent }) {
         className="flex w-full items-center justify-between px-4 py-3"
       >
         <span className="flex items-center gap-2 text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-          <Sparkles className="h-4 w-4" /> AI Summary
+          <Sparkles className="h-4 w-4" /> Dax Summary
         </span>
         {open ? <ChevronUp className="h-4 w-4 text-indigo-500" /> : <ChevronDown className="h-4 w-4 text-indigo-500" />}
       </button>
@@ -184,7 +184,7 @@ export default function NoteDetailPage() {
         </div>
 
         <div className="flex items-center gap-2 mt-4 mb-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">AI Summary</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Dax Summary</span>
           <CrownBadge required="pro" />
         </div>
         <TierGate required="pro" inline description="Search your notes using natural language — find concepts, not just keywords.">

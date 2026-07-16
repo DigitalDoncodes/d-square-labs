@@ -109,7 +109,7 @@ export default function AdminStudioPage() {
     <AdminShell
       title="Content Studio"
       icon={Sparkles}
-      subtitle="Upload anything — AI analyses it and suggests where it belongs."
+      subtitle="Upload anything — Dax analyses it and suggests where it belongs."
     >
       {dest && (
         <div className="mb-3 flex items-center gap-2 rounded-xl bg-indigo-50 px-3 py-2 text-sm text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300">
@@ -119,7 +119,7 @@ export default function AdminStudioPage() {
             onClick={() => setSearchParams({})}
             className="ml-auto text-xs underline"
           >
-            Let AI decide instead
+            Let Dax decide instead
           </button>
         </div>
       )}

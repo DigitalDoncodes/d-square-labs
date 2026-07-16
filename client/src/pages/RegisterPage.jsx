@@ -129,7 +129,7 @@ export default function RegisterPage() {
   const totalSteps = STEPS.length;
 
   return (
-    <AuthShell subtitle={isWelcome ? 'Your AI-powered student workspace' : `Step ${stepNumber} of ${totalSteps}`}>
+    <AuthShell subtitle={isWelcome ? 'Your student workspace, powered by Dax' : `Step ${stepNumber} of ${totalSteps}`}>
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
           {!isWelcome && <ProgressBar currentStep={step} totalSteps={totalSteps} />}

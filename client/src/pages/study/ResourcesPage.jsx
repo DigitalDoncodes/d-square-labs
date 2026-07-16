@@ -248,7 +248,7 @@ export default function ResourcesPage() {
         {user?.role === 'admin' && (
           <Link to="/admin/studio?dest=resources"
             className="mb-4 flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-300">
-            <Sparkles className="h-3.5 w-3.5" /> Admin tip: upload via the Content Studio for AI-filled metadata →
+            <Sparkles className="h-3.5 w-3.5" /> Admin tip: upload via the Content Studio and Dax fills the metadata →
           </Link>
         )}
         <div className="mb-4 flex rounded-xl border border-gray-200 p-1 dark:border-gray-700">

@@ -293,7 +293,7 @@ export default function StudyHubPage() {
         </div>
       </div>
 
-      {/* AI INSIGHT */}
+      {/* DAX INSIGHT */}
       {insight && (
         <>
           <div className="mt-10 border-t border-gray-200/60 dark:border-gray-800/60" />

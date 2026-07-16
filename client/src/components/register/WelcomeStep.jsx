@@ -6,7 +6,7 @@ const FEATURES = [
   { emoji: '🤝', label: 'Batch community & directory' },
   { emoji: '🧠', label: 'Daily MBA case practice' },
   { emoji: '💰', label: 'Finance & budget tracker' },
-  { emoji: '✨', label: 'AI-powered briefings' },
+  { emoji: '✨', label: 'Briefings from Dax' },
 ];
 
 export default function WelcomeStep() {

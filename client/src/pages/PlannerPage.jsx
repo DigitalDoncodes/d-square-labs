@@ -26,7 +26,7 @@ function AIPlannerPanel() {
       setResult(res.data);
       setState('done');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'AI suggestions failed');
+      toast.error(err.response?.data?.message || 'Dax could not suggest priorities');
       setState('error');
     }
   };
@@ -38,7 +38,7 @@ function AIPlannerPanel() {
         className="flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800/60 dark:bg-indigo-900/30 dark:text-indigo-300"
       >
         <Sparkles className="h-4 w-4" />
-        {state === 'error' ? 'Retry AI suggestions' : 'Get AI suggestions for today'}
+        {state === 'error' ? 'Ask Dax again' : "Ask Dax what to focus on today"}
       </button>
     );
   }
@@ -55,7 +55,7 @@ function AIPlannerPanel() {
     <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800/60 dark:bg-indigo-900/20">
       <div className="mb-2 flex items-center justify-between">
         <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-          <Sparkles className="h-3.5 w-3.5" /> AI Priorities for Today
+          <Sparkles className="h-3.5 w-3.5" /> Dax’s priorities for today
         </p>
         <button onClick={run} className="text-indigo-400 hover:text-indigo-600">
           <RefreshCw className="h-3.5 w-3.5" />
@@ -194,10 +194,10 @@ export default function PlannerPage() {
 
       <div className="mb-4">
         <div className="mb-2 flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">AI Suggestions</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Dax Planner</span>
           <CrownBadge required="pro" />
         </div>
-        <TierGate required="pro" inline description="AI prioritizes your tasks for today based on deadlines, readiness score, and your goals.">
+        <TierGate required="pro" inline description="Dax prioritises your tasks for today based on deadlines, readiness score, and your goals.">
           <AIPlannerPanel />
         </TierGate>
       </div>

@@ -14,8 +14,8 @@ import { useSubscription } from '../../context/SubscriptionContext';
 import { tierTheme } from '../../utils/tiers';
 
 const DEFAULT_DESCRIPTIONS = {
-  pro: 'Unlock AI-powered tools for placement preparation.',
-  max: 'Access the full AI career advisor suite.',
+  pro: 'Unlock Dax for placement preparation.',
+  max: 'Unlock everything Dax can do, including Dax Career Coach.',
 };
 
 export default function TierGate({ required = 'pro', description, inline = false, children }) {

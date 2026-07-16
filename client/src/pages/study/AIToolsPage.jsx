@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Sparkles, FileSearch, FileText, MessageSquare, Search, Loader2, ChevronDown, ChevronUp, Mic, Scale } from 'lucide-react';
+import { DAX_CAPABILITY } from '../../utils/dax';
 import PageHeader from '../../components/common/PageHeader';
 import toast from 'react-hot-toast';
 import { summariseDoc, reviewResume, askCareerAdvice, semanticSearch, simulateInterview, compareCompanies } from '../../api/aiTools';
@@ -34,7 +35,7 @@ function ResultBox({ content }) {
   return (
     <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 p-4 dark:border-indigo-900/50 dark:bg-indigo-900/20">
       <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
-        <Sparkles className="h-3.5 w-3.5" /> AI Result
+        <Sparkles className="h-3.5 w-3.5" /> Dax
       </p>
       <div className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200">{content}</div>
     </div>
@@ -91,7 +92,7 @@ function ResumeReviewer() {
 
   return (
     <TierGate required="pro">
-      <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">AI will analyse your saved resume and return structured feedback on each section.</p>
+      <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">Dax will analyse your saved resume and return structured feedback on each section.</p>
       <button onClick={run} disabled={loading} className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSearch className="h-4 w-4" />}
         {loading ? 'Reviewing…' : 'Analyse My Resume'}
@@ -164,7 +165,7 @@ function SmartSearch() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && run()}
-            placeholder="Search across all your content semantically…"
+            placeholder="Ask Dax to find something across your content…"
             className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-4 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900"
           />
         </div>
@@ -268,7 +269,7 @@ function CompanyComparator() {
     'flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
   return (
-    <TierGate required="max" description="Pit two recruiters against each other and get a decisive AI verdict on where to focus your preparation.">
+    <TierGate required="max" description="Pit two recruiters against each other and get a decisive verdict from Dax on where to focus your preparation.">
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
         <select value={slugA} onChange={(e) => setSlugA(e.target.value)} className={selectCls} aria-label="First company">
           <option value="">First company…</option>
@@ -290,33 +291,33 @@ function CompanyComparator() {
 }
 
 export default function AIToolsPage() {
-  useDocumentTitle('AI Tools');
+  useDocumentTitle('Dax Studio');
 
   return (
     <Page>
       <PageHeader
         icon={Sparkles}
-        title="AI Tools Studio"
-        subtitle="AI tuned for MBA workflows — summarise, review, advise, search"
+        title="Dax Studio"
+        subtitle="One assistant, many jobs — summarise, review, advise, research"
       />
 
       <div className="space-y-4">
-        <ToolPanel title="Document Summarizer" icon={FileText} description="Paste any text and get a concise AI summary">
+        <ToolPanel title={DAX_CAPABILITY.summaries} icon={FileText} description="Paste any text and Dax gives you a concise summary">
           <DocumentSummarizer />
         </ToolPanel>
-        <ToolPanel title="Resume Reviewer" icon={FileSearch} description="AI feedback on every section of your saved resume">
+        <ToolPanel title={DAX_CAPABILITY.resumeReview} icon={FileSearch} description="Dax reviews every section of your saved resume">
           <ResumeReviewer />
         </ToolPanel>
-        <ToolPanel title="Career Advisor" icon={MessageSquare} description="Ask any career or placement question">
+        <ToolPanel title={DAX_CAPABILITY.careerCoach} icon={MessageSquare} description="Ask Dax any career or placement question">
           <CareerAdvisor />
         </ToolPanel>
         <ToolPanel title="Interview Simulator" icon={Mic} description="A realistic mock interview round, tailored to your resume">
           <InterviewSimulator />
         </ToolPanel>
-        <ToolPanel title="Company Comparator" icon={Scale} description="Two recruiters, one decisive AI verdict">
+        <ToolPanel title="Company Comparator" icon={Scale} description="Two recruiters, one decisive verdict from Dax">
           <CompanyComparator />
         </ToolPanel>
-        <ToolPanel title="Smart Search" icon={Search} description="Semantic search across all your notes, news and companies">
+        <ToolPanel title={DAX_CAPABILITY.research} icon={Search} description="Dax searches across all your notes, news and companies">
           <SmartSearch />
         </ToolPanel>
       </div>

@@ -9,7 +9,7 @@ export default function PageHeader({
   title,
   subtitle,
   action,         // { label, onClick | href, icon: ActionIcon } or JSX
-  insight,        // string — a one-line AI-derived insight shown as a soft pill
+  insight,        // string — a one-line insight from Dax, shown as a soft pill
   className = '',
 }) {
   return (
