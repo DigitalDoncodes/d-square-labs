@@ -294,3 +294,14 @@ router.patch('/memory', async (req, res, next) => {
     res.json({ ok: true, updatedFields: Object.keys(patch) });
   } catch (err) { next(err); }
 });
+
+// DELETE /api/ai/memory — the student's right to be forgotten.
+// Drops the document entirely rather than blanking fields: the next
+// getUserMemory() re-bootstraps a clean baseline from their real data, so Dax
+// forgets what it inferred and learned without forgetting who they are.
+router.delete('/memory', async (req, res, next) => {
+  try {
+    await UserMemory.deleteOne({ user: req.user.userId });
+    res.json({ ok: true, message: 'Dax has forgotten what it learned about you.' });
+  } catch (err) { next(err); }
+});

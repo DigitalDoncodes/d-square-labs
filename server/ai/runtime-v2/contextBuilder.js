@@ -57,7 +57,8 @@ async function buildContext(userId, options = {}) {
     .select('title dueDate type status priority')
     .lean();
 
-  const recentNotes = await Note.find({ user: userId })
+  // Note's owner field is `author` — see ai/memory.js. `user` matched nothing.
+  const recentNotes = await Note.find({ author: userId })
     .sort({ updatedAt: -1 })
     .limit(MAX_RECENT_NOTES)
     .select('title subject updatedAt')

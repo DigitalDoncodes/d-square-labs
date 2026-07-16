@@ -30,7 +30,9 @@ async function bootstrapMemory(userId) {
     StudentIdentity.findOne({ user: userId }).lean(),
     Resume.findOne({ user: userId }).select('skills summary').lean(),
     Task.countDocuments({ $or: [{ createdBy: userId }, { assignee: userId }], status: 'done' }),
-    Note.countDocuments({ user: userId }),
+    // Note is authored, not owned — the field is `author`. This filtered on a
+    // non-existent `user` field, so notesCount was always 0 for every student.
+    Note.countDocuments({ author: userId }),
   ]);
 
   // Fallback: read from legacy models if StudentIdentity not yet created
@@ -147,11 +149,11 @@ function formatMemoryContext(mem) {
   if (mem.resumeCompletionPct != null) lines.push(`Resume Completion: ${mem.resumeCompletionPct}%`);
   if (mem.strengths?.length)        lines.push(`Strengths: ${mem.strengths.join(', ')}`);
   if (mem.weaknesses?.length)       lines.push(`Areas to improve: ${mem.weaknesses.join(', ')}`);
-  if (mem.recentTopics?.length)     lines.push(`Recent AI topics: ${mem.recentTopics.slice(-5).join(', ')}`);
+  if (mem.recentTopics?.length)     lines.push(`Recently discussed with you: ${mem.recentTopics.slice(-5).join(', ')}`);
   if (mem.timeAvailable)            lines.push(`Study Time Available: ${mem.timeAvailable}`);
   if (mem.contextSummary)           lines.push(`Context: ${mem.contextSummary}`);
   if (!lines.length) return '';
-  return `[User Memory]\n${lines.join('\n')}\n`;
+  return `[Dax Memory — what you remember about this student]\n${lines.join('\n')}\n`;
 }
 
 module.exports = { getUserMemory, bootstrapMemory, updateMemory, appendTopic, formatMemoryContext };

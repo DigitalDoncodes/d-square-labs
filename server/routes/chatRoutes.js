@@ -10,6 +10,7 @@ const SiteMeta = require('../models/SiteMeta');
 const { routeTask } = require('../ai/router');
 const aiGateway = require('../ai/aiGateway');
 const { withDaxIdentity } = require('../ai/dax');
+const { getUserMemory, formatMemoryContext, appendTopic } = require('../ai/memory');
 const { todayKey } = require('../utils/quota');
 const { getEffectiveTier } = require('../subscription/permissionEngine');
 const { isAtLeast } = require('../subscription/tierHierarchy');
@@ -19,14 +20,37 @@ const { computeDailyCaseStreak } = require('../utils/streak');
 router.use(verifyToken);
 router.use(generalLimiter);
 const HISTORY_WINDOW = 12;
+const TOPIC_MAX_LEN = 80;
+
+/**
+ * A short, human-readable label for what this turn was about, stored in
+ * UserMemory.recentTopics (rolling last 10) so Dax carries the thread across
+ * sessions once the 12-message window has rolled off.
+ *
+ * The student's own words are the topic — cheaper and more faithful than
+ * asking a model to summarise, and this runs on every message.
+ */
+function deriveTopic(message) {
+  const firstLine = message.trim().split('\n')[0].replace(/\s+/g, ' ').trim();
+  if (firstLine.length <= TOPIC_MAX_LEN) return firstLine;
+  return `${firstLine.slice(0, TOPIC_MAX_LEN - 1).trimEnd()}…`;
+}
 
 async function buildSystemPrompt(user) {
   const uid = user.userId;
   const today = todayKey();
 
-  const [meta, tasks, noteCount, resume, streak, todayCount] = await Promise.all([
+  // Dax Chat runs on the V1 messages path, which bypasses runPipeline — so it
+  // never received the memoryContext every other Dax capability gets. Fetch it
+  // here and fold it into the system prompt, so what Dax learns about a student
+  // in one session is still there in the next.
+  const [memory, meta, tasks, noteCount, resume, streak, todayCount] = await Promise.all([
+    getUserMemory(uid).catch(() => null),
     SiteMeta.findOne({ key: 'main' }).select('placementDate batchName').lean(),
-    Task.find({ assignedTo: uid, status: { $ne: 'done' } })
+    // Task has `assignee` / `createdBy`; `assignedTo` exists nowhere on the
+    // schema, so this matched nothing and Dax always believed the student had
+    // no pending tasks. Mirrors the ownership test in ai/memory.js.
+    Task.find({ $or: [{ assignee: uid }, { createdBy: uid }], status: { $ne: 'done' } })
       .sort({ dueDate: 1 })
       .limit(5)
       .select('title dueDate type')
@@ -55,6 +79,7 @@ async function buildSystemPrompt(user) {
     // is the context and the rules specific to a conversation.
     systemPrompt: withDaxIdentity(`You are in conversation with the student.
 
+${formatMemoryContext(memory)}
 Student profile:
 - Name: ${user.name}
 - Batch: ${meta?.batchName || ''}
@@ -70,6 +95,7 @@ Today's date: ${today}
 
 Rules for this conversation:
 - You know this student's context above — reference it naturally when relevant, not on every reply.
+- [Dax Memory] is what you remember about this student from previous sessions. Use it to stay continuous: do not re-ask what you already know. Never recite the memory back at them or announce that you remembered — just be someone who knows them.
 - Be concise, direct, and practically useful. No fluff, no excessive disclaimers.
 - You excel at: concepts (strategy, finance, marketing, ops, HR), case interview frameworks, placement prep, study planning, resume advice, and general motivation.
 - When asked for a framework, give a crisp structured answer (bullets, numbered steps).
@@ -142,6 +168,10 @@ router.post('/', async (req, res, next) => {
       { user: uid, role: 'user', content: message.trim() },
       { user: uid, role: 'assistant', content: reply },
     ]);
+
+    // Remember what this was about. Fire-and-forget: memory is an enhancement,
+    // and a write failure must never cost the student a reply they already have.
+    appendTopic(uid, deriveTopic(message)).catch(() => {});
 
     // Persist runtime comparison metrics
     aiGateway.persistExecutionMetrics(gatewayResult, {

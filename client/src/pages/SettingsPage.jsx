@@ -12,6 +12,7 @@ import { useSubscription } from '../context/SubscriptionContext';
 import { Link } from 'react-router-dom';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
+import DaxMemoryPanel from '../components/common/DaxMemoryPanel';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const fmtDate = (d) =>
@@ -472,6 +473,10 @@ export default function SettingsPage() {
         </Card>
 
         <SubscriptionCard />
+
+        {/* Dax brings its own Card chrome so it can render its own empty and
+            loading states while the memory loads. */}
+        <DaxMemoryPanel />
 
         <Card title="Referral code" icon={Gift}>
           <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">

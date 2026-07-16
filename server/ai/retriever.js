@@ -82,7 +82,9 @@ async function getCompanyContext(companyId) {
 // ── Notes context ──────────────────────────────────────────────────────────
 
 async function getRecentNotes(userId, limit = 5) {
-  const notes = await Note.find({ user: userId })
+  // Note's owner field is `author`; `user` does not exist on the schema, so
+  // this returned nothing and note retrieval silently never fired.
+  const notes = await Note.find({ author: userId })
     .sort({ updatedAt: -1 })
     .limit(limit)
     .select('title subject content updatedAt')
