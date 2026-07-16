@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSubscription } from '../context/SubscriptionContext';
 import { Link } from 'react-router-dom';
+import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 
@@ -131,9 +132,6 @@ function SubscriptionCard() {
     </section>
   );
 }
-
-const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 function Card({ title, icon: Icon, danger, children }) {
   return (
@@ -265,33 +263,27 @@ function AppSection() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <button
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={handleClearCache}
           disabled={clearing}
-          className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:border-red-300 hover:text-red-600 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300"
+          className="hover:border-red-300 hover:text-red-600"
+          icon={Trash2}
         >
-          <Trash2 className="h-3.5 w-3.5" />
           {clearing ? 'Clearing…' : 'Clear cache'}
-        </button>
+        </Button>
 
         {updateAvailable && (
-          <button
-            onClick={applyUpdate}
-            className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
+          <Button size="sm" onClick={applyUpdate} icon={RefreshCw}>
             Update now
-          </button>
+          </Button>
         )}
 
         {!installed && deferredPrompt && (
-          <button
-            onClick={installApp}
-            className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
-          >
-            <Download className="h-3.5 w-3.5" />
+          <Button size="sm" onClick={installApp} icon={Download}>
             Install app
-          </button>
+          </Button>
         )}
 
         {!installed && !deferredPrompt && (
@@ -445,7 +437,7 @@ export default function SettingsPage() {
               placeholder="Name"
               aria-label="Name"
               {...profileForm.register('name', { required: true })}
-              className={inputClass}
+              className="input"
             />
             <textarea
               rows={2}
@@ -453,29 +445,29 @@ export default function SettingsPage() {
               aria-label="Bio"
               maxLength={300}
               {...profileForm.register('bio')}
-              className={inputClass}
+              className="input"
             />
             <div className="grid gap-3 sm:grid-cols-2">
               <input
                 placeholder="LinkedIn URL"
                 aria-label="LinkedIn URL"
                 {...profileForm.register('linkedin')}
-                className={inputClass}
+                className="input"
               />
               <input
                 placeholder="GitHub URL"
                 aria-label="GitHub URL"
                 {...profileForm.register('github')}
-                className={inputClass}
+                className="input"
               />
             </div>
-            <button
+            <Button
               type="submit"
+              size="md"
               disabled={profileForm.formState.isSubmitting}
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
             >
               {profileForm.formState.isSubmitting ? 'Saving…' : 'Save profile'}
-            </button>
+            </Button>
           </form>
         </Card>
 
@@ -530,22 +522,22 @@ export default function SettingsPage() {
               placeholder="Current password"
               aria-label="Current password"
               {...pwForm.register('currentPassword', { required: true })}
-              className={inputClass}
+              className="input"
             />
             <input
               type="password"
               placeholder="New password (8+ chars, letter & number)"
               aria-label="New password"
               {...pwForm.register('newPassword', { required: true, minLength: 8 })}
-              className={inputClass}
+              className="input"
             />
-            <button
+            <Button
               type="submit"
+              size="md"
               disabled={pwForm.formState.isSubmitting}
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
             >
-              Update password
-            </button>
+              {pwForm.formState.isSubmitting ? 'Updating…' : 'Update password'}
+            </Button>
           </form>
         </Card>
 
@@ -578,7 +570,7 @@ export default function SettingsPage() {
             onChange={(e) => setDeletePassword(e.target.value)}
             placeholder="Your password"
             aria-label="Confirm password"
-            className={inputClass}
+            className="input"
           />
           <div className="flex justify-end gap-2">
             <button

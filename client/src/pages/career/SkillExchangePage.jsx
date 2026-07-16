@@ -11,8 +11,6 @@ import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { useAuth } from '../../context/AuthContext';
 import { Page } from '../../components/common/motion';
 
-const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
-
 function StarRating({ value, max = 5, onChange }) {
   return (
     <div className="flex gap-1">
@@ -145,16 +143,16 @@ export default function SkillExchangePage() {
 
       <Modal open={showAdd} onClose={() => { setShowAdd(false); reset(); }} title="Offer a Skill">
         <form onSubmit={handleSubmit(onAdd)} className="space-y-3">
-          <input {...register('skill', { required: true })} placeholder="Skill name * (e.g. Excel, Python, Public Speaking)" className={inputClass} />
-          <textarea {...register('description')} placeholder="Describe what you'll teach and how" rows={3} className={inputClass} />
-          <select {...register('mode')} className={inputClass}>
+          <input {...register('skill', { required: true })} placeholder="Skill name * (e.g. Excel, Python, Public Speaking)" className="input" />
+          <textarea {...register('description')} placeholder="Describe what you'll teach and how" rows={3} className="input" />
+          <select {...register('mode')} className="input">
             <option value="both">Online & In-person</option>
             <option value="online">Online only</option>
             <option value="in-person">In-person only</option>
           </select>
-          <input {...register('availability')} placeholder="Availability (e.g. Weekends, evenings)" className={inputClass} />
-          <input {...register('contact')} placeholder="Contact (LinkedIn URL or email)" className={inputClass} />
-          <input {...register('tags')} placeholder="Tags (comma-separated: Finance, Excel, MBA)" className={inputClass} />
+          <input {...register('availability')} placeholder="Availability (e.g. Weekends, evenings)" className="input" />
+          <input {...register('contact')} placeholder="Contact (LinkedIn URL or email)" className="input" />
+          <input {...register('tags')} placeholder="Tags (comma-separated: Finance, Excel, MBA)" className="input" />
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => { setShowAdd(false); reset(); }} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">Cancel</button>
             <button type="submit" disabled={isSubmitting} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">List Skill</button>

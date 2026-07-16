@@ -141,6 +141,12 @@
   50% { opacity: 0.5; }
 }
 
+/* Typing indicator dots. */
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
+}
+
 /* Entrance animation — short, ease-out, always settles visible. */
 @keyframes fade-up {
   from {

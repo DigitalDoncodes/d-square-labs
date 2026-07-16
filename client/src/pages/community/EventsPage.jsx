@@ -10,8 +10,6 @@ import Modal from '../../components/common/Modal';
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { Page } from '../../components/common/motion';
 
-const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
-
 const CAT_COLORS = {
   academic: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
   social: 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300',
@@ -196,20 +194,20 @@ export default function EventsPage() {
       {/* Create Event Modal */}
       <Modal open={showAdd} onClose={() => { setShowAdd(false); reset(); }} title="Create Event">
         <form onSubmit={handleSubmit(onAdd)} className="space-y-3">
-          <input {...register('title', { required: true })} placeholder="Event title *" className={inputClass} />
-          <textarea {...register('description')} placeholder="Description" rows={2} className={inputClass} />
+          <input {...register('title', { required: true })} placeholder="Event title *" className="input" />
+          <textarea {...register('description')} placeholder="Description" rows={2} className="input" />
           <div className="grid grid-cols-2 gap-2">
-            <input type="datetime-local" {...register('date', { required: true })} className={inputClass} />
-            <input type="datetime-local" {...register('endDate')} className={inputClass} />
+            <input type="datetime-local" {...register('date', { required: true })} className="input" />
+            <input type="datetime-local" {...register('endDate')} className="input" />
           </div>
-          <select {...register('category')} className={inputClass}>
+          <select {...register('category')} className="input">
             {['academic', 'social', 'career', 'sports', 'other'].map((c) => <option key={c} value={c} className="capitalize">{c}</option>)}
           </select>
-          <input {...register('location')} placeholder="Location" className={inputClass} />
+          <input {...register('location')} placeholder="Location" className="input" />
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('online')} className="rounded" /> Online event</label>
-          <input {...register('meetLink')} placeholder="Meet / Zoom link (if online)" className={inputClass} />
-          <input {...register('organizer')} placeholder="Organizer name / club" className={inputClass} />
-          <input type="number" {...register('maxAttendees')} placeholder="Max attendees (optional)" className={inputClass} />
+          <input {...register('meetLink')} placeholder="Meet / Zoom link (if online)" className="input" />
+          <input {...register('organizer')} placeholder="Organizer name / club" className="input" />
+          <input type="number" {...register('maxAttendees')} placeholder="Max attendees (optional)" className="input" />
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => { setShowAdd(false); reset(); }} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">Cancel</button>
             <button type="submit" disabled={isSubmitting} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">Create</button>

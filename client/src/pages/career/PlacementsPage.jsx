@@ -25,7 +25,6 @@ const APP_STATUS = {
   rejected:    { label: 'Rejected',    color: 'text-red-500',    icon: XCircle },
 };
 
-const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 function DriveCard({ drive, onApply }) {
   const deadline = drive.applicationDeadline ? new Date(drive.applicationDeadline) : null;
@@ -262,14 +261,14 @@ export default function PlacementsPage() {
       {/* Add Drive Modal */}
       <Modal open={showAdd} onClose={() => { setShowAdd(false); reset(); }} title="Add Placement Drive">
         <form onSubmit={handleSubmit(onAddDrive)} className="space-y-3">
-          <input {...register('name', { required: true })} placeholder="Drive name *" className={inputClass} />
-          <input {...register('company', { required: true })} placeholder="Company *" className={inputClass} />
-          <input {...register('role')} placeholder="Role / position" className={inputClass} />
-          <input {...register('package')} placeholder="Package (e.g. ₹6–8 LPA)" className={inputClass} />
-          <input {...register('eligibility')} placeholder="Eligibility criteria" className={inputClass} />
-          <input type="date" {...register('applicationDeadline')} className={inputClass} />
-          <input {...register('applyLink')} placeholder="Apply link (optional)" className={inputClass} />
-          <select {...register('status')} className={inputClass}>
+          <input {...register('name', { required: true })} placeholder="Drive name *" className="input" />
+          <input {...register('company', { required: true })} placeholder="Company *" className="input" />
+          <input {...register('role')} placeholder="Role / position" className="input" />
+          <input {...register('package')} placeholder="Package (e.g. ₹6–8 LPA)" className="input" />
+          <input {...register('eligibility')} placeholder="Eligibility criteria" className="input" />
+          <input type="date" {...register('applicationDeadline')} className="input" />
+          <input {...register('applyLink')} placeholder="Apply link (optional)" className="input" />
+          <select {...register('status')} className="input">
             <option value="upcoming">Upcoming</option>
             <option value="active">Active</option>
             <option value="closed">Closed</option>
@@ -284,10 +283,10 @@ export default function PlacementsPage() {
       {/* Apply Modal */}
       <Modal open={!!applyDrive} onClose={() => setApplyDrive(null)} title={`Track: ${applyDrive?.company}`}>
         <form onSubmit={handleSubmit(onApply)} className="space-y-3">
-          <select {...register('status')} className={inputClass}>
+          <select {...register('status')} className="input">
             {Object.entries(APP_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </select>
-          <textarea {...register('notes')} placeholder="Notes (optional)" rows={3} className={inputClass} />
+          <textarea {...register('notes')} placeholder="Notes (optional)" rows={3} className="input" />
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => setApplyDrive(null)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">Cancel</button>
             <button type="submit" className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Save</button>

@@ -17,8 +17,6 @@ const TYPE_FILTERS = [
   { key: 'photo', label: '📷 Photos' },
 ];
 
-const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
-
 function PostCard({ post: initialPost }) {
   const [post, setPost] = useState(initialPost);
 
@@ -172,22 +170,22 @@ export default function FeedPage() {
           </div>
           <form onSubmit={handleSubmit(onPost)} className="space-y-3">
             {postType !== 'poll' && (
-              <input {...register('title')} placeholder={postType === 'achievement' ? '🏆 What did you achieve?' : 'Title (optional)'} className={inputClass} />
+              <input {...register('title')} placeholder={postType === 'achievement' ? '🏆 What did you achieve?' : 'Title (optional)'} className="input" />
             )}
-            <textarea {...register('body', { required: true })} placeholder={postType === 'poll' ? 'Ask your question…' : 'Share something with the batch…'} rows={3} className={inputClass} />
-            {postType === 'photo' && <input {...register('imageUrl')} placeholder="Image URL" className={inputClass} />}
+            <textarea {...register('body', { required: true })} placeholder={postType === 'poll' ? 'Ask your question…' : 'Share something with the batch…'} rows={3} className="input" />
+            {postType === 'photo' && <input {...register('imageUrl')} placeholder="Image URL" className="input" />}
             {postType === 'poll' && (
               <div className="space-y-2">
                 {pollInputs.map((val, i) => (
                   <input key={i} value={val} onChange={(e) => setPollInputs((p) => p.map((v, j) => j === i ? e.target.value : v))}
-                    placeholder={`Option ${i + 1}`} className={inputClass} />
+                    placeholder={`Option ${i + 1}`} className="input" />
                 ))}
                 {pollInputs.length < 4 && (
                   <button type="button" onClick={() => setPollInputs((p) => [...p, ''])} className="text-xs text-indigo-600 hover:underline">+ Add option</button>
                 )}
               </div>
             )}
-            <input {...register('tags')} placeholder="Tags (comma-separated, optional)" className={inputClass} />
+            <input {...register('tags')} placeholder="Tags (comma-separated, optional)" className="input" />
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setShowCompose(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">Cancel</button>
               <button type="submit" disabled={isSubmitting} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">

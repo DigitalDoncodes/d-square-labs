@@ -3,12 +3,11 @@ import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Paperclip, Link2, X, Upload, FileText, FileSpreadsheet, File, Loader2 } from 'lucide-react';
+import Button from '../components/common/Button';
 import { getNote, createNote, updateNote } from '../api/notes';
 import { SUBJECTS } from '../utils/constants';
 import api from '../api/axios';
 
-const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 const FILE_ICONS = {
   pdf: FileText,
@@ -108,13 +107,13 @@ export default function NoteEditorPage() {
       >
         <div>
           <label htmlFor="title" className="mb-1 block text-sm font-medium">Title</label>
-          <input id="title" {...register('title', { required: true })} className={inputClass} />
+          <input id="title" {...register('title', { required: true })} className="input" />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="subject" className="mb-1 block text-sm font-medium">Subject</label>
-            <select id="subject" {...register('subject', { required: true })} className={inputClass}>
+            <select id="subject" {...register('subject', { required: true })} className="input">
               {SUBJECTS.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
@@ -124,7 +123,7 @@ export default function NoteEditorPage() {
             <label htmlFor="semester" className="mb-1 block text-sm font-medium">
               Semester <span className="text-gray-400">(optional)</span>
             </label>
-            <input id="semester" {...register('semester')} placeholder="e.g. Sem 2" className={inputClass} />
+            <input id="semester" {...register('semester')} placeholder="e.g. Sem 2" className="input" />
           </div>
         </div>
 
@@ -138,7 +137,7 @@ export default function NoteEditorPage() {
               id="customSubject"
               {...register('customSubject', { required: subject === 'Other' })}
               placeholder="e.g. Business Law, Entrepreneurship…"
-              className={inputClass}
+              className="input"
             />
             {formState.errors.customSubject && (
               <p className="mt-1 text-xs text-red-500">Please specify the subject name</p>
@@ -153,7 +152,7 @@ export default function NoteEditorPage() {
             rows={10}
             {...register('content')}
             placeholder="What did you learn today? Explain it the way you'd tell a friend before the exam…"
-            className={inputClass}
+            className="input"
           />
         </div>
 
@@ -187,7 +186,7 @@ export default function NoteEditorPage() {
               onChange={(e) => setLinkInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addLink())}
               placeholder="Paste Google Drive / Docs / any link…"
-              className={inputClass}
+              className="input"
             />
             <button
               type="button"
@@ -229,13 +228,9 @@ export default function NoteEditorPage() {
           >
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={formState.isSubmitting || uploading}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
+          <Button type="submit" disabled={formState.isSubmitting || uploading}>
             {formState.isSubmitting ? 'Saving…' : 'Save note'}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

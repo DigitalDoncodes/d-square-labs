@@ -35,8 +35,6 @@ const exportCSV = (expenses, month) => {
   URL.revokeObjectURL(a.href);
 };
 
-const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
-
 export default function FinanceOverviewPage() {
   const [month, setMonth]             = useState(currentMonth());
   const [expenses, setExpenses]       = useState(null);
@@ -162,19 +160,19 @@ export default function FinanceOverviewPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1 block text-sm font-medium">Amount (₹)</label>
-              <input type="number" step="0.01" min="0" {...expenseForm.register('amount', { required: true, min: 0.01 })} className={inputClass} />
+              <input type="number" step="0.01" min="0" {...expenseForm.register('amount', { required: true, min: 0.01 })} className="input" />
             </div>
             {entryModal === 'income' ? (
               <div>
                 <label className="mb-1 block text-sm font-medium">Source</label>
-                <select {...expenseForm.register('source')} className={inputClass}>
+                <select {...expenseForm.register('source')} className="input">
                   {SOURCES.map((s) => <option key={s}>{s}</option>)}
                 </select>
               </div>
             ) : (
               <div>
                 <label className="mb-1 block text-sm font-medium">Category</label>
-                <select {...expenseForm.register('category')} className={inputClass}>
+                <select {...expenseForm.register('category')} className="input">
                   {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </div>
@@ -182,11 +180,11 @@ export default function FinanceOverviewPage() {
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium">Note <span className="text-gray-400">(optional)</span></label>
-            <input {...expenseForm.register('note')} placeholder={entryModal === 'income' ? 'e.g. Monthly allowance' : 'e.g. Mess bill'} className={inputClass} />
+            <input {...expenseForm.register('note')} placeholder={entryModal === 'income' ? 'e.g. Monthly allowance' : 'e.g. Mess bill'} className="input" />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium">Date</label>
-            <input type="date" defaultValue={new Date().toISOString().slice(0, 10)} {...expenseForm.register('date')} className={inputClass} />
+            <input type="date" defaultValue={new Date().toISOString().slice(0, 10)} {...expenseForm.register('date')} className="input" />
           </div>
           <button type="submit" disabled={expenseForm.formState.isSubmitting}
             className={`w-full rounded-lg py-2 text-sm font-medium text-white disabled:opacity-50 ${entryModal === 'income' ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
@@ -200,7 +198,7 @@ export default function FinanceOverviewPage() {
         <form onSubmit={budgetForm.handleSubmit(onSetBudget)} className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium">Budget amount (₹ per month)</label>
-            <input type="number" min="0" {...budgetForm.register('monthlyAmount', { required: true })} className={inputClass} />
+            <input type="number" min="0" {...budgetForm.register('monthlyAmount', { required: true })} className="input" />
           </div>
           <button type="submit" disabled={budgetForm.formState.isSubmitting}
             className="w-full rounded-lg bg-indigo-600 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">

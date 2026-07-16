@@ -3,8 +3,6 @@ import { useState } from 'react';
 const formatINR = (n) =>
   '₹' + Math.round(n).toLocaleString('en-IN');
 
-const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 function Field({ label, value, onChange, suffix }) {
   return (
@@ -17,7 +15,7 @@ function Field({ label, value, onChange, suffix }) {
         min="0"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={inputClass}
+        className="input"
       />
     </div>
   );

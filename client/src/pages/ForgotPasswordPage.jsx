@@ -3,11 +3,9 @@ import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { MailCheck } from 'lucide-react';
+import Button from '../components/common/Button';
 import AuthShell from '../components/layout/AuthShell';
 import { forgotPassword } from '../api/auth';
-
-const fieldClass =
-  'w-full rounded-lg border border-gray-300 bg-white/50 px-3 py-2 text-sm transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-900/50';
 
 export default function ForgotPasswordPage() {
   const { register, handleSubmit, formState } = useForm();
@@ -50,15 +48,9 @@ export default function ForgotPasswordPage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label htmlFor="email" className="mb-1 block text-sm font-medium">Email</label>
-          <input id="email" type="email" {...register('email', { required: true })} className={fieldClass} />
+          <input id="email" type="email" {...register('email', { required: true })} className="input" />
         </div>
-        <button
-          type="submit"
-          disabled={formState.isSubmitting}
-          className="w-full rounded-xl bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-indigo-500 disabled:opacity-50"
-        >
-          {formState.isSubmitting ? 'Sending…' : 'Send reset link'}
-        </button>
+        <Button type="submit" fullWidth disabled={formState.isSubmitting} loading={formState.isSubmitting}>Send reset link</Button>
         <p className="text-center text-sm text-gray-500 dark:text-gray-400">
           Remembered it?{' '}
           <Link to="/login" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { BookLock, Lock, Pencil, Plus, Trash2 } from 'lucide-react';
+import { BookLock, Lock, PenLine, Pencil, Plus, Trash2 } from 'lucide-react';
 import {
   listJournal,
   createJournalEntry,
@@ -13,6 +13,7 @@ import { FeedSkeleton } from '../components/common/Skeleton';
 import EmptyState from '../components/common/EmptyState';
 import Modal from '../components/common/Modal';
 import ConfirmModal from '../components/common/ConfirmModal';
+import Button from '../components/common/Button';
 
 const MOODS = [
   { value: 'great', label: '😄 Great' },
@@ -23,9 +24,6 @@ const MOODS = [
 ];
 
 const moodEmoji = (mood) => MOODS.find((m) => m.value === mood)?.label.split(' ')[0] || '🙂';
-
-const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 export default function JournalPage() {
   const [entries, setEntries] = useState(null);
@@ -89,12 +87,7 @@ export default function JournalPage() {
         <h1 className="flex items-center gap-2 text-xl font-bold">
           <BookLock className="h-5 w-5 text-indigo-500" /> My Journal
         </h1>
-        <button
-          onClick={openNew}
-          className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-        >
-          <Plus className="h-4 w-4" /> New entry
-        </button>
+        <Button onClick={openNew} size="sm" icon={PenLine}>New entry</Button>
       </div>
       <p className="mb-5 flex items-center gap-1 text-xs text-gray-400">
         <Lock className="h-3 w-3" /> Completely private — only you can ever see this.
@@ -166,11 +159,11 @@ export default function JournalPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="j-date" className="mb-1 block text-sm font-medium">Date</label>
-              <input id="j-date" type="date" {...register('entryDate', { required: true })} className={inputClass} />
+              <input id="j-date" type="date" {...register('entryDate', { required: true })} className="input" />
             </div>
             <div>
               <label htmlFor="j-mood" className="mb-1 block text-sm font-medium">Mood</label>
-              <select id="j-mood" {...register('mood')} className={inputClass}>
+              <select id="j-mood" {...register('mood')} className="input">
                 {MOODS.map((m) => (
                   <option key={m.value} value={m.value}>{m.label}</option>
                 ))}
@@ -181,7 +174,7 @@ export default function JournalPage() {
             <label htmlFor="j-title" className="mb-1 block text-sm font-medium">
               Title <span className="text-gray-400">(optional)</span>
             </label>
-            <input id="j-title" {...register('title')} placeholder="e.g. First day of Sem 2" className={inputClass} />
+            <input id="j-title" {...register('title')} placeholder="e.g. First day of Sem 2" className="input" />
           </div>
           <div>
             <label htmlFor="j-content" className="mb-1 block text-sm font-medium">What happened?</label>
@@ -190,16 +183,10 @@ export default function JournalPage() {
               rows={6}
               {...register('content', { required: true })}
               placeholder="Write freely — this stays between you and the page…"
-              className={inputClass}
+              className="input"
             />
           </div>
-          <button
-            type="submit"
-            disabled={formState.isSubmitting}
-            className="w-full rounded-lg bg-indigo-600 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {formState.isSubmitting ? 'Saving…' : 'Save entry'}
-          </button>
+          <Button type="submit" fullWidth disabled={formState.isSubmitting}>{formState.isSubmitting ? 'Saving…' : 'Save entry'}</Button>
         </form>
       </Modal>
     </div>

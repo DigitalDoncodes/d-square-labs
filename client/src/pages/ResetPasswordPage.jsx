@@ -1,11 +1,9 @@
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import Button from '../components/common/Button';
 import AuthShell from '../components/layout/AuthShell';
 import { resetPassword } from '../api/auth';
-
-const fieldClass =
-  'w-full rounded-lg border border-gray-300 bg-white/50 px-3 py-2 text-sm transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-900/50';
 
 export default function ResetPasswordPage() {
   const { register, handleSubmit, watch, formState } = useForm();
@@ -51,7 +49,7 @@ export default function ResetPasswordPage() {
             id="password"
             type="password"
             {...register('password', { required: true, minLength: 8 })}
-            className={fieldClass}
+            className="input"
           />
           {formState.errors.password && (
             <p className="mt-1 text-xs text-red-500">At least 8 characters, with a letter and a number</p>
@@ -66,19 +64,13 @@ export default function ResetPasswordPage() {
               required: true,
               validate: (v) => v === watch('password') || 'Passwords do not match',
             })}
-            className={fieldClass}
+            className="input"
           />
           {formState.errors.confirm && (
             <p className="mt-1 text-xs text-red-500">Passwords do not match</p>
           )}
         </div>
-        <button
-          type="submit"
-          disabled={formState.isSubmitting}
-          className="w-full rounded-xl bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-indigo-500 disabled:opacity-50"
-        >
-          {formState.isSubmitting ? 'Resetting…' : 'Reset password'}
-        </button>
+        <Button type="submit" fullWidth disabled={formState.isSubmitting} loading={formState.isSubmitting}>Reset password</Button>
       </form>
     </AuthShell>
   );

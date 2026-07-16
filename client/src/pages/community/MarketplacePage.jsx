@@ -11,8 +11,6 @@ import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { useAuth } from '../../context/AuthContext';
 import { Page } from '../../components/common/motion';
 
-const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
-
 const CATEGORIES = ['books', 'electronics', 'stationery', 'clothing', 'prep-material', 'other'];
 const CONDITIONS = ['new', 'like-new', 'good', 'fair'];
 
@@ -169,19 +167,19 @@ export default function MarketplacePage() {
       {/* Add Listing Modal */}
       <Modal open={showAdd} onClose={() => { setShowAdd(false); reset(); }} title="List an Item">
         <form onSubmit={handleSubmit(onAdd)} className="space-y-3">
-          <input {...register('title', { required: true })} placeholder="Item title *" className={inputClass} />
-          <textarea {...register('description')} placeholder="Description" rows={2} className={inputClass} />
-          <input type="number" {...register('price', { required: true })} placeholder="Price (₹) *" className={inputClass} />
+          <input {...register('title', { required: true })} placeholder="Item title *" className="input" />
+          <textarea {...register('description')} placeholder="Description" rows={2} className="input" />
+          <input type="number" {...register('price', { required: true })} placeholder="Price (₹) *" className="input" />
           <div className="grid grid-cols-2 gap-2">
-            <select {...register('category')} className={inputClass}>
+            <select {...register('category')} className="input">
               {CATEGORIES.map((c) => <option key={c} value={c} className="capitalize">{c.replace('-', ' ')}</option>)}
             </select>
-            <select {...register('condition')} className={inputClass}>
+            <select {...register('condition')} className="input">
               {CONDITIONS.map((c) => <option key={c} value={c} className="capitalize">{c.replace('-', ' ')}</option>)}
             </select>
           </div>
-          <input {...register('contact')} placeholder="Your contact (WhatsApp / email / insta)" className={inputClass} />
-          <input {...register('tags')} placeholder="Tags (comma-separated: CMAT, Notes)" className={inputClass} />
+          <input {...register('contact')} placeholder="Your contact (WhatsApp / email / insta)" className="input" />
+          <input {...register('tags')} placeholder="Tags (comma-separated: CMAT, Notes)" className="input" />
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => { setShowAdd(false); reset(); }} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">Cancel</button>
             <button type="submit" disabled={isSubmitting} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">List</button>

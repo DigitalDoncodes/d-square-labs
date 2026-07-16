@@ -1,8 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
-export const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
+export const inputClass = 'input';
 
 // Common frame for every admin subpage: back link + title + icon.
 export function AdminShell({ title, icon: Icon, subtitle, children }) {

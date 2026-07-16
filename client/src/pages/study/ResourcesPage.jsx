@@ -16,7 +16,6 @@ import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { useAuth } from '../../context/AuthContext';
 import { Page } from '../../components/common/motion';
 
-const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 const TYPE_ICONS = {
   pdf: FileText, word: FileText, excel: FileSpreadsheet, ppt: FileText,
@@ -262,13 +261,13 @@ export default function ResourcesPage() {
         </div>
         {addTab === 'link' ? (
           <form onSubmit={handleSubmit(onAddLink)} className="space-y-3">
-            <input {...register('title', { required: true })} placeholder="Title *" className={inputClass} />
-            <input {...register('url', { required: true })} placeholder="URL / link *" className={inputClass} />
-            <select {...register('type')} className={inputClass}>{TYPES.map((t) => <option key={t} value={t}>{t.toUpperCase()}</option>)}</select>
-            <input {...register('subject')} placeholder="Subject / folder name" className={inputClass} />
-            <input {...register('semester')} placeholder="Semester (e.g. Sem 2)" className={inputClass} />
-            <input {...register('professor')} placeholder="Professor name" className={inputClass} />
-            <input {...register('tags')} placeholder="Tags (comma-separated)" className={inputClass} />
+            <input {...register('title', { required: true })} placeholder="Title *" className="input" />
+            <input {...register('url', { required: true })} placeholder="URL / link *" className="input" />
+            <select {...register('type')} className="input">{TYPES.map((t) => <option key={t} value={t}>{t.toUpperCase()}</option>)}</select>
+            <input {...register('subject')} placeholder="Subject / folder name" className="input" />
+            <input {...register('semester')} placeholder="Semester (e.g. Sem 2)" className="input" />
+            <input {...register('professor')} placeholder="Professor name" className="input" />
+            <input {...register('tags')} placeholder="Tags (comma-separated)" className="input" />
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" onClick={closeModal} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">Cancel</button>
               <button type="submit" disabled={isSubmitting} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">Add</button>
@@ -276,16 +275,16 @@ export default function ResourcesPage() {
           </form>
         ) : (
           <form onSubmit={handleSubmit(onUploadFile)} className="space-y-3">
-            <input {...register('title', { required: true })} placeholder="Title *" className={inputClass} />
+            <input {...register('title', { required: true })} placeholder="Title *" className="input" />
             <div onClick={() => fileRef.current?.click()} className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 py-6 hover:border-indigo-400 dark:border-gray-700">
               <Upload className="h-7 w-7 text-gray-400" />
               {selectedFile ? <p className="text-sm font-medium text-indigo-600">{selectedFile.name}</p> : <p className="text-sm text-gray-500">Click to select a file (PDF, PPT, Word, Excel, ZIP, Video · max 50 MB)</p>}
               <input ref={fileRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.mp4,.webm" onChange={(e) => setSelectedFile(e.target.files[0] || null)} />
             </div>
-            <input {...register('subject')} placeholder="Subject / folder name" className={inputClass} />
-            <input {...register('semester')} placeholder="Semester (e.g. Sem 2)" className={inputClass} />
-            <input {...register('professor')} placeholder="Professor name" className={inputClass} />
-            <input {...register('tags')} placeholder="Tags (comma-separated)" className={inputClass} />
+            <input {...register('subject')} placeholder="Subject / folder name" className="input" />
+            <input {...register('semester')} placeholder="Semester (e.g. Sem 2)" className="input" />
+            <input {...register('professor')} placeholder="Professor name" className="input" />
+            <input {...register('tags')} placeholder="Tags (comma-separated)" className="input" />
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" onClick={closeModal} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">Cancel</button>
               <button type="submit" disabled={uploading} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">{uploading ? 'Uploading…' : 'Upload'}</button>

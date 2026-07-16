@@ -12,7 +12,6 @@ import { TASK_TYPES } from '../../utils/constants';
 const ACADEMIC_TYPES = ['case-study', 'exam', 'deadline', 'other'];
 const TYPE_LABEL = { 'case-study': 'Case study', exam: 'Exam', deadline: 'Deadline', 'interview-prep': 'Interview Prep', other: 'Task' };
 
-const inputClass = 'w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 function NewAssignmentModal({ onClose, onCreated }) {
   const [form, setForm] = useState({ title: '', type: 'deadline', subject: '', dueDate: '', description: '' });
@@ -43,27 +42,27 @@ function NewAssignmentModal({ onClose, onCreated }) {
         <div className="space-y-3">
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-500">Title *</label>
-            <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={inputClass} placeholder="e.g. Marketing Case Analysis" />
+            <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="input" placeholder="e.g. Marketing Case Analysis" />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">Type</label>
-              <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className={inputClass}>
+              <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="input">
                 {TASK_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">Due date</label>
-              <input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} className={inputClass} />
+              <input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} className="input" />
             </div>
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-500">Subject (optional)</label>
-            <input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} className={inputClass} placeholder="e.g. Marketing" />
+            <input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} className="input" placeholder="e.g. Marketing" />
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-500">Notes (optional)</label>
-            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className={inputClass} placeholder="What do you need to prepare?" />
+            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="input" placeholder="What do you need to prepare?" />
           </div>
         </div>
         <div className="mt-4 flex justify-end gap-2">

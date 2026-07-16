@@ -10,6 +10,7 @@ import { FeedSkeleton } from '../components/common/Skeleton';
 import TierGate from '../components/common/TierGate';
 import AIBadge from '../components/common/AIBadge';
 import CrownBadge from '../components/common/CrownBadge';
+import Button from '../components/common/Button';
 
 function AIReviewPanel() {
   const [state, setState] = useState('idle');
@@ -101,9 +102,6 @@ function AIReviewPanel() {
     </div>
   );
 }
-
-const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 const emptyForm = {
   personal: { fullName: '', email: '', phone: '', location: '', linkedin: '', website: '' },
@@ -238,26 +236,27 @@ export default function ResumePage() {
           >
             <Layout className="h-4 w-4" /> Templates
           </button>
-          <button
-            form="resume-form"
-            type="submit"
+          <Button
+            size="sm"
+            onClick={handleSubmit(onSave)}
             disabled={formState.isSubmitting}
-            className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            loading={formState.isSubmitting}
+            icon={Save}
           >
-            <Save className="h-4 w-4" /> {formState.isSubmitting ? 'Saving…' : 'Save'}
-          </button>
+            {formState.isSubmitting ? 'Saving…' : 'Save'}
+          </Button>
         </div>
       </div>
 
       <form id="resume-form" onSubmit={handleSubmit(onSave)} className="space-y-4">
         <Section title="Personal details">
           <div className="grid gap-3 sm:grid-cols-2">
-            <input {...register('personal.fullName')} placeholder="Full name" aria-label="Full name" className={inputClass} />
-            <input {...register('personal.email')} placeholder="Email" aria-label="Email" className={inputClass} />
-            <input {...register('personal.phone')} placeholder="Phone" aria-label="Phone" className={inputClass} />
-            <input {...register('personal.location')} placeholder="City, State" aria-label="Location" className={inputClass} />
-            <input {...register('personal.linkedin')} placeholder="LinkedIn URL" aria-label="LinkedIn URL" className={inputClass} />
-            <input {...register('personal.website')} placeholder="Portfolio/website (optional)" aria-label="Website" className={inputClass} />
+            <input {...register('personal.fullName')} placeholder="Full name" aria-label="Full name" className="input" />
+            <input {...register('personal.email')} placeholder="Email" aria-label="Email" className="input" />
+            <input {...register('personal.phone')} placeholder="Phone" aria-label="Phone" className="input" />
+            <input {...register('personal.location')} placeholder="City, State" aria-label="Location" className="input" />
+            <input {...register('personal.linkedin')} placeholder="LinkedIn URL" aria-label="LinkedIn URL" className="input" />
+            <input {...register('personal.website')} placeholder="Portfolio/website (optional)" aria-label="Website" className="input" />
           </div>
         </Section>
 
@@ -267,7 +266,7 @@ export default function ResumePage() {
             rows={3}
             placeholder="MBA candidate specialising in Finance with experience in…"
             aria-label="Professional summary"
-            className={inputClass}
+            className="input"
           />
         </Section>
 
@@ -280,10 +279,10 @@ export default function ResumePage() {
           >
             {(i) => (
               <div className="grid gap-3 sm:grid-cols-2">
-                <input {...register(`education.${i}.degree`)} placeholder="Degree (e.g. MBA — Finance)" aria-label="Degree" className={inputClass} />
-                <input {...register(`education.${i}.institution`)} placeholder="Institution" aria-label="Institution" className={inputClass} />
-                <input {...register(`education.${i}.years`)} placeholder="Years (e.g. 2025–2027)" aria-label="Years" className={inputClass} />
-                <input {...register(`education.${i}.score`)} placeholder="CGPA / % (optional)" aria-label="Score" className={inputClass} />
+                <input {...register(`education.${i}.degree`)} placeholder="Degree (e.g. MBA — Finance)" aria-label="Degree" className="input" />
+                <input {...register(`education.${i}.institution`)} placeholder="Institution" aria-label="Institution" className="input" />
+                <input {...register(`education.${i}.years`)} placeholder="Years (e.g. 2025–2027)" aria-label="Years" className="input" />
+                <input {...register(`education.${i}.score`)} placeholder="CGPA / % (optional)" aria-label="Score" className="input" />
               </div>
             )}
           </EntryList>
@@ -299,16 +298,16 @@ export default function ResumePage() {
             {(i) => (
               <div className="grid gap-3">
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <input {...register(`experience.${i}.role`)} placeholder="Role" aria-label="Role" className={inputClass} />
-                  <input {...register(`experience.${i}.organization`)} placeholder="Company / Organization" aria-label="Organization" className={inputClass} />
-                  <input {...register(`experience.${i}.duration`)} placeholder="Duration (e.g. May–Jul 2026)" aria-label="Duration" className={inputClass} />
+                  <input {...register(`experience.${i}.role`)} placeholder="Role" aria-label="Role" className="input" />
+                  <input {...register(`experience.${i}.organization`)} placeholder="Company / Organization" aria-label="Organization" className="input" />
+                  <input {...register(`experience.${i}.duration`)} placeholder="Duration (e.g. May–Jul 2026)" aria-label="Duration" className="input" />
                 </div>
                 <textarea
                   {...register(`experience.${i}.description`)}
                   rows={3}
                   placeholder={'One bullet per line:\nAnalysed sales data for 3 regions…\nPresented findings to senior management…'}
                   aria-label="Description"
-                  className={inputClass}
+                  className="input"
                 />
               </div>
             )}
@@ -325,15 +324,15 @@ export default function ResumePage() {
             {(i) => (
               <div className="grid gap-3">
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <input {...register(`projects.${i}.title`)} placeholder="Project title" aria-label="Project title" className={inputClass} />
-                  <input {...register(`projects.${i}.link`)} placeholder="Link (optional)" aria-label="Project link" className={inputClass} />
+                  <input {...register(`projects.${i}.title`)} placeholder="Project title" aria-label="Project title" className="input" />
+                  <input {...register(`projects.${i}.link`)} placeholder="Link (optional)" aria-label="Project link" className="input" />
                 </div>
                 <textarea
                   {...register(`projects.${i}.description`)}
                   rows={2}
                   placeholder="What it was, what you did, the result"
                   aria-label="Project description"
-                  className={inputClass}
+                  className="input"
                 />
               </div>
             )}
@@ -341,7 +340,7 @@ export default function ResumePage() {
         </Section>
 
         <Section title="Skills" hint="One skill per line (e.g. Financial Modelling, Excel, Power BI, SQL)">
-          <textarea {...register('skillsText')} rows={4} aria-label="Skills" className={inputClass} />
+          <textarea {...register('skillsText')} rows={4} aria-label="Skills" className="input" />
         </Section>
 
         <Section title="Certifications">
@@ -353,30 +352,31 @@ export default function ResumePage() {
           >
             {(i) => (
               <div className="grid gap-3 sm:grid-cols-3">
-                <input {...register(`certifications.${i}.name`)} placeholder="Certification" aria-label="Certification name" className={inputClass} />
-                <input {...register(`certifications.${i}.issuer`)} placeholder="Issuer" aria-label="Issuer" className={inputClass} />
-                <input {...register(`certifications.${i}.year`)} placeholder="Year" aria-label="Year" className={inputClass} />
+                <input {...register(`certifications.${i}.name`)} placeholder="Certification" aria-label="Certification name" className="input" />
+                <input {...register(`certifications.${i}.issuer`)} placeholder="Issuer" aria-label="Issuer" className="input" />
+                <input {...register(`certifications.${i}.year`)} placeholder="Year" aria-label="Year" className="input" />
               </div>
             )}
           </EntryList>
         </Section>
 
         <Section title="Achievements" hint="One per line — awards, ranks, competitions">
-          <textarea {...register('achievementsText')} rows={3} aria-label="Achievements" className={inputClass} />
+          <textarea {...register('achievementsText')} rows={3} aria-label="Achievements" className="input" />
         </Section>
 
         <Section title="Leadership & extracurricular" hint="One per line — clubs, committees, volunteering">
-          <textarea {...register('leadershipText')} rows={3} aria-label="Leadership and extracurricular" className={inputClass} />
+          <textarea {...register('leadershipText')} rows={3} aria-label="Leadership and extracurricular" className="input" />
         </Section>
 
         <div className="flex justify-end">
-          <button
+          <Button
             type="submit"
             disabled={formState.isSubmitting}
-            className="flex items-center gap-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            loading={formState.isSubmitting}
+            icon={Save}
           >
-            <Save className="h-4 w-4" /> {formState.isSubmitting ? 'Saving…' : 'Save resume'}
-          </button>
+            {formState.isSubmitting ? 'Saving…' : 'Save resume'}
+          </Button>
         </div>
       </form>
 

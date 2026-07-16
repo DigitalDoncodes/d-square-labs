@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { MessageSquare, Heart, Send, Pin, User } from 'lucide-react';
 
-const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 export default function MemoryStream({ memories = [], itemId, onAddMemory }) {
   const memoryList = memories;
@@ -41,7 +39,7 @@ export default function MemoryStream({ memories = [], itemId, onAddMemory }) {
             aria-label="Memory title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className={inputClass}
+            className="input"
           />
           <textarea
             rows={3}
@@ -49,7 +47,7 @@ export default function MemoryStream({ memories = [], itemId, onAddMemory }) {
             aria-label="Memory story"
             value={story}
             onChange={(e) => setStory(e.target.value)}
-            className={inputClass}
+            className="input"
           />
           <button
             type="submit"

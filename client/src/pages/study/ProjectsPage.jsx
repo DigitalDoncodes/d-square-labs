@@ -10,7 +10,6 @@ import Modal from '../../components/common/Modal';
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { Page } from '../../components/common/motion';
 
-const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 const COLUMNS = [
   { key: 'todo', label: 'To Do', color: 'border-gray-300 dark:border-gray-700' },
@@ -185,10 +184,10 @@ export default function ProjectsPage() {
 
       <Modal open={showAdd} onClose={() => { setShowAdd(false); reset(); }} title="New Project">
         <form onSubmit={handleSubmit(onAdd)} className="space-y-3">
-          <input {...register('title', { required: true })} placeholder="Project title *" className={inputClass} />
-          <textarea {...register('description')} placeholder="What's this project about?" rows={2} className={inputClass} />
-          <input {...register('subject')} placeholder="Subject / course" className={inputClass} />
-          <input type="date" {...register('deadline')} className={inputClass} />
+          <input {...register('title', { required: true })} placeholder="Project title *" className="input" />
+          <textarea {...register('description')} placeholder="What's this project about?" rows={2} className="input" />
+          <input {...register('subject')} placeholder="Subject / course" className="input" />
+          <input type="date" {...register('deadline')} className="input" />
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => { setShowAdd(false); reset(); }} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">Cancel</button>
             <button type="submit" disabled={isSubmitting} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">Create</button>

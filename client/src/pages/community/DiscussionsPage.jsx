@@ -10,6 +10,7 @@ import {
   createReply, deleteReply, likeReply,
 } from '../../api/posts';
 import { formatDate } from '../../utils/dateUtils';
+import Button from '../../components/common/Button';
 import EmptyState from '../../components/common/EmptyState';
 import Modal from '../../components/common/Modal';
 import { FeedSkeleton } from '../../components/common/Skeleton';
@@ -368,9 +369,9 @@ function PostCard({ post: initial, currentUserId, isAdmin }) {
             <button onClick={() => setDeletePostOpen(false)} className="rounded-lg px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">
               Cancel
             </button>
-            <button onClick={handleDeletePost} className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">
+            <Button variant="danger" size="sm" onClick={handleDeletePost}>
               Delete post
-            </button>
+            </Button>
           </div>
         </div>
       </Modal>
@@ -384,9 +385,9 @@ function PostCard({ post: initial, currentUserId, isAdmin }) {
             <button onClick={() => setDeleteReplyId(null)} className="rounded-lg px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">
               Cancel
             </button>
-            <button onClick={handleDeleteReply} className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">
+            <Button variant="danger" size="sm" onClick={handleDeleteReply}>
               Delete reply
-            </button>
+            </Button>
           </div>
         </div>
       </Modal>

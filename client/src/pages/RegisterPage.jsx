@@ -3,6 +3,7 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { MailCheck } from 'lucide-react';
+import Button from '../components/common/Button';
 import AuthShell from '../components/layout/AuthShell';
 import { register as registerApi } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
@@ -46,7 +47,7 @@ const DEFAULT_VALUES = {
 
 export default function RegisterPage() {
   const methods = useForm({ defaultValues: DEFAULT_VALUES, mode: 'onChange' });
-  const { handleSubmit, formState: { isSubmitting } } = methods;
+  const { handleSubmit, formState: { isSubmitting, isValid } } = methods;
   const { login } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -139,13 +140,7 @@ export default function RegisterPage() {
 
           <div className={`flex gap-3 pt-1 ${step > 0 ? 'justify-between' : ''}`}>
             {step > 0 && (
-              <button
-                type="button"
-                onClick={back}
-                className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-              >
-                Back
-              </button>
+              <Button variant="secondary" onClick={back}>Back</Button>
             )}
             {isLast ? (
               <button
@@ -156,13 +151,7 @@ export default function RegisterPage() {
                 {isSubmitting ? 'Creating your workspace…' : 'Create My Workspace ✨'}
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={next}
-                className={`${step > 0 ? 'flex-1' : 'w-full'} rounded-xl bg-indigo-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700`}
-              >
-                {isWelcome ? 'Get started →' : 'Continue →'}
-              </button>
+              <Button type="submit" disabled={isSubmitting || !isValid} fullWidth={step === 0} loading={isSubmitting} className={step > 0 ? 'flex-1' : ''}>{step > 0 ? (step < totalSteps ? 'Continue →' : 'Get started →') : 'Get started →'}</Button>
             )}
           </div>
 

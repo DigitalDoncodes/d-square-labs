@@ -3,8 +3,6 @@ import { useFormContext } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Check } from 'lucide-react';
 
-const fieldClass =
-  'w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100';
 
 function StrengthBar({ password }) {
   const checks = [
@@ -64,7 +62,7 @@ export default function ProgramStep() {
           <input
             {...register('name', { required: 'Name is required', minLength: { value: 2, message: 'At least 2 characters' } })}
             placeholder="e.g. Arjun Mehta"
-            className={fieldClass}
+            className="input"
           />
           {name.trim().length >= 2 && (
             <Check className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500" />
@@ -85,7 +83,7 @@ export default function ProgramStep() {
             pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Enter a valid email' },
           })}
           placeholder="you@college.edu"
-          className={fieldClass}
+          className="input"
         />
         {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
       </div>
@@ -104,7 +102,7 @@ export default function ProgramStep() {
               validate: (v) => (/[a-zA-Z]/.test(v) && /[0-9]/.test(v)) || 'Include at least one letter and one number',
             })}
             placeholder="Min 8 chars, letter + number"
-            className={`${fieldClass} pr-10`}
+            className="input pr-10"
           />
           <button
             type="button"
@@ -125,13 +123,13 @@ export default function ProgramStep() {
           <label className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-gray-400">
             Roll number <span className="text-gray-400 font-normal">(opt)</span>
           </label>
-          <input {...register('rollNumber')} placeholder="2024MBA001" className={fieldClass} />
+          <input {...register('rollNumber')} placeholder="2024MBA001" className="input" />
         </div>
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-gray-400">
             Referral code <span className="text-gray-400 font-normal">(opt)</span>
           </label>
-          <input {...register('referralCode')} placeholder="DHAT-7K2M" className={fieldClass} />
+          <input {...register('referralCode')} placeholder="DHAT-7K2M" className="input" />
         </div>
       </div>
       <p className="text-[11px] text-gray-400">

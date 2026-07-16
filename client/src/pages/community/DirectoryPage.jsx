@@ -11,8 +11,6 @@ import Modal from '../../components/common/Modal';
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { Page } from '../../components/common/motion';
 
-const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
-
 function Avatar({ name, avatar, size = 'md' }) {
   const sizes = { sm: 'h-8 w-8 text-xs', md: 'h-12 w-12 text-base', lg: 'h-20 w-20 text-2xl' };
   if (avatar) return <img src={avatar} alt={name} className={`${sizes[size]} rounded-full object-cover`} />;
@@ -185,7 +183,7 @@ export default function DirectoryPage() {
       {/* Edit Profile Modal */}
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="My Profile">
         <form onSubmit={handleSubmit(onSaveProfile)} className="space-y-3">
-          <textarea {...register('bio')} placeholder="Short bio (max 300 chars)" maxLength={300} rows={2} className={inputClass} />
+          <textarea {...register('bio')} placeholder="Short bio (max 300 chars)" maxLength={300} rows={2} className="input" />
           <SmartSelect
             options={ALL_SPECS}
             value={watch('specialization') || ''}
@@ -196,15 +194,15 @@ export default function DirectoryPage() {
             variant="dropdown"
             name="specialization"
           />
-          <input {...register('batch')} placeholder="Batch / year (e.g. 2025-27)" className={inputClass} />
-          <input {...register('skills')} placeholder="Skills (comma-sep: Excel, Python, Financial Modelling)" className={inputClass} />
-          <input {...register('interests')} placeholder="Interests (comma-sep: VC, Consulting, FMCG)" className={inputClass} />
-          <input {...register('clubs')} placeholder="Clubs / committees (comma-sep)" className={inputClass} />
-          <input {...register('languages')} placeholder="Languages (comma-sep)" className={inputClass} />
-          <input {...register('linkedin')} placeholder="LinkedIn URL" className={inputClass} />
-          <input {...register('github')} placeholder="GitHub URL (optional)" className={inputClass} />
-          <input {...register('portfolio')} placeholder="Portfolio / website URL (optional)" className={inputClass} />
-          <input {...register('lookingFor')} placeholder="Looking for (e.g. study partner, project teammate)" className={inputClass} />
+          <input {...register('batch')} placeholder="Batch / year (e.g. 2025-27)" className="input" />
+          <input {...register('skills')} placeholder="Skills (comma-sep: Excel, Python, Financial Modelling)" className="input" />
+          <input {...register('interests')} placeholder="Interests (comma-sep: VC, Consulting, FMCG)" className="input" />
+          <input {...register('clubs')} placeholder="Clubs / committees (comma-sep)" className="input" />
+          <input {...register('languages')} placeholder="Languages (comma-sep)" className="input" />
+          <input {...register('linkedin')} placeholder="LinkedIn URL" className="input" />
+          <input {...register('github')} placeholder="GitHub URL (optional)" className="input" />
+          <input {...register('portfolio')} placeholder="Portfolio / website URL (optional)" className="input" />
+          <input {...register('lookingFor')} placeholder="Looking for (e.g. study partner, project teammate)" className="input" />
           <SmartSelect
             options={DIR_DOMAINS}
             value={watch('preMbaDomain') || ''}

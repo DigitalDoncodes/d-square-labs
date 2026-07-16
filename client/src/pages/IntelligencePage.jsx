@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Newspaper, RefreshCw, Sparkles, LineChart, Bookmark, SlidersHorizontal, Star } from 'lucide-react';
+import Button from '../components/common/Button';
 import {
   listArticles,
   listBookmarked,
@@ -120,13 +121,7 @@ export default function IntelligencePage() {
             <SlidersHorizontal className="h-4 w-4" /> Topics
           </button>
           {isAdmin && (
-            <button
-              onClick={onRefresh}
-              disabled={refreshing}
-              className="flex items-center gap-1 rounded-lg bg-indigo-600 px-2.5 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-            >
-              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} /> Refresh
-            </button>
+            <Button size="sm" onClick={onRefresh} disabled={refreshing} icon={RefreshCw}>Refresh</Button>
           )}
         </div>
       </div>
@@ -191,12 +186,7 @@ export default function IntelligencePage() {
           }
           action={
             view === 'foryou' && !hasInterests ? (
-              <button
-                onClick={() => setTopicsOpen(true)}
-                className="mt-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-              >
-                Choose topics
-              </button>
+              <Button onClick={() => setTopicsOpen(true)} className="mt-2">Choose topics</Button>
             ) : undefined
           }
         />

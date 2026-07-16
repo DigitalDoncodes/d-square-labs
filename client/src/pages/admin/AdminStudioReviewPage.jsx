@@ -4,6 +4,7 @@ import {
   Sparkles, Loader2, AlertTriangle, CheckCircle2, RefreshCw, Trash2,
   CalendarClock, Save, Send, ExternalLink,
 } from 'lucide-react';
+import Button from '../../components/common/Button';
 import { AdminShell, inputClass } from './shared';
 import {
   getItem, updateItem, publishItem, draftItem, scheduleItem, reanalyzeItem,
@@ -161,12 +162,9 @@ export default function AdminStudioReviewPage() {
             <AlertTriangle className="h-4 w-4" /> Analysis failed
           </p>
           <p className="mb-3 text-rose-600 dark:text-rose-400">{item.rejectedReason}</p>
-          <button
-            onClick={act('reanalyze', async () => { await reanalyzeItem(id); await load(); })}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-700"
-          >
+          <Button variant="danger" size="sm" onClick={act('reanalyze', async () => { await reanalyzeItem(id); await load(); })}>
             <RefreshCw className="h-3.5 w-3.5" /> Retry analysis
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="grid gap-5 md:grid-cols-[280px,1fr]">

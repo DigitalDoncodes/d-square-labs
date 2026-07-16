@@ -11,7 +11,6 @@ import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { useAuth } from '../../context/AuthContext';
 import { Page } from '../../components/common/motion';
 
-const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 const CONDITION_LABELS = { new: 'New', 'like-new': 'Like New', good: 'Good', fair: 'Fair' };
 
@@ -123,15 +122,15 @@ export default function InternshipsPage() {
 
       <Modal open={showAdd} onClose={() => { setShowAdd(false); reset(); }} title="Post Internship">
         <form onSubmit={handleSubmit(onAdd)} className="space-y-3">
-          <input {...register('title', { required: true })} placeholder="Role / title *" className={inputClass} />
-          <input {...register('company', { required: true })} placeholder="Company *" className={inputClass} />
-          <input {...register('applyLink', { required: true })} placeholder="Apply link *" className={inputClass} />
-          <input {...register('location')} placeholder="Location (e.g. Mumbai)" className={inputClass} />
-          <input {...register('stipend')} placeholder="Stipend (e.g. ₹15,000/month)" className={inputClass} />
-          <input {...register('duration')} placeholder="Duration (e.g. 2 months)" className={inputClass} />
-          <input type="date" {...register('deadline')} className={inputClass} />
-          <input {...register('eligibility')} placeholder="Eligibility" className={inputClass} />
-          <input {...register('tags')} placeholder="Tags (comma-separated: Finance, Excel)" className={inputClass} />
+          <input {...register('title', { required: true })} placeholder="Role / title *" className="input" />
+          <input {...register('company', { required: true })} placeholder="Company *" className="input" />
+          <input {...register('applyLink', { required: true })} placeholder="Apply link *" className="input" />
+          <input {...register('location')} placeholder="Location (e.g. Mumbai)" className="input" />
+          <input {...register('stipend')} placeholder="Stipend (e.g. ₹15,000/month)" className="input" />
+          <input {...register('duration')} placeholder="Duration (e.g. 2 months)" className="input" />
+          <input type="date" {...register('deadline')} className="input" />
+          <input {...register('eligibility')} placeholder="Eligibility" className="input" />
+          <input {...register('tags')} placeholder="Tags (comma-separated: Finance, Excel)" className="input" />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" {...register('remote')} className="rounded" /> Remote / hybrid
           </label>

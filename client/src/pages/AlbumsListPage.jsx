@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { Camera, Plus, Image, Trash2, ExternalLink } from 'lucide-react';
+import Button from '../components/common/Button';
 import { listAlbums, createAlbum, deleteAlbum } from '../api/albums';
 import { useAuth } from '../context/AuthContext';
 import { formatDate } from '../utils/dateUtils';
@@ -9,9 +10,6 @@ import { CardGridSkeleton } from '../components/common/Skeleton';
 import EmptyState from '../components/common/EmptyState';
 import Modal from '../components/common/Modal';
 import ConfirmModal from '../components/common/ConfirmModal';
-
-const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 export default function AlbumsListPage() {
   const [albums, setAlbums] = useState(null);
@@ -53,12 +51,7 @@ export default function AlbumsListPage() {
     <div className="mx-auto max-w-5xl px-4 py-6">
       <div className="mb-1 flex items-center justify-between">
         <h1 className="text-xl font-bold">Photo Albums</h1>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-        >
-          <Plus className="h-4 w-4" /> Add album
-        </button>
+        <Button size="sm" onClick={() => setModalOpen(true)} icon={Plus}>Add album</Button>
       </div>
       <p className="mb-4 text-xs text-gray-400">
         Albums link to shared Google Photos — click any card to open the full album.
@@ -140,7 +133,7 @@ export default function AlbumsListPage() {
               id="album-title"
               {...register('title', { required: true })}
               placeholder="e.g. Orientation Week"
-              className={inputClass}
+              className="input"
             />
           </div>
           <div>
@@ -151,7 +144,7 @@ export default function AlbumsListPage() {
               id="album-link"
               {...register('link', { required: true })}
               placeholder="https://photos.app.goo.gl/…"
-              className={inputClass}
+              className="input"
             />
             <p className="mt-1 text-xs text-gray-400">
               In Google Photos: open the album → Share → Create link → paste it here.
@@ -165,22 +158,18 @@ export default function AlbumsListPage() {
               id="album-cover"
               {...register('cover')}
               placeholder="https://… (leave blank for a default cover)"
-              className={inputClass}
+              className="input"
             />
           </div>
           <div>
             <label htmlFor="album-desc" className="mb-1 block text-sm font-medium">
               Description <span className="text-gray-400">(optional)</span>
             </label>
-            <input id="album-desc" {...register('description')} className={inputClass} />
+            <input id="album-desc" {...register('description')} className="input" />
           </div>
-          <button
-            type="submit"
-            disabled={formState.isSubmitting}
-            className="w-full rounded-lg bg-indigo-600 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            Add album
-          </button>
+          <Button type="submit" fullWidth disabled={formState.isSubmitting}>
+            {formState.isSubmitting ? 'Saving…' : 'Save'}
+          </Button>
         </form>
       </Modal>
     </div>

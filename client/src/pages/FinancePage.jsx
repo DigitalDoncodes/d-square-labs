@@ -31,8 +31,6 @@ const TABS = [
   { key: 'learn',       label: 'Learn',       icon: BookOpen },
 ];
 
-const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 /* ─── CSV export ─────────────────────────────────────────── */
 const exportCSV = (expenses, month) => {
@@ -84,7 +82,7 @@ function SIPCalculator() {
               placeholder={placeholder}
               value={sip[key]}
               onChange={(e) => setSip((p) => ({ ...p, [key]: e.target.value }))}
-              className={inputClass}
+              className="input"
             />
           </div>
         ))}
@@ -137,7 +135,7 @@ function EMICalculator() {
               placeholder={placeholder}
               value={loan[key]}
               onChange={(e) => setLoan((p) => ({ ...p, [key]: e.target.value }))}
-              className={inputClass}
+              className="input"
             />
           </div>
         ))}
@@ -189,7 +187,7 @@ function GoalCalculator() {
               placeholder={placeholder}
               value={g[key]}
               onChange={(e) => setG((p) => ({ ...p, [key]: e.target.value }))}
-              className={inputClass}
+              className="input"
             />
           </div>
         ))}
@@ -558,19 +556,19 @@ export default function FinancePage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="exp-amount" className="mb-1 block text-sm font-medium">Amount (₹)</label>
-              <input id="exp-amount" type="number" step="0.01" min="0" {...expenseForm.register('amount', { required: true, min: 0.01 })} className={inputClass} />
+              <input id="exp-amount" type="number" step="0.01" min="0" {...expenseForm.register('amount', { required: true, min: 0.01 })} className="input" />
             </div>
             {entryModal === 'income' ? (
               <div>
                 <label htmlFor="exp-source" className="mb-1 block text-sm font-medium">Source</label>
-                <select id="exp-source" {...expenseForm.register('source')} className={inputClass}>
+                <select id="exp-source" {...expenseForm.register('source')} className="input">
                   {SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
             ) : (
               <div>
                 <label htmlFor="exp-category" className="mb-1 block text-sm font-medium">Category</label>
-                <select id="exp-category" {...expenseForm.register('category')} className={inputClass}>
+                <select id="exp-category" {...expenseForm.register('category')} className="input">
                   {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
@@ -578,11 +576,11 @@ export default function FinancePage() {
           </div>
           <div>
             <label htmlFor="exp-note" className="mb-1 block text-sm font-medium">Note <span className="text-gray-400">(optional)</span></label>
-            <input id="exp-note" {...expenseForm.register('note')} placeholder={entryModal === 'income' ? 'e.g. Monthly allowance' : 'e.g. Mess bill'} className={inputClass} />
+            <input id="exp-note" {...expenseForm.register('note')} placeholder={entryModal === 'income' ? 'e.g. Monthly allowance' : 'e.g. Mess bill'} className="input" />
           </div>
           <div>
             <label htmlFor="exp-date" className="mb-1 block text-sm font-medium">Date</label>
-            <input id="exp-date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} {...expenseForm.register('date')} className={inputClass} />
+            <input id="exp-date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} {...expenseForm.register('date')} className="input" />
           </div>
           <button type="submit" disabled={expenseForm.formState.isSubmitting} className={`w-full rounded-lg py-2 text-sm font-medium text-white disabled:opacity-50 ${entryModal === 'income' ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
             {entryModal === 'income' ? 'Add income' : 'Add expense'}
@@ -594,7 +592,7 @@ export default function FinancePage() {
         <form onSubmit={budgetForm.handleSubmit(onSetBudget)} className="space-y-4">
           <div>
             <label htmlFor="budget-amount" className="mb-1 block text-sm font-medium">Budget amount (₹ per month)</label>
-            <input id="budget-amount" type="number" min="0" {...budgetForm.register('monthlyAmount', { required: true, min: 0 })} className={inputClass} />
+            <input id="budget-amount" type="number" min="0" {...budgetForm.register('monthlyAmount', { required: true, min: 0 })} className="input" />
           </div>
           <button type="submit" disabled={budgetForm.formState.isSubmitting} className="w-full rounded-lg bg-indigo-600 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
             Save budget

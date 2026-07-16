@@ -13,6 +13,7 @@ import Modal from '../components/common/Modal';
 import ConfirmModal from '../components/common/ConfirmModal';
 import TierGate from '../components/common/TierGate';
 import CrownBadge from '../components/common/CrownBadge';
+import Button from '../components/common/Button';
 
 function AIPlannerPanel() {
   const [state, setState] = useState('idle');
@@ -77,9 +78,6 @@ function AIPlannerPanel() {
     </div>
   );
 }
-
-const inputClass =
-  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
 
 const statusStyles = {
   pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
@@ -190,12 +188,7 @@ export default function PlannerPage() {
               <option key={s.value} value={s.value}>{s.label}</option>
             ))}
           </select>
-          <button
-            onClick={openNew}
-            className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-          >
-            <Plus className="h-4 w-4" /> Add task
-          </button>
+          <Button onClick={openNew} size="sm">Add task</Button>
         </div>
       </div>
 
@@ -289,13 +282,13 @@ export default function PlannerPage() {
               id="task-title"
               {...register('title', { required: true })}
               placeholder="e.g. Submit Marketing Case 3"
-              className={inputClass}
+              className="input"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="task-type" className="mb-1 block text-sm font-medium">Type</label>
-              <select id="task-type" {...register('type')} className={inputClass}>
+              <select id="task-type" {...register('type')} className="input">
                 {TASK_TYPES.map((t) => (
                   <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
@@ -303,7 +296,7 @@ export default function PlannerPage() {
             </div>
             <div>
               <label htmlFor="task-subject" className="mb-1 block text-sm font-medium">Subject</label>
-              <select id="task-subject" {...register('subject')} className={inputClass}>
+              <select id="task-subject" {...register('subject')} className="input">
                 <option value="">None</option>
                 {SUBJECTS.map((s) => (
                   <option key={s} value={s}>{s}</option>
@@ -317,7 +310,7 @@ export default function PlannerPage() {
               id="task-due"
               type="date"
               {...register('dueDate', { required: true })}
-              className={inputClass}
+              className="input"
             />
           </div>
           {!editing && (
@@ -326,13 +319,7 @@ export default function PlannerPage() {
               Assign to me (otherwise it's for the whole batch)
             </label>
           )}
-          <button
-            type="submit"
-            disabled={formState.isSubmitting}
-            className="w-full rounded-lg bg-indigo-600 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {formState.isSubmitting ? 'Saving…' : editing ? 'Save changes' : 'Add task'}
-          </button>
+          <Button type="submit" fullWidth disabled={formState.isSubmitting}>{formState.isSubmitting ? 'Saving…' : editing ? 'Save changes' : 'Add task'}</Button>
         </form>
       </Modal>
     </div>

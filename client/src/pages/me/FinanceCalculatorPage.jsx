@@ -3,8 +3,6 @@ import { TrendingUp, Sprout, Umbrella, PiggyBank, Banknote } from 'lucide-react'
 import { Page } from '../../components/common/motion';
 
 const inr = (n) => '₹' + Math.round(n).toLocaleString('en-IN');
-const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900';
-
 function Field({ label, value, onChange, suffix }) {
   return (
     <label className="block">
@@ -12,7 +10,7 @@ function Field({ label, value, onChange, suffix }) {
       <div className="relative">
         <input type="number" min="0" value={value}
           onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))}
-          className={inputClass}
+          className="input"
         />
         {suffix && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">{suffix}</span>}
       </div>
