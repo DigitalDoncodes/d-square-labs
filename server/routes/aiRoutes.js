@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const verifyToken = require('../middleware/verifyToken');
-const checkTier   = require('../middleware/checkTier');
+const { requireFeature } = require('../subscription/permissionEngine');
+const { FEATURE } = require('../subscription/featureRegistry');
 const checkRole   = require('../middleware/checkRole');
 const aiQuota     = require('../middleware/aiQuota');
 const { generalLimiter } = require('../middleware/rateLimiters');
@@ -18,7 +19,7 @@ router.use(generalLimiter);
 
 // ── Summarise Note ────────────────────────────────────────────────────────
 
-router.post('/summarise/:noteId', checkTier('trial'), aiQuota, async (req, res, next) => {
+router.post('/summarise/:noteId', requireFeature(FEATURE.AI_SUMMARISE), aiQuota, async (req, res, next) => {
   try {
     const note = await Note.findById(req.params.noteId).lean();
     if (!note) return res.status(404).json({ message: 'Note not found' });
@@ -52,7 +53,7 @@ router.post('/summarise/:noteId', checkTier('trial'), aiQuota, async (req, res, 
 
 // ── Review Resume (RAG-enhanced) ──────────────────────────────────────────
 
-router.post('/review-resume', checkTier('trial'), aiQuota, async (req, res, next) => {
+router.post('/review-resume', requireFeature(FEATURE.AI_RESUME_REVIEW), aiQuota, async (req, res, next) => {
   try {
     const resume = await Resume.findOne({ user: req.user.userId }).lean();
     if (!resume) return res.status(404).json({ message: 'No resume found — build one first' });
@@ -113,7 +114,7 @@ router.post('/case-framework', checkRole('admin'), async (req, res, next) => {
 
 // ── Planner AI Suggestions (RAG-enhanced) ────────────────────────────────
 
-router.post('/planner-suggest', checkTier('trial'), aiQuota, async (req, res, next) => {
+router.post('/planner-suggest', requireFeature(FEATURE.AI_PLANNER_SUGGEST), aiQuota, async (req, res, next) => {
   try {
     const [ragCtx, mem] = await Promise.all([
       buildPlannerRAGContext(req.user.userId),
@@ -140,7 +141,7 @@ router.post('/planner-suggest', checkTier('trial'), aiQuota, async (req, res, ne
 
 // ── Career Hub Company Advice (RAG-enhanced) ──────────────────────────────
 
-router.post('/career-advice', checkTier('max'), aiQuota, async (req, res, next) => {
+router.post('/career-advice', requireFeature(FEATURE.AI_CAREER_ADVICE), aiQuota, async (req, res, next) => {
   try {
     const { companyId, question } = req.body;
     const [ragCtx, mem] = await Promise.all([
@@ -168,7 +169,7 @@ router.post('/career-advice', checkTier('max'), aiQuota, async (req, res, next) 
 
 // ── Interview Simulator (Max) ─────────────────────────────────────────────
 
-router.post('/interview-simulator', checkTier('max'), aiQuota, async (req, res, next) => {
+router.post('/interview-simulator', requireFeature(FEATURE.AI_INTERVIEW_SIMULATOR), aiQuota, async (req, res, next) => {
   try {
     const { role, company, category } = req.body;
     const [ragCtx, mem] = await Promise.all([
@@ -196,7 +197,7 @@ router.post('/interview-simulator', checkTier('max'), aiQuota, async (req, res, 
 
 // ── Company Comparison (Max) ──────────────────────────────────────────────
 
-router.post('/compare-companies', checkTier('max'), aiQuota, async (req, res, next) => {
+router.post('/compare-companies', requireFeature(FEATURE.AI_COMPARE_COMPANIES), aiQuota, async (req, res, next) => {
   try {
     const { slugA, slugB } = req.body;
     if (!slugA || !slugB) return res.status(400).json({ message: 'Pick two companies to compare' });
@@ -230,7 +231,7 @@ router.post('/compare-companies', checkTier('max'), aiQuota, async (req, res, ne
 
 // ── Semantic Search ────────────────────────────────────────────────────────
 
-router.post('/search', checkTier('trial'), async (req, res, next) => {
+router.post('/search', requireFeature(FEATURE.SEMANTIC_SEARCH), async (req, res, next) => {
   try {
     const { query, collections, limit = 5 } = req.body;
     if (!query?.trim()) return res.status(400).json({ message: 'query is required' });
@@ -250,7 +251,7 @@ router.post('/search', checkTier('trial'), async (req, res, next) => {
 
 // ── Index a document for semantic search (pro+ only — prevents free-tier abuse) ──
 
-router.post('/index/:collection/:docId', checkTier('trial'), async (req, res, next) => {
+router.post('/index/:collection/:docId', requireFeature(FEATURE.SEMANTIC_SEARCH), async (req, res, next) => {
   try {
     const { collection, docId } = req.params;
     const { text, metadata } = req.body;

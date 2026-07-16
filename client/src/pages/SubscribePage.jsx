@@ -9,6 +9,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import { submitPaymentRef, activateTrial, getSubscriptionStatus } from '../api/subscription';
+import { TIER_COLORS } from '../utils/tiers';
 
 const fmtDate = (d) =>
   new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -89,29 +90,7 @@ const PLANS = [
   },
 ];
 
-const COLOR = {
-  indigo: {
-    bg: 'bg-indigo-50 dark:bg-indigo-950/30',
-    border: 'border-indigo-200 dark:border-indigo-800',
-    icon: 'text-indigo-500',
-    badge: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300',
-    btn: 'bg-indigo-600 hover:bg-indigo-700 text-white',
-  },
-  amber: {
-    bg: 'bg-amber-50 dark:bg-amber-950/20',
-    border: 'border-amber-300 dark:border-amber-700',
-    icon: 'text-amber-500',
-    badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-    btn: 'bg-amber-500 hover:bg-amber-600 text-white',
-  },
-  purple: {
-    bg: 'bg-purple-50 dark:bg-purple-950/20',
-    border: 'border-purple-300 dark:border-purple-700',
-    icon: 'text-purple-500',
-    badge: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
-    btn: 'bg-purple-600 hover:bg-purple-700 text-white',
-  },
-};
+const COLOR = TIER_COLORS;
 
 // ── QR + payment ref panel ─────────────────────────────────────────────────
 function PaymentPanel({ plan, onClose, onSuccess }) {

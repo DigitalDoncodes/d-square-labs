@@ -1,10 +1,9 @@
 const Company = require('../models/Company');
 const CompanyRead = require('../models/CompanyRead');
 const User = require('../models/User');
+const { canAccessFeature } = require('../subscription/permissionEngine');
+const { FEATURE } = require('../subscription/featureRegistry');
 
-const TIER_RANK = { free: 0, trial: 1, pro: 2, max: 3 };
-
-// Fields requiring pro access — not sent to free users
 const PREMIUM_FIELDS = ['interviewQuestions', 'prepTips', 'rounds', 'salaryRange'];
 
 const slugify = (name) =>
@@ -43,19 +42,13 @@ exports.getCompanyBySlug = async (req, res, next) => {
     ]);
     if (!company) return res.status(404).json({ message: 'Company not found' });
 
-    // Mark studied (feeds readiness score) for all users
     CompanyRead.updateOne(
       { user: req.user.userId, company: company._id },
       { $setOnInsert: { user: req.user.userId, company: company._id } },
       { upsert: true }
     ).catch(() => {});
 
-    // Determine effective tier (auto-expire)
-    let tier = dbUser?.tier || 'free';
-    if (dbUser?.tierExpiresAt && new Date() > new Date(dbUser.tierExpiresAt)) tier = 'free';
-
-    // Strip premium prep content for free users; they still see overview/roles
-    if ((TIER_RANK[tier] ?? 0) < TIER_RANK.pro) {
+    if (!canAccessFeature(dbUser, FEATURE.INTERVIEW_QUESTIONS)) {
       const stripped = { ...company };
       PREMIUM_FIELDS.forEach((f) => delete stripped[f]);
       return res.json({ ...stripped, _prepLocked: true });

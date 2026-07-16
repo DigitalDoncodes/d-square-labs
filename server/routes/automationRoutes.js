@@ -3,6 +3,7 @@ const router = express.Router();
 const verifyToken = require('../middleware/verifyToken');
 const checkRole = require('../middleware/checkRole');
 const AutomationLog = require('../models/AutomationLog');
+const RuntimeComparison = require('../models/RuntimeComparison');
 
 const guard = [verifyToken, checkRole('admin')];
 
@@ -209,6 +210,228 @@ router.get('/cost-trends', ...guard, async (req, res, next) => {
       { $sort: { _id: 1 } },
     ]);
     res.json(data);
+  } catch (err) { next(err); }
+});
+
+// ── GET /api/automation/gateway-mode — View/change gateway execution mode ──
+
+router.get('/gateway-mode', ...guard, async (req, res, next) => {
+  try {
+    const gateway = require('../ai/aiGateway');
+    res.json({
+      mode: gateway.getMode(),
+      availableModes: gateway.getAllModes(),
+      hybridV2Intents: gateway.HYBRID_V2_INTENTS,
+    });
+  } catch (err) { next(err); }
+});
+
+router.put('/gateway-mode', ...guard, async (req, res, next) => {
+  try {
+    const gateway = require('../ai/aiGateway');
+    const { mode } = req.body;
+    if (!mode) return res.status(400).json({ message: 'Mode is required' });
+    const ok = gateway.setMode(mode);
+    if (!ok) return res.status(400).json({ message: `Invalid mode. Must be one of: ${gateway.getAllModes().join(', ')}` });
+    res.json({ mode: gateway.getMode(), message: `Gateway mode set to "${mode}"` });
+  } catch (err) { next(err); }
+});
+
+// ── GET /api/automation/runtime-comparison — Runtime V1 vs V2 Dashboard ──
+
+router.get('/runtime-comparison', ...guard, async (req, res, next) => {
+  try {
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const [
+      latencyByRuntime,
+      selectionFreq,
+      cacheHitRate,
+      costPerFeature,
+      modelPerformance,
+      verificationSuccess,
+      providerHealth,
+      promptPerformance,
+      modeUsage,
+    ] = await Promise.all([
+
+      // 1. Latency comparison V1 vs V2
+      RuntimeComparison.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        { $group: {
+          _id: null,
+          v1AvgLatency: { $avg: '$v1.latencyMs' },
+          v2AvgLatency: { $avg: '$v2.latencyMs' },
+          v1Count: { $sum: { $cond: [{ $ne: ['$v1', null] }, 1, 0] } },
+          v2Count: { $sum: { $cond: [{ $ne: ['$v2', null] }, 1, 0] } },
+          v1AvgCost: { $avg: '$v1.estimatedCostUsd' },
+          v2AvgCost: { $avg: '$v2.estimatedCostUsd' },
+        }},
+      ]),
+
+      // 2. Runtime selection frequency
+      RuntimeComparison.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        { $group: { _id: '$runtimeSelected', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+
+      // 3. Cache hit rate by runtime
+      RuntimeComparison.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        { $group: {
+          _id: '$runtimeSelected',
+          total: { $sum: 1 },
+          cacheHits: { $sum: { $cond: [{ $eq: ['$v1.cacheHit', true] }, 1, 0] } },
+        }},
+        { $project: {
+          runtime: '$_id',
+          total: 1,
+          cacheHits: 1,
+          cacheHitRate: {
+            $cond: [{ $gt: ['$total', 0] }, { $divide: ['$cacheHits', '$total'] }, 0],
+          },
+        }},
+      ]),
+
+      // 4. Cost per feature (intent) by runtime
+      RuntimeComparison.aggregate([
+        { $match: { createdAt: { $gte: since }, intent: { $exists: true } } },
+        { $group: {
+          _id: '$intent',
+          v1Cost: { $avg: '$v1.estimatedCostUsd' },
+          v2Cost: { $avg: '$v2.estimatedCostUsd' },
+          v1Latency: { $avg: '$v1.latencyMs' },
+          v2Latency: { $avg: '$v2.latencyMs' },
+          count: { $sum: 1 },
+        }},
+        { $sort: { count: -1 } },
+      ]),
+
+      // 5. Model performance (avg confidence, latency by model)
+      RuntimeComparison.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        { $facet: {
+          v1Models: [
+            { $match: { 'v1.model': { $exists: true } } },
+            { $group: {
+              _id: { model: '$v1.model', provider: '$v1.provider' },
+              avgLatencyMs: { $avg: '$v1.latencyMs' },
+              avgConfidence: { $avg: '$v1.confidence' },
+              avgCost: { $avg: '$v1.estimatedCostUsd' },
+              runs: { $sum: 1 },
+            }},
+          ],
+          v2Models: [
+            { $match: { 'v2.model': { $exists: true } } },
+            { $group: {
+              _id: { model: '$v2.model', provider: '$v2.provider' },
+              avgLatencyMs: { $avg: '$v2.latencyMs' },
+              avgConfidence: { $avg: '$v2.confidence' },
+              avgCost: { $avg: '$v2.estimatedCostUsd' },
+              runs: { $sum: 1 },
+            }},
+          ],
+        }},
+      ]),
+
+      // 6. Verification success rate by runtime
+      RuntimeComparison.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        { $group: {
+          _id: '$runtimeSelected',
+          total: { $sum: 1 },
+          verified: { $sum: { $cond: [
+            { $or: [
+              { $eq: ['$v1.verificationStatus', 'published'] },
+              { $eq: ['$v2.verificationStatus', 'published'] },
+            ]}, 1, 0,
+          ]}},
+          pending: { $sum: { $cond: [
+            { $or: [
+              { $eq: ['$v1.verificationStatus', 'pending_review'] },
+              { $eq: ['$v2.verificationStatus', 'pending_review'] },
+            ]}, 1, 0,
+          ]}},
+          failed: { $sum: { $cond: [
+            { $or: [
+              { $eq: ['$v1.verificationStatus', 'failed'] },
+              { $eq: ['$v2.verificationStatus', 'failed'] },
+            ]}, 1, 0,
+          ]}},
+        }},
+      ]),
+
+      // 7. Provider health from RuntimeComparison
+      RuntimeComparison.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        { $facet: {
+          v1Providers: [
+            { $match: { 'v1.provider': { $exists: true } } },
+            { $group: {
+              _id: '$v1.provider',
+              avgLatencyMs: { $avg: '$v1.latencyMs' },
+              runs: { $sum: 1 },
+              avgCost: { $avg: '$v1.estimatedCostUsd' },
+            }},
+          ],
+          v2Providers: [
+            { $match: { 'v2.provider': { $exists: true } } },
+            { $group: {
+              _id: '$v2.provider',
+              avgLatencyMs: { $avg: '$v2.latencyMs' },
+              runs: { $sum: 1 },
+              avgCost: { $avg: '$v2.estimatedCostUsd' },
+            }},
+          ],
+        }},
+      ]),
+
+      // 8. Prompt performance by version
+      RuntimeComparison.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        { $facet: {
+          v1Prompts: [
+            { $match: { 'v1.promptVersion': { $exists: true } } },
+            { $group: {
+              _id: '$v1.promptVersion',
+              avgConfidence: { $avg: '$v1.confidence' },
+              avgLatencyMs: { $avg: '$v1.latencyMs' },
+              runs: { $sum: 1 },
+            }},
+          ],
+          v2Prompts: [
+            { $match: { 'v2.promptVersion': { $exists: true } } },
+            { $group: {
+              _id: '$v2.promptVersion',
+              avgConfidence: { $avg: '$v2.confidence' },
+              avgLatencyMs: { $avg: '$v2.latencyMs' },
+              runs: { $sum: 1 },
+            }},
+          ],
+        }},
+      ]),
+
+      // 9. Mode usage distribution
+      RuntimeComparison.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        { $group: { _id: '$mode', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+    ]);
+
+    res.json({
+      latencyByRuntime: latencyByRuntime[0] || null,
+      selectionFrequency: selectionFreq,
+      cacheHitRate,
+      costPerFeature,
+      modelPerformance,
+      verificationSuccessRate: verificationSuccess,
+      providerHealth,
+      promptPerformance,
+      modeUsage,
+      since,
+    });
   } catch (err) { next(err); }
 });
 

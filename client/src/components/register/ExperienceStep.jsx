@@ -1,10 +1,11 @@
 import { useFormContext } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { GraduationCap, Briefcase } from 'lucide-react';
+import SmartSelect from '../common/SmartSelect';
 
 const DOMAINS = [
   'IT / Software', 'Banking / Finance', 'Consulting', 'Manufacturing / Ops',
-  'Healthcare', 'FMCG / Retail', 'Govt / PSU', 'Media / Content', 'Startup', 'Other',
+  'Healthcare', 'FMCG / Retail', 'Govt / PSU', 'Media / Content', 'Startup',
 ];
 
 const STYLES = [
@@ -30,6 +31,7 @@ export default function ExperienceStep() {
   const studentType = watch('studentType', 'fresher');
   const learningStyle = watch('learningStyle', '');
   const timeAvailable = watch('timeAvailable', '');
+  const preMbaDomain = watch('preMbaDomain', '');
 
   return (
     <motion.div
@@ -89,11 +91,16 @@ export default function ExperienceStep() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-600 dark:text-gray-400">Domain</label>
-              <select {...register('preMbaDomain')} className={inp}>
-                <option value="">Select…</option>
-                {DOMAINS.map((d) => <option key={d}>{d}</option>)}
-              </select>
+              <SmartSelect
+                options={DOMAINS}
+                value={preMbaDomain}
+                onChange={(val) => setValue('preMbaDomain', val)}
+                label="Domain"
+                placeholder="Select…"
+                allowOther={true}
+                variant="dropdown"
+                name="preMbaDomain"
+              />
             </div>
           </div>
         </motion.div>

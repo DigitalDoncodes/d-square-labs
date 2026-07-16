@@ -40,13 +40,17 @@ const userProfileSchema = new mongoose.Schema(
       leadership: { type: Boolean, default: false },
       communication: { type: Boolean, default: false },
       research: { type: Boolean, default: false },
-      certifications: { type: Boolean, default: false }
+      certifications: { type: Boolean, default: false },
+      skillBuilding: { type: Boolean, default: false },
+      networking: { type: Boolean, default: false },
+      interviewPrep: { type: Boolean, default: false },
+      resumeBuilding: { type: Boolean, default: false }
     },
     experience: {
       years: { type: Number, min: 0, max: 50, default: 0 },
       type: {
         type: String,
-        enum: ['fresher', 'intern', 'entry-level', 'mid-level', 'senior', 'other'],
+        enum: ['fresher', 'intern', 'entry-level', 'mid-level', 'senior', 'experienced', 'other'],
         default: 'fresher'
       },
       pastDomain: { type: String, trim: true } // e.g., IT, Finance, Marketing

@@ -33,7 +33,7 @@ export default function CompaniesPage() {
     <div className="animate-in mx-auto max-w-5xl px-4 py-6">
       <div className="mb-6 text-center">
         <h1 className="text-3xl font-bold">
-          Company <span className="gradient-text">prep cards</span>
+          Company <span className="accent-text">prep cards</span>
         </h1>
         <p className="mx-auto mt-2 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
           One page per recruiter: what they do, what they ask, what they pay — everything

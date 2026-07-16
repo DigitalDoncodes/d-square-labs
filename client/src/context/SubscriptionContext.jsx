@@ -8,7 +8,7 @@ const TIER_RANK = { free: 0, trial: 1, pro: 2, max: 3 };
 
 export function SubscriptionProvider({ children }) {
   const { user } = useAuth();
-  const [status, setStatus] = useState({ tier: 'free', tierExpiresAt: null, trialUsed: false });
+  const [status, setStatus] = useState({ tier: 'free', tierExpiresAt: null, trialUsed: false, capabilities: {} });
   const [loading, setLoading] = useState(false);
 
   const fetch = useCallback(() => {
@@ -22,10 +22,10 @@ export function SubscriptionProvider({ children }) {
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  // Derive tier from live DB data, falling back to JWT for initial render
   const tier = status?.tier ?? user?.tier ?? 'free';
   const tierExpiresAt = status?.tierExpiresAt ? new Date(status.tierExpiresAt) : null;
   const trialUsed = !!status?.trialUsed;
+  const capabilities = status?.capabilities ?? {};
 
   const daysLeft = tierExpiresAt
     ? Math.max(0, Math.ceil((tierExpiresAt - Date.now()) / (24 * 60 * 60 * 1000)))
@@ -34,8 +34,10 @@ export function SubscriptionProvider({ children }) {
   const hasAccess = (required) =>
     (TIER_RANK[tier] ?? 0) >= (TIER_RANK[required] ?? 1);
 
+  const hasFeature = (feature) => capabilities[feature] === true;
+
   return (
-    <SubscriptionContext.Provider value={{ tier, tierExpiresAt, trialUsed, daysLeft, loading, hasAccess, refresh: fetch }}>
+    <SubscriptionContext.Provider value={{ tier, tierExpiresAt, trialUsed, daysLeft, loading, hasAccess, hasFeature, capabilities, refresh: fetch }}>
       {children}
     </SubscriptionContext.Provider>
   );

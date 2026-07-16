@@ -1,5 +1,6 @@
 const UserProfile = require('../models/UserProfile');
 const User = require('../models/User');
+const { updateIdentity } = require('../services/studentIdentityService');
 
 exports.getDirectory = async (req, res, next) => {
   try {
@@ -41,6 +42,10 @@ exports.upsertMyProfile = async (req, res, next) => {
       { $set: update },
       { upsert: true, new: true }
     ).populate('user', 'name avatar email');
+
+    // Sync to canonical StudentIdentity
+    await updateIdentity(req.user.userId, update);
+
     res.json(profile);
   } catch (err) { next(err); }
 };

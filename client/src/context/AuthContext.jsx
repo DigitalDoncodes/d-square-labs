@@ -14,6 +14,8 @@ const decodeUser = (token) => {
       email: payload.email,
       role: payload.role || 'member',
       tier: payload.tier || 'free',
+      programs: payload.programs || ['mba'],
+      activeProgram: payload.activeProgram || 'mba',
     };
   } catch {
     return null;
@@ -26,16 +28,26 @@ export function AuthProvider({ children }) {
 
   const login = (newToken) => {
     localStorage.setItem('token', newToken);
+    const decoded = decodeUser(newToken);
+    if (decoded) localStorage.setItem('activeProgram', decoded.activeProgram);
     setToken(newToken);
   };
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('activeProgram');
     setToken(null);
   };
 
+  const switchProgram = async (slug) => {
+    const { default: axios } = await import('../api/axios');
+    const res = await axios.post('/api/modules/switch', { slug });
+    login(res.data.token);
+    return res.data;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, token, login, logout, switchProgram }}>
       {children}
     </AuthContext.Provider>
   );

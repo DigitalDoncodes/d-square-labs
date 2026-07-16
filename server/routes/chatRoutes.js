@@ -5,53 +5,19 @@ const ChatMessage = require('../models/ChatMessage');
 const Note = require('../models/Note');
 const Task = require('../models/Task');
 const Resume = require('../models/Resume');
+const User = require('../models/User');
 const SiteMeta = require('../models/SiteMeta');
-const DailyCaseSolve = require('../models/DailyCaseSolve');
-const { getProvider } = require('../ai/providers');
-const { routeTask }   = require('../ai/router');
+const { routeTask } = require('../ai/router');
+const aiGateway = require('../ai/aiGateway');
+const { todayKey } = require('../utils/quota');
+const { getEffectiveTier } = require('../subscription/permissionEngine');
+const { isAtLeast } = require('../subscription/tierHierarchy');
+const { CHAT_QUOTAS } = require('../subscription/subscriptionService');
+const { computeDailyCaseStreak } = require('../utils/streak');
 
 router.use(verifyToken);
 router.use(generalLimiter);
-const HISTORY_WINDOW = 12; // last N messages sent as context
-
-// Daily message quota per tier — the AI assistant is the "Unlimited AI"
-// value ladder: free gets a taste, paid tiers get room to work.
-const TIER_QUOTA = { free: 10, trial: 30, pro: 100, max: 1000 };
-
-const User = require('../models/User');
-
-// Effective tier with auto-expiry, same rules as middleware/checkTier.
-async function getEffectiveTier(userId) {
-  const user = await User.findById(userId).select('tier tierExpiresAt').lean();
-  let tier = user?.tier || 'free';
-  if (user?.tierExpiresAt && new Date() > new Date(user.tierExpiresAt)) {
-    tier = 'free';
-    User.findByIdAndUpdate(userId, { tier: 'free' }).catch(() => {});
-  }
-  return TIER_QUOTA[tier] !== undefined ? tier : 'free';
-}
-
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-async function getCasStreak(userId) {
-  const solves = await DailyCaseSolve.find({ user: userId })
-    .sort({ dateKey: -1 })
-    .limit(60)
-    .select('dateKey')
-    .lean();
-  const days = [...new Set(solves.map((s) => s.dateKey))];
-  let streak = 0;
-  const today = todayKey();
-  for (let i = 0; i < days.length; i++) {
-    const expected = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
-    if (days[i] === expected || (i === 0 && days[0] < today)) {
-      streak += 1;
-    } else break;
-  }
-  return streak;
-}
+const HISTORY_WINDOW = 12;
 
 async function buildSystemPrompt(user) {
   const uid = user.userId;
@@ -66,7 +32,7 @@ async function buildSystemPrompt(user) {
       .lean(),
     Note.countDocuments(),
     Resume.findOne({ user: uid }).select('personal.fullName summary skills').lean(),
-    getCasStreak(uid),
+    computeDailyCaseStreak(uid),
     ChatMessage.countDocuments({ user: uid, role: 'user', createdAt: { $gte: new Date(today) } }),
   ]);
 
@@ -113,29 +79,26 @@ Persona and rules:
 // POST /api/chat
 router.post('/', async (req, res, next) => {
   try {
-    let provider;
-    try { provider = getProvider(routeTask('chat')); }
-    catch { return res.status(503).json({ message: 'AI features are not enabled on this server' }); }
-
     const { message } = req.body;
     if (!message?.trim()) return res.status(400).json({ message: 'Message is required' });
     if (message.length > 2000) return res.status(400).json({ message: 'Message too long (max 2000 chars)' });
 
     const uid = req.user.userId;
-    const [{ systemPrompt, todayCount }, tier] = await Promise.all([
+    const [{ systemPrompt, todayCount }, userDoc] = await Promise.all([
       buildSystemPrompt(req.user),
-      getEffectiveTier(req.user.userId),
+      User.findById(uid).select('tier tierExpiresAt').lean(),
     ]);
-    const quota = TIER_QUOTA[tier];
+    const tier = getEffectiveTier(userDoc);
+    const quota = CHAT_QUOTAS[tier];
 
     if (todayCount >= quota) {
+      const isFree = !isAtLeast(tier, 'trial');
       return res.status(429).json({
-        message:
-          tier === 'free'
-            ? `You've used all ${quota} free messages for today. Upgrade to Pro for a much higher daily limit.`
-            : `Daily limit reached (${quota} messages). Come back tomorrow!`,
-        requiredTier: tier === 'free' ? 'pro' : undefined,
-        upgradeUrl: tier === 'free' ? '/subscribe' : undefined,
+        message: isFree
+          ? `You've used all ${quota} free messages for today. Upgrade to Pro for a much higher daily limit.`
+          : `Daily limit reached (${quota} messages). Come back tomorrow!`,
+        requiredTier: isFree ? 'pro' : undefined,
+        upgradeUrl: isFree ? '/subscribe' : undefined,
       });
     }
 
@@ -146,24 +109,41 @@ router.post('/', async (req, res, next) => {
       .lean();
     history.reverse();
 
-    const messages = [
+    const historyMessages = [
       ...history.map((m) => ({ role: m.role, content: m.content })),
       { role: 'user', content: message.trim() },
     ];
 
-    const { text: reply } = await provider.complete({
+    const fullMessages = [
+      { role: 'system', content: systemPrompt },
+      ...historyMessages,
+    ];
+
+    // Route through aiGateway — supports messages array for chat
+    const gatewayResult = await aiGateway.process({
+      messages: fullMessages,
+      provider: routeTask('chat'),
       maxTokens: 700,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...messages,
-      ],
+      task: 'chat',
+      userId: uid,
     });
+
+    const reply = gatewayResult.result;
+    if (!reply) {
+      throw new Error('AI gateway returned empty response');
+    }
 
     // Persist both turns.
     await ChatMessage.insertMany([
       { user: uid, role: 'user', content: message.trim() },
       { user: uid, role: 'assistant', content: reply },
     ]);
+
+    // Persist runtime comparison metrics
+    aiGateway.persistExecutionMetrics(gatewayResult, {
+      userId: uid,
+      taskName: 'chat',
+    }).catch(() => {});
 
     const remaining = quota - todayCount - 1;
     res.json({ reply, remaining });
@@ -177,12 +157,13 @@ router.get('/history', async (req, res, next) => {
   try {
     const uid = req.user.userId;
     const today = todayKey();
-    const [messages, todayCount, tier] = await Promise.all([
+    const [messages, todayCount, userDoc] = await Promise.all([
       ChatMessage.find({ user: uid }).sort({ createdAt: -1 }).limit(30).lean(),
       ChatMessage.countDocuments({ user: uid, role: 'user', createdAt: { $gte: new Date(today) } }),
-      getEffectiveTier(uid),
+      User.findById(uid).select('tier tierExpiresAt').lean(),
     ]);
-    res.json({ messages: messages.reverse(), remaining: Math.max(0, TIER_QUOTA[tier] - todayCount) });
+    const tier = getEffectiveTier(userDoc);
+    res.json({ messages: messages.reverse(), remaining: Math.max(0, CHAT_QUOTAS[tier] - todayCount) });
   } catch (err) {
     next(err);
   }

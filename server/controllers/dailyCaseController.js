@@ -1,27 +1,7 @@
 const DailyCase = require('../models/DailyCase');
 const DailyCaseSolve = require('../models/DailyCaseSolve');
-
-const todayKey = () => new Date().toISOString().slice(0, 10);
-
-// Consecutive-day streak counted back from today (a miss today doesn't break
-// the streak until tomorrow).
-const computeStreak = async (userId) => {
-  const solves = await DailyCaseSolve.find({ user: userId })
-    .sort({ dateKey: -1 })
-    .limit(120)
-    .select('dateKey')
-    .lean();
-  const days = [...new Set(solves.map((s) => s.dateKey))];
-  let streak = 0;
-  const cursor = new Date();
-  if (days[0] !== cursor.toISOString().slice(0, 10)) cursor.setDate(cursor.getDate() - 1);
-  for (const day of days) {
-    if (day !== cursor.toISOString().slice(0, 10)) break;
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
-};
+const { computeDailyCaseStreak } = require('../utils/streak');
+const { todayKey } = require('../utils/quota');
 
 // GET /api/daily-case/today — today's case (falls back to the most recent one
 // so the widget never shows empty), whether the user solved it, and streak.
@@ -36,8 +16,7 @@ exports.getToday = async (req, res, next) => {
     if (!dailyCase) return res.json({ case: null, solved: false, streak: 0 });
 
     const solve = await DailyCaseSolve.findOne({ user: req.user.userId, dailyCase: dailyCase._id });
-    const streak = await computeStreak(req.user.userId);
-    // The framework is the payoff for engaging — hide it until solved.
+    const streak = await computeDailyCaseStreak(req.user.userId);
     if (!solve) delete dailyCase.framework;
     res.json({ case: dailyCase, solved: Boolean(solve), streak });
   } catch (err) {
@@ -56,7 +35,7 @@ exports.solveCase = async (req, res, next) => {
       { $setOnInsert: { dateKey: dailyCase.dateKey } },
       { upsert: true }
     );
-    const streak = await computeStreak(req.user.userId);
+    const streak = await computeDailyCaseStreak(req.user.userId);
     res.json({ framework: dailyCase.framework || '', streak });
   } catch (err) {
     next(err);

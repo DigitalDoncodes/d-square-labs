@@ -19,27 +19,7 @@ import { DatadMark } from '../common/Logo';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSubscription } from '../../context/SubscriptionContext';
-
-const TIER_RING = {
-  free:  null,
-  trial: 'ring-2 ring-indigo-400 dark:ring-indigo-500',
-  pro:   'ring-2 ring-amber-400 dark:ring-amber-500',
-  max:   'ring-2 ring-purple-500 dark:ring-purple-400',
-};
-
-const TIER_DOT = {
-  free:  null,
-  trial: 'bg-indigo-500',
-  pro:   'bg-amber-400',
-  max:   'bg-purple-500',
-};
-
-const TIER_BADGE_STYLE = {
-  free:  'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
-  trial: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
-  pro:   'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-  max:   'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
-};
+import { TIER_RING, TIER_DOT, TIER_BADGE_STYLE } from '../../utils/tiers';
 import { useLocation } from 'react-router-dom';
 import { WORKSPACES, WORKSPACE_TABS } from '../../utils/workspaces';
 import CommandPalette from '../common/CommandPalette';

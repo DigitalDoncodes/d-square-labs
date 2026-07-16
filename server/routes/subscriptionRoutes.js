@@ -4,6 +4,8 @@ const { heavyLimiter } = require('../middleware/rateLimiters');
 const SubscriptionRequest = require('../models/SubscriptionRequest');
 const User = require('../models/User');
 const { notify } = require('../controllers/notificationController');
+const { getSubscriptionStatus, getRemainingAiQuota } = require('../subscription/subscriptionService');
+const { getEffectiveTier } = require('../subscription/permissionEngine');
 
 const PRICES = { pro: 299, max: 499 };
 
@@ -49,33 +51,21 @@ router.post('/request', verifyToken, heavyLimiter, async (req, res, next) => {
 // GET /api/subscription/me — current user's requests + tier
 router.get('/me', verifyToken, async (req, res, next) => {
   try {
-    const [user, requests] = await Promise.all([
-      User.findById(req.user.userId).select('tier tierExpiresAt trialStartedAt subscriptionRef').lean(),
-      SubscriptionRequest.find({ user: req.user.userId }).sort({ createdAt: -1 }).limit(10).lean(),
-    ]);
-    // Lazily downgrade an expired plan so the client always sees the real state
-    let tier = user?.tier || 'free';
-    let tierExpiresAt = user?.tierExpiresAt || null;
-    if (tier !== 'free' && tierExpiresAt && new Date() > new Date(tierExpiresAt)) {
-      tier = 'free';
-      tierExpiresAt = null;
-      User.findByIdAndUpdate(req.user.userId, { tier: 'free', tierExpiresAt: null }).catch(() => {});
-    }
+    const status = await getSubscriptionStatus(req.user.userId);
+    if (!status) return res.status(404).json({ message: 'User not found' });
 
-    // Today's metered AI usage so the client can show "X of Y AI actions".
-    const aiQuota = require('../middleware/aiQuota');
-    const AiUsage = require('../models/AiUsage');
-    const limit = aiQuota.DAILY_LIMIT[tier] ?? 0;
-    const usage = limit
-      ? await AiUsage.findOne({ user: req.user.userId, dateKey: aiQuota.todayKey() }).select('count').lean()
-      : null;
+    const requests = await SubscriptionRequest.find({ user: req.user.userId })
+      .sort({ createdAt: -1 }).limit(10).lean();
 
     res.json({
-      tier,
-      tierExpiresAt,
-      trialUsed: !!user?.trialStartedAt,
+      tier: status.tier,
+      effectiveTier: status.effectiveTier,
+      tierExpiresAt: status.tierExpiresAt,
+      trialUsed: status.trialUsed,
       requests,
-      aiUsage: { used: usage?.count || 0, limit },
+      aiUsage: status.aiQuota,
+      chatQuota: status.chatQuota,
+      capabilities: status.capabilities,
     });
   } catch (err) {
     next(err);
@@ -88,12 +78,10 @@ router.post('/trial', verifyToken, async (req, res, next) => {
     const user = await User.findById(req.user.userId).select('tier trialStartedAt').lean();
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Check trialStartedAt first — once used, it's used regardless of current tier
     if (user.trialStartedAt) {
       return res.status(400).json({ message: 'You have already used your free trial.' });
     }
-    // Legacy accounts predate the tier field — treat missing as 'free'.
-    if ((user.tier || 'free') !== 'free') {
+    if (getEffectiveTier(user) !== 'free') {
       return res.status(400).json({ message: 'Trial is only available on the free plan. Downgrade first if you want to try again.' });
     }
 

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { Users, Search, Edit2, ExternalLink, Link2 } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
-// Github and Linkedin icons removed — not available in this lucide-react version
+import SmartSelect from '../../components/common/SmartSelect';
 import { getDirectory, getMyProfile, upsertMyProfile } from '../../api/directory';
 import { FeedSkeleton } from '../../components/common/Skeleton';
 import EmptyState from '../../components/common/EmptyState';
@@ -26,12 +26,12 @@ function Avatar({ name, avatar, size = 'md' }) {
 export default function DirectoryPage() {
   useDocumentTitle('Student Directory');
   const [profiles, setProfiles] = useState(null);
-  [myProfile, setMyProfile] = useState(null);
+  const [myProfile, setMyProfile] = useState(null);
   const [search, setSearch] = useState('');
   const [specFilter, setSpecFilter] = useState('');
   const [view, setView] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm();
+  const { register, handleSubmit, reset, setValue, watch, formState: { isSubmitting } } = useForm();
 
   const loadDirectory = () => {
     const params = {};
@@ -83,6 +83,18 @@ export default function DirectoryPage() {
     setEditOpen(true);
   };
 
+  const ALL_SPECS = [
+    'Finance', 'Marketing', 'HR', 'Operations', 'Analytics', 'Strategy', 'General',
+    'CSE', 'IT', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Chemical',
+    'Physics', 'Chemistry', 'Mathematics', 'Biology', 'Computer Science',
+    'Accounting', 'English', 'History', 'Political Science', 'Economics', 'Psychology',
+    'Corporate', 'Criminal', 'Intellectual Property', 'Family Law',
+    'MBBS', 'BDS', 'Nursing', 'Pharmacy',
+  ];
+  const DIR_DOMAINS = [
+    'IT / Software', 'Banking / Finance', 'Consulting', 'Manufacturing / Ops',
+    'Healthcare', 'FMCG / Retail', 'Govt / PSU', 'Media / Content', 'Startup',
+  ];
   const specs = [...new Set(profiles?.map((p) => p.specialization).filter(Boolean) || [])];
   const domains = [...new Set(profiles?.map((p) => p.preMbaDomain).filter(Boolean) || [])];
   const [domainFilter, setDomainFilter] = useState('');
@@ -174,7 +186,16 @@ export default function DirectoryPage() {
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="My Profile">
         <form onSubmit={handleSubmit(onSaveProfile)} className="space-y-3">
           <textarea {...register('bio')} placeholder="Short bio (max 300 chars)" maxLength={300} rows={2} className={inputClass} />
-          <input {...register('specialization')} placeholder="Specialization (e.g. Finance, Marketing)" className={inputClass} />
+          <SmartSelect
+            options={ALL_SPECS}
+            value={watch('specialization') || ''}
+            onChange={(val) => setValue('specialization', val)}
+            label="Specialisation"
+            placeholder="Select…"
+            allowOther={true}
+            variant="dropdown"
+            name="specialization"
+          />
           <input {...register('batch')} placeholder="Batch / year (e.g. 2025-27)" className={inputClass} />
           <input {...register('skills')} placeholder="Skills (comma-sep: Excel, Python, Financial Modelling)" className={inputClass} />
           <input {...register('interests')} placeholder="Interests (comma-sep: VC, Consulting, FMCG)" className={inputClass} />
@@ -184,10 +205,16 @@ export default function DirectoryPage() {
           <input {...register('github')} placeholder="GitHub URL (optional)" className={inputClass} />
           <input {...register('portfolio')} placeholder="Portfolio / website URL (optional)" className={inputClass} />
           <input {...register('lookingFor')} placeholder="Looking for (e.g. study partner, project teammate)" className={inputClass} />
-          <select {...register('preMbaDomain')} className={inputClass}>
-            <option value="">Past work domain (optional)</option>
-            {['IT / Software','Banking / Finance','Consulting','Manufacturing / Ops','Healthcare','FMCG / Retail','Govt / PSU','Media / Content','Startup','Other'].map((d) => <option key={d}>{d}</option>)}
-          </select>
+          <SmartSelect
+            options={DIR_DOMAINS}
+            value={watch('preMbaDomain') || ''}
+            onChange={(val) => setValue('preMbaDomain', val)}
+            label="Past work domain"
+            placeholder="Select…"
+            allowOther={true}
+            variant="dropdown"
+            name="preMbaDomain"
+          />
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setEditOpen(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">Cancel</button>
             <button type="submit" disabled={isSubmitting} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">Save</button>

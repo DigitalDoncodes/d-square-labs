@@ -8,9 +8,12 @@
  * Usage:
  *   const { runPipeline } = require('./pipeline');
  *   const result = await runPipeline({ task, userContext, ragContext, promptFn });
+ *
+ * Note: The actual LLM call now routes through aiGateway, which decides
+ *       whether to use Runtime V1 or Runtime V2.
  */
 
-const { run }     = require('../runner');
+const aiGateway  = require('../aiGateway');
 const { validate } = require('../validator');
 const { routeTask, estimateCost } = require('../router');
 
@@ -52,25 +55,31 @@ async function runPipeline(opts) {
   const enrichedSystem = _buildEnrichedSystem(systemPrompt, memoryContext, ragContext);
   pipelineMeta.stages.push({ stage: 'research', contextInjected: Boolean(ragContext || memoryContext) });
 
-  // ── Stage 2: Writer Agent ────────────────────────────────────────────────
+  // ── Stage 2: Writer Agent (routed through aiGateway) ─────────────────────
   const preferredProvider = routeTask(task);
-  const { result, meta } = await run({
+  const gatewayResult = await aiGateway.process({
     system: enrichedSystem,
     user: userPrompt,
     provider: preferredProvider,
     json,
     maxTokens,
+    task,
+    sourceCount,
   });
 
-  const costUsd = estimateCost(meta.provider, meta.promptTokens, meta.completionTokens);
-  pipelineMeta.totalTokens += meta.tokensUsed || 0;
+  const result = gatewayResult.result;
+  const execMeta = gatewayResult._execMeta || {};
+
+  const costUsd = estimateCost(execMeta.provider, execMeta.promptTokens, execMeta.completionTokens);
+  pipelineMeta.totalTokens += execMeta.tokensUsed || 0;
   pipelineMeta.totalCostUsd += costUsd;
   pipelineMeta.stages.push({
     stage: 'write',
-    provider: meta.provider,
-    model: meta.model,
-    tokensUsed: meta.tokensUsed,
-    latencyMs: meta.latencyMs,
+    runtime: gatewayResult.runtime,
+    provider: execMeta.provider || gatewayResult.provider,
+    model: execMeta.model || gatewayResult.model,
+    tokensUsed: execMeta.tokensUsed || 0,
+    latencyMs: gatewayResult.latencyMs,
     costUsd,
   });
 
@@ -91,19 +100,20 @@ async function runPipeline(opts) {
 
   // Attach attribution metadata to result object
   const attribution = {
-    provider: meta.provider,
-    model: meta.model,
-    tokensUsed: meta.tokensUsed,
-    promptTokens: meta.promptTokens,
-    completionTokens: meta.completionTokens,
-    latencyMs: meta.latencyMs,
+    runtime: gatewayResult.runtime,
+    provider: execMeta.provider || gatewayResult.provider,
+    model: execMeta.model || gatewayResult.model,
+    tokensUsed: execMeta.tokensUsed || 0,
+    promptTokens: execMeta.promptTokens || 0,
+    completionTokens: execMeta.completionTokens || 0,
+    latencyMs: gatewayResult.latencyMs,
     estimatedCostUsd: parseFloat(costUsd.toFixed(6)),
     confidence: validation.confidence,
     status: validation.status,
     validationIssues: validation.issues,
     ragSourceCount: sourceCount,
     generatedAt: new Date(),
-    promptVersion: 'v1',
+    promptVersion: gatewayResult.promptVersion || 'v1',
     pipeline: pipelineMeta,
   };
 

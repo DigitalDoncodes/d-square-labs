@@ -1,47 +1,36 @@
-/**
- * RBAC tier middleware.
- * Usage: router.get('/premium-route', verifyToken, checkTier('pro'), handler)
- *
- * Tier hierarchy: max > pro > trial > free
- */
+const { canAccessFeature, requireFeature } = require('../subscription/permissionEngine');
+const { FEATURE } = require('../subscription/featureRegistry');
+const { isAtLeast, getRank } = require('../subscription/tierHierarchy');
 
-const User = require('../models/User');
-
-const TIER_RANK = { free: 0, trial: 1, pro: 2, max: 3 };
+const TIER_FEATURE_MAP = {
+  free:  FEATURE.AI_CHAT,
+  trial: FEATURE.AI_SUMMARISE,
+  pro:   FEATURE.INTERVIEW_QUESTIONS,
+  max:   FEATURE.KNOWLEDGE_GRAPH,
+};
 
 function checkTier(minTier) {
-  return async (req, res, next) => {
-    try {
-      // Always re-fetch tier from DB so admin changes take effect immediately
-      const user = await User.findById(req.user.userId).select('tier tierExpiresAt').lean();
-      if (!user) return res.status(401).json({ message: 'User not found' });
-
-      // Auto-expire trial/pro/max if past expiry date
-      let tier = user.tier;
-      if (user.tierExpiresAt && new Date() > user.tierExpiresAt) {
-        tier = 'free';
-        // Downgrade in DB asynchronously
-        User.findByIdAndUpdate(req.user.userId, { tier: 'free' }).catch(() => {});
-      }
-
-      const userRank = TIER_RANK[tier] ?? 0;
-      const requiredRank = TIER_RANK[minTier] ?? 0;
-
-      if (userRank < requiredRank) {
-        return res.status(403).json({
-          message: `This feature requires a ${minTier} plan.`,
-          requiredTier: minTier,
-          currentTier: tier,
-          upgradeUrl: '/subscribe',
-        });
-      }
-
-      req.user.tier = tier;
-      next();
-    } catch (err) {
-      next(err);
+  return (req, res, next) => {
+    let tier = req.user?.tier || 'free';
+    if (req.user?.tierExpiresAt && new Date() > new Date(req.user.tierExpiresAt)) {
+      tier = 'free';
+      require('mongoose').model('User').findByIdAndUpdate(req.user.userId, { tier: 'free' }).catch(() => {});
     }
+    req.user.tier = tier;
+
+    const feature = TIER_FEATURE_MAP[minTier];
+    if (feature) return requireFeature(feature)(req, res, next);
+
+    if (!isAtLeast(tier, minTier)) {
+      return res.status(403).json({
+        message: `This requires at least the ${minTier} plan.`,
+        requiredTier: minTier,
+        upgradeUrl: '/subscribe',
+      });
+    }
+    next();
   };
 }
 
+checkTier.feature = checkTier;
 module.exports = checkTier;

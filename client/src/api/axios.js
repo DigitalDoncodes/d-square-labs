@@ -9,6 +9,8 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  const program = localStorage.getItem('activeProgram');
+  if (program && program !== 'mba') config.headers['x-program'] = program;
   return config;
 });
 

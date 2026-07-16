@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middleware/verifyToken');
-const checkTier = require('../middleware/checkTier');
+const { requireFeature } = require('../subscription/permissionEngine');
+const { FEATURE } = require('../subscription/featureRegistry');
 const DailyBriefing = require('../models/DailyBriefing');
 const { getUserMemory } = require('../ai/memory');
 
@@ -14,7 +15,7 @@ const SPEC_SECTIONS = {
   Consulting: ['consulting', 'market', 'leadership', 'economy'],
 };
 
-router.get('/today', verifyToken, checkTier('trial'), async (req, res, next) => {
+router.get('/today', verifyToken, requireFeature(FEATURE.BRIEFING), async (req, res, next) => {
   try {
     const dateKey = new Date().toISOString().slice(0, 10);
     const briefing = await DailyBriefing.findOne({ dateKey, status: 'published' }).lean();
@@ -29,7 +30,7 @@ router.get('/today', verifyToken, checkTier('trial'), async (req, res, next) => 
   } catch (err) { next(err); }
 });
 
-router.get('/history', verifyToken, checkTier('trial'), async (req, res, next) => {
+router.get('/history', verifyToken, requireFeature(FEATURE.BRIEFING), async (req, res, next) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 7, 30);
     const briefings = await DailyBriefing.find({ status: 'published' })

@@ -38,6 +38,10 @@ const userSchema = new mongoose.Schema(
     trialStartedAt: { type: Date, default: null },
     tierExpiresAt: { type: Date, default: null },    // null = never expires
     subscriptionRef: { type: String, default: null }, // last verified payment ref
+
+    // Module system: programs this user is enrolled in + active one
+    programs: { type: [{ type: String }], default: ['mba'] },
+    activeProgram: { type: String, default: 'mba' },
   },
   { timestamps: true }
 );

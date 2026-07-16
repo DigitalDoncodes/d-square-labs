@@ -1,7 +1,8 @@
 const router = require('express').Router();
 const verifyToken = require('../middleware/verifyToken');
 const checkRole = require('../middleware/checkRole');
-const checkTier = require('../middleware/checkTier');
+const { requireFeature } = require('../subscription/permissionEngine');
+const { FEATURE } = require('../subscription/featureRegistry');
 const {
   listCompanies,
   getCompanyBySlug,
@@ -15,7 +16,7 @@ const { getCompanyNews } = require('../controllers/companyNewsController');
 router.use(verifyToken);
 
 router.get('/', listCompanies);
-router.get('/questions/bank', checkTier('pro'), listQuestions);
+router.get('/questions/bank', requireFeature(FEATURE.INTERVIEW_QUESTIONS), listQuestions);
 router.get('/news/feed', getCompanyNews);
 router.get('/:slug', getCompanyBySlug);
 

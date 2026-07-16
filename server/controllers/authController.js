@@ -12,6 +12,8 @@ const Resume = require('../models/Resume');
 const JournalEntry = require('../models/JournalEntry');
 const Announcement = require('../models/Announcement');
 const UserProfile = require('../models/UserProfile');
+const StudentIdentity = require('../models/StudentIdentity');
+const { upsertFromRegistration, updateIdentity } = require('../services/studentIdentityService');
 const { sendWelcomeEmail, sendPasswordResetEmail } = require('../config/mailer');
 const logActivity = require('../utils/logActivity');
 const cloudinary = require('../config/cloudinary');
@@ -50,7 +52,7 @@ const uniqueReferralCode = async (name) => {
 
 const signToken = (user) =>
   jwt.sign(
-    { userId: user._id, name: user.name, email: user.email, role: user.role || 'member', tier: user.tier || 'free', studentType: user.studentType || 'fresher' },
+    { userId: user._id, name: user.name, email: user.email, role: user.role || 'member', tier: user.tier || 'free', studentType: user.studentType || 'fresher', programs: user.programs || ['mba'], activeProgram: user.activeProgram || 'mba' },
     process.env.JWT_SECRET,
     { expiresIn: '7d' }
   );
@@ -78,7 +80,10 @@ exports.register = async (req, res, next) => {
       difficultSubjects,
       learningStyle,
       goals,
-      experience
+      experience,
+      skills: regSkills,
+      timeAvailable,
+      challenges,
     } = req.body;
 
     // Basic validation
@@ -184,7 +189,11 @@ exports.register = async (req, res, next) => {
       });
     }
 
-    // Prepare profile data
+    // Normalise learningStyle client values → schema enum
+    const ClientLS = { Videos: 'Visual', Reading: 'Reading/Writing', Practice: 'Kinesthetic', Discussion: 'Auditory', AI: 'Other', Mixed: 'Multimodal' };
+    const normalisedLS = ClientLS[learningStyle] || (['Visual', 'Auditory', 'Reading/Writing', 'Kinesthetic', 'Multimodal', 'Other'].includes(learningStyle) ? learningStyle : 'Other');
+
+    // Prepare profile data using canonical goal mapper
     const profileData = {
       user: user._id,
       college: college || '',
@@ -199,24 +208,14 @@ exports.register = async (req, res, next) => {
       careerInterests: Array.isArray(careerInterests) ? careerInterests : [],
       favouriteSubjects: Array.isArray(favouriteSubjects) ? favouriteSubjects : [],
       difficultSubjects: Array.isArray(difficultSubjects) ? difficultSubjects : [],
-      learningStyle: learningStyle || 'Other',
-      goals: typeof goals === 'object' && goals !== null ? goals : {
-        placement: false,
-        higherStudies: false,
-        entrepreneurship: false,
-        financialLiteracy: false,
-        leadership: false,
-        communication: false,
-        research: false,
-        certifications: false
-      },
+      learningStyle: normalisedLS,
+      goals: typeof goals === 'object' && !Array.isArray(goals) && goals !== null ? goals : StudentIdentity.goalsArrayToSubdoc(goals),
       experience: {
         years: years,
         type: expType,
         pastDomain: pastDomain
       },
-      // Keep existing fields for backward compatibility
-      skills: [],
+      skills: Array.isArray(regSkills) ? regSkills : [],
       interests: [],
       clubs: [],
       languages: [],
@@ -225,11 +224,44 @@ exports.register = async (req, res, next) => {
       portfolio: '',
       bio: '',
       lookingFor: '',
-      preMbaDomain: pastDomain // map pastDomain to preMbaDomain for existing features
+      preMbaDomain: pastDomain
     };
 
-    // Create UserProfile
+    // Create UserProfile (backward compat)
     await UserProfile.create(profileData);
+
+    // Populate canonical StudentIdentity (single source of truth).
+    // Explicitly construct data — never spread req.body (which contains password).
+    try {
+      await upsertFromRegistration(user._id, {
+        name, email, rollNumber: rollNumber || '',
+        studentType, workExYears,
+        college: college || '', course: course || '', department: department || '',
+        specialization: specialization || '', batch: batch || '', semester: semester || '',
+        graduationYear: graduationYear || null,
+        dreamRole: dreamRole || '',
+        preferredIndustries: Array.isArray(preferredIndustries) ? preferredIndustries : [],
+        careerInterests: Array.isArray(careerInterests) ? careerInterests : [],
+        favouriteSubjects: Array.isArray(favouriteSubjects) ? favouriteSubjects : [],
+        difficultSubjects: Array.isArray(difficultSubjects) ? difficultSubjects : [],
+        learningStyle: normalisedLS,
+        goals,
+        experience: { years, type: expType, pastDomain },
+        skills: Array.isArray(regSkills) ? regSkills : [],
+        timeAvailable: timeAvailable || '',
+        challenges: Array.isArray(challenges) ? challenges : [],
+      });
+    } catch (err) {
+      logger.error('StudentIdentity creation failed', {
+        error: err.message, stack: err.stack,
+        userId: user._id, email: user.email,
+      });
+      // Mark for backfill so migration scripts can find missing identities
+      await User.updateOne(
+        { _id: user._id },
+        { $set: { needsIdentityBackfill: true } }
+      ).catch(() => {});
+    }
 
     // Fire-and-forget: registration must not fail if the mail service is down.
     sendWelcomeEmail(user).catch((err) => logger.error('Welcome email failed:', { error: err.message }));
@@ -296,12 +328,13 @@ exports.updateProfile = async (req, res, next) => {
     if (linkedin !== undefined) updates.linkedin = String(linkedin);
     if (github !== undefined) updates.github = String(github);
 
+    await updateIdentity(req.user.userId, updates);
+
     const user = await User.findByIdAndUpdate(req.user.userId, updates, {
       new: true,
       runValidators: true,
     }).select('-password -resetTokenHash -resetTokenExpires');
     if (!user) return res.status(404).json({ message: 'User not found' });
-    // Name lives inside the JWT too — issue a fresh token so the UI stays in sync.
     res.json({ user, token: signToken(user) });
   } catch (err) {
     next(err);

@@ -57,6 +57,7 @@ export default function RegisterPage() {
 
   const onSubmit = async (data) => {
     try {
+      const isExp = data.studentType === 'experienced';
       const payload = {
         name: data.name,
         email: data.email,
@@ -64,8 +65,28 @@ export default function RegisterPage() {
         rollNumber: data.rollNumber || '',
         referralCode: data.referralCode || '',
         studentType: data.studentType || 'fresher',
-        workExYears: data.studentType === 'experienced' ? (data.workExYears || undefined) : undefined,
-        preMbaDomain: data.studentType === 'experienced' ? (data.preMbaDomain || '') : '',
+        course: data.course || '',
+        specialization: data.specialization || '',
+        college: data.college || '',
+        department: data.department || '',
+        batch: data.batch || '',
+        semester: data.semester || '',
+        graduationYear: data.graduationYear || undefined,
+        careerInterests: data.careerInterests || [],
+        skills: data.skills || [],
+        goals: data.goals || {},
+        learningStyle: data.learningStyle || '',
+        timeAvailable: data.timeAvailable || '',
+        challenges: data.challenges || [],
+        experience: isExp ? {
+          years: Number(data.workExYears) || 0,
+          type: 'experienced',
+          pastDomain: data.preMbaDomain || '',
+        } : {
+          years: 0,
+          type: 'fresher',
+          pastDomain: '',
+        },
       };
       const res = await registerApi(payload);
       if (res.data.pending) { setPending(true); return; }

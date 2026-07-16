@@ -11,31 +11,11 @@
 import { Link } from 'react-router-dom';
 import { Crown, Lock } from 'lucide-react';
 import { useSubscription } from '../../context/SubscriptionContext';
+import { TIER_COLORS, TIER_COLOR_MAP } from '../../utils/tiers';
 
 const TIER_LABEL = {
   pro: { label: 'Pro', color: 'amber' },
   max: { label: 'Max', color: 'purple' },
-};
-
-const COLORS = {
-  amber: {
-    bg:     'bg-amber-50 dark:bg-amber-950/20',
-    border: 'border-amber-200 dark:border-amber-800/60',
-    iconBg: 'bg-amber-100 dark:bg-amber-900/40',
-    icon:   'text-amber-500',
-    badge:  'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-    btn:    'bg-amber-500 hover:bg-amber-600 text-white',
-    inline: 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300',
-  },
-  purple: {
-    bg:     'bg-purple-50 dark:bg-purple-950/20',
-    border: 'border-purple-200 dark:border-purple-800/60',
-    iconBg: 'bg-purple-100 dark:bg-purple-900/40',
-    icon:   'text-purple-500',
-    badge:  'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
-    btn:    'bg-purple-600 hover:bg-purple-700 text-white',
-    inline: 'border-purple-300 bg-purple-50 text-purple-700 dark:border-purple-700 dark:bg-purple-950/30 dark:text-purple-300',
-  },
 };
 
 const DEFAULT_DESCRIPTIONS = {
@@ -49,7 +29,7 @@ export default function TierGate({ required = 'pro', description, inline = false
   if (!sub || sub.hasAccess(required)) return children;
 
   const meta = TIER_LABEL[required] || TIER_LABEL.pro;
-  const c = COLORS[meta.color];
+  const c = TIER_COLORS[meta.color];
   const desc = description || DEFAULT_DESCRIPTIONS[required];
 
   if (inline) {

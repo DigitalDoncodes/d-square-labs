@@ -50,7 +50,9 @@ router.put('/meta', async (req, res, next) => {
 const SubscriptionRequest = require('../models/SubscriptionRequest');
 const User = require('../models/User');
 
-const VALID_TIERS = ['free', 'trial', 'pro', 'max'];
+const { TIERS } = require('../subscription/tierHierarchy');
+
+const VALID_TIERS = TIERS;
 
 // Paid plans run for exactly one month from activation; trials for 7 days.
 const oneMonthFromNow = () => {

@@ -20,6 +20,7 @@ const userMemorySchema = new mongoose.Schema(
     readinessUpdatedAt: { type: Date },
 
     // Engagement signals
+    timeAvailable: { type: String, maxlength: 20 },             // '<1hr', '1-2hr', '2-4hr', 'flexible'
     resumeCompletionPct: { type: Number, min: 0, max: 100 },
     tasksCompletedCount: { type: Number, default: 0 },
     notesCount:          { type: Number, default: 0 },

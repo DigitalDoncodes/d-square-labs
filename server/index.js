@@ -90,6 +90,9 @@ app.use('/api/subscription', require('./routes/subscriptionRoutes'));
 app.use('/api/star-stories', require('./routes/starStoryRoutes'));
 app.use('/api/pivot', require('./routes/pivotRoutes'));
 
+// Module system — program enrollment and switching
+app.use('/api/modules', require('./routes/moduleRoutes'));
+
 // Content Studio — centralized publishing engine.
 // Rollback: set STUDIO_ENABLED=false to hide it (per-module uploads unaffected).
 if (process.env.STUDIO_ENABLED !== 'false') {
@@ -101,6 +104,7 @@ app.use('/api/briefing', require('./routes/briefingRoutes'));
 app.use('/api/reflection', require('./routes/reflectionRoutes'));
 app.use('/api/resume-tip', require('./routes/resumeTipRoutes'));
 app.use('/api/automation', require('./routes/automationRoutes'));
+app.use('/api/recommendations', require('./routes/recommendationRoutes'));
 
 // Public read for placement countdown (available to all authenticated members).
 const { generalLimiter: _gl } = require('./middleware/rateLimiters');
@@ -129,9 +133,13 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 const { register: registerSchedulers } = require('./schedulers');
+const { register: registerModule, bootAll } = require('./modules/registry');
+
+registerModule('mba', require('./modules/mba'));
 
 connectDB()
   .then(() => {
+    bootAll();
     app.listen(PORT, () => logger.info(`Server running on port ${PORT}`));
     registerSchedulers();
   })

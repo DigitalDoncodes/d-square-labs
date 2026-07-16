@@ -6,6 +6,8 @@
 
 const UserMemory = require('../models/UserMemory');
 const User       = require('../models/User');
+const UserProfile = require('../models/UserProfile');
+const StudentIdentity = require('../models/StudentIdentity');
 const Resume     = require('../models/Resume');
 const Task       = require('../models/Task');
 const Note       = require('../models/Note');
@@ -24,36 +26,71 @@ async function getUserMemory(userId) {
 // ── Bootstrap ──────────────────────────────────────────────────────────────
 
 async function bootstrapMemory(userId) {
-  const [user, resume, taskCount, noteCount] = await Promise.all([
-    User.findById(userId).select('interests bio name').lean(),
+  const [identity, resume, taskCount, noteCount] = await Promise.all([
+    StudentIdentity.findOne({ user: userId }).lean(),
     Resume.findOne({ user: userId }).select('skills summary').lean(),
     Task.countDocuments({ $or: [{ createdBy: userId }, { assignee: userId }], status: 'done' }),
     Note.countDocuments({ user: userId }),
   ]);
 
-  const interests = user?.interests || [];
-  const skills    = resume?.skills || [];
+  // Fallback: read from legacy models if StudentIdentity not yet created
+  let specialization = identity?.specialization || null;
+  let careerInterests = identity?.careerInterests || [];
+  let bio = identity?.bio || '';
+  let college = identity?.college || '';
+  let course = identity?.course || '';
+  let learningStyle = identity?.learningStyle || '';
+  let workExYears = identity?.workExYears || null;
+  let pastDomain = identity?.pastDomain || '';
+  let goals = identity?.goals || [];
+  let timeAvailable = identity?.timeAvailable || '';
 
-  const specMap = {
-    Finance:    ['finance', 'banking', 'equity', 'investment', 'cfa', 'valuation'],
-    Marketing:  ['marketing', 'brand', 'consumer', 'campaign', 'digital'],
-    Operations: ['operations', 'supply chain', 'logistics', 'scm', 'lean'],
-    HR:         ['hr', 'human resources', 'people', 'talent', 'opm'],
-    Consulting: ['consulting', 'strategy', 'mckinsey', 'bcg', 'bain'],
-  };
+  if (!identity) {
+    const [user, profile] = await Promise.all([
+      User.findById(userId).select('interests bio name').lean(),
+      UserProfile.findOne({ user: userId }).select('specialization careerInterests college course preMbaDomain learningStyle goals experience').lean(),
+    ]);
+    careerInterests = profile?.careerInterests || user?.interests || [];
+    bio = user?.bio || '';
+    college = profile?.college || '';
+    course = profile?.course || '';
+    learningStyle = profile?.learningStyle || '';
+    workExYears = user?.workExYears || profile?.experience?.years || null;
+    pastDomain = profile?.experience?.pastDomain || profile?.preMbaDomain || '';
+    if (profile?.goals) {
+      goals = StudentIdentity.goalsSubdocToArray ? StudentIdentity.goalsSubdocToArray(profile.goals) : [];
+    }
+    if (!specialization) specialization = profile?.specialization || null;
+    timeAvailable = '';
+  }
 
-  const pool = [...interests, ...skills].map((s) => s.toLowerCase());
-  let specialization = null;
-  let maxScore = 0;
-  for (const [spec, keywords] of Object.entries(specMap)) {
-    const score = keywords.filter((k) => pool.some((p) => p.includes(k))).length;
-    if (score > maxScore) { maxScore = score; specialization = spec; }
+  // Use stored specialization; infer from keywords as fallback
+  const skills = resume?.skills || identity?.skills || [];
+  if (!specialization) {
+    const specMap = {
+      Finance:    ['finance', 'banking', 'equity', 'investment', 'cfa', 'valuation'],
+      Marketing:  ['marketing', 'brand', 'consumer', 'campaign', 'digital'],
+      Operations: ['operations', 'supply chain', 'logistics', 'scm', 'lean'],
+      HR:         ['hr', 'human resources', 'people', 'talent', 'opm'],
+      Consulting: ['consulting', 'strategy', 'mckinsey', 'bcg', 'bain'],
+    };
+
+    const pool = [...careerInterests, ...skills].map((s) => s.toLowerCase());
+    let maxScore = 0;
+    for (const [spec, keywords] of Object.entries(specMap)) {
+      const score = keywords.filter((k) => pool.some((p) => p.includes(k))).length;
+      if (score > maxScore) { maxScore = score; specialization = spec; }
+    }
   }
 
   const data = {
     user: userId,
     specialization,
-    careerInterests: interests,
+    careerInterests,
+    timeAvailable: timeAvailable || undefined,
+    contextSummary: [specialization, bio, college, course, pastDomain, learningStyle, timeAvailable, ...(goals || [])]
+      .filter(Boolean)
+      .join(' | ') || undefined,
     resumeCompletionPct: _resumeCompletionPct(resume),
     tasksCompletedCount: taskCount,
     notesCount: noteCount,
@@ -111,6 +148,7 @@ function formatMemoryContext(mem) {
   if (mem.strengths?.length)        lines.push(`Strengths: ${mem.strengths.join(', ')}`);
   if (mem.weaknesses?.length)       lines.push(`Areas to improve: ${mem.weaknesses.join(', ')}`);
   if (mem.recentTopics?.length)     lines.push(`Recent AI topics: ${mem.recentTopics.slice(-5).join(', ')}`);
+  if (mem.timeAvailable)            lines.push(`Study Time Available: ${mem.timeAvailable}`);
   if (mem.contextSummary)           lines.push(`Context: ${mem.contextSummary}`);
   if (!lines.length) return '';
   return `[User Memory]\n${lines.join('\n')}\n`;

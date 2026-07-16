@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { Plus, CheckCircle2, Circle, Clock, ArrowRight, Save, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import PageHeader from '../../components/common/PageHeader';
+import SmartSelect from '../../components/common/SmartSelect';
 import { Page } from '../../components/common/motion';
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { getPivot, upsertPivot, updateGap } from '../../api/pivot';
 
-const DOMAINS = ['IT / Software', 'Banking / Finance', 'Consulting', 'Manufacturing / Ops', 'Healthcare', 'FMCG / Retail', 'Govt / PSU', 'Media / Content', 'Startup', 'Other'];
+const DOMAINS = ['IT / Software', 'Banking / Finance', 'Consulting', 'Manufacturing / Ops', 'Healthcare', 'FMCG / Retail', 'Govt / PSU', 'Media / Content', 'Startup'];
 
 const GAP_STATUS = {
   'not-started': { icon: Circle,       label: 'Not started', color: 'text-gray-400' },
@@ -117,11 +118,16 @@ export default function PivotPage() {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">Pre-MBA domain</label>
-                  <select value={form.fromDomain} onChange={set('fromDomain')} className={inp}>
-                    <option value="">Select…</option>
-                    {DOMAINS.map((d) => <option key={d}>{d}</option>)}
-                  </select>
+                  <SmartSelect
+                    options={DOMAINS}
+                    value={form.fromDomain}
+                    onChange={(val) => setForm((f) => ({ ...f, fromDomain: val }))}
+                    label="Pre-MBA domain"
+                    placeholder="Select…"
+                    allowOther={true}
+                    variant="dropdown"
+                    name="fromDomain"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1">Pre-MBA role / title</label>
@@ -134,11 +140,16 @@ export default function PivotPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">Target domain</label>
-                  <select value={form.toDomain} onChange={set('toDomain')} className={inp}>
-                    <option value="">Select…</option>
-                    {DOMAINS.map((d) => <option key={d}>{d}</option>)}
-                  </select>
+                  <SmartSelect
+                    options={DOMAINS}
+                    value={form.toDomain}
+                    onChange={(val) => setForm((f) => ({ ...f, toDomain: val }))}
+                    label="Target domain"
+                    placeholder="Select…"
+                    allowOther={true}
+                    variant="dropdown"
+                    name="toDomain"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1">Target role</label>
