@@ -146,7 +146,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-indigo-500/40 disabled:opacity-60"
+                className="flex-1 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white transition-colors duration-150 hover:bg-indigo-500 disabled:opacity-60"
               >
                 {isSubmitting ? 'Creating your workspace…' : 'Create My Workspace ✨'}
               </button>

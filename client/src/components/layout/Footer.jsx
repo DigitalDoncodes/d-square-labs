@@ -7,7 +7,7 @@ const mailto = (subject) => `mailto:${CONTACT}?subject=${encodeURIComponent(subj
 export default function Footer() {
   return (
     <footer className="mt-12 border-t border-gray-200 py-6 print:hidden dark:border-gray-800">
-      <div className="mx-auto flex max-w-5xl flex-col items-center gap-3 px-4 text-xs text-gray-400">
+      <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-3 px-4 text-xs text-gray-400">
         <Link
           to="/support"
           className="inline-flex items-center gap-1.5 font-medium text-gray-500 hover:text-indigo-500 dark:text-gray-400"

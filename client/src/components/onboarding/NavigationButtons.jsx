@@ -40,7 +40,7 @@ export default function NavigationButtons({
           type="submit"
           onClick={onSubmit}
           disabled={isLoading || disabled}
-          className="relative flex-1 overflow-hidden rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition-all hover:shadow-indigo-500/40 disabled:opacity-50 disabled:shadow-none"
+          className="relative flex-1 overflow-hidden rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white transition-colors duration-150 hover:bg-indigo-500 disabled:opacity-50"
         >
           <span className="relative z-10 flex items-center justify-center gap-2">
             {isLoading ? (
@@ -66,7 +66,6 @@ export default function NavigationButtons({
               submitLabel
             )}
           </span>
-          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-indigo-600 to-purple-600 transition-opacity opacity-0 hover:opacity-100" />
         </motion.button>
       ) : (
         <motion.button
@@ -75,7 +74,7 @@ export default function NavigationButtons({
           type="button"
           onClick={onNext}
           disabled={isLoading || disabled}
-          className="flex-1 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition-all hover:bg-indigo-700 hover:shadow-indigo-500/40 disabled:opacity-50 disabled:shadow-none"
+          className="flex-1 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white transition-colors duration-150 hover:bg-indigo-500 disabled:opacity-50"
         >
           {isLoading ? (
             <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">

@@ -127,7 +127,7 @@ export default function EventsPage() {
   const myRsvpEvents = myRsvps.filter((r) => r.status !== 'not-going' && r.event);
 
   return (
-    <Page className="mx-auto max-w-3xl px-4 py-6">
+    <Page>
       <PageHeader
         icon={CalendarRange}
         title="Events"

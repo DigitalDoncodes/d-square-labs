@@ -2,6 +2,7 @@
 // Keeps title, subtitle, and primary action visually consistent
 // so the product feels designed together rather than assembled.
 import { Sparkles } from 'lucide-react';
+import Button from './Button';
 
 export default function PageHeader({
   icon: Icon,
@@ -28,10 +29,9 @@ export default function PageHeader({
         {action && (
           <div className="shrink-0">
             {typeof action === 'object' && action.label ? (
-              <button onClick={action.onClick} className="btn-primary">
-                {action.icon && <action.icon className="h-4 w-4" />}
+              <Button onClick={action.onClick} icon={action.icon}>
                 {action.label}
-              </button>
+              </Button>
             ) : action}
           </div>
         )}

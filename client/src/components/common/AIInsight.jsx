@@ -34,7 +34,7 @@ export default function AIInsight({
   };
 
   return (
-    <div className={`mb-5 rounded-2xl border border-indigo-200/80 bg-gradient-to-r from-indigo-50 to-blue-50/60 p-4 dark:border-indigo-800/50 dark:from-indigo-900/20 dark:to-blue-900/10 ${className}`}>
+    <div className={`mb-5 rounded-2xl border border-indigo-200/80 bg-indigo-50 p-4 dark:border-indigo-800/50 dark:bg-indigo-950/30 ${className}`}>
       <div className="flex items-start gap-3">
         <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/60">
           <Sparkles className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />

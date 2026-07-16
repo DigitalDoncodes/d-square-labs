@@ -4,7 +4,7 @@ import { Page } from '../../components/common/motion';
 
 export default function WellbeingSupportPage() {
   return (
-    <Page className="mx-auto max-w-3xl px-4 py-6">
+    <Page>
       <div className="mb-5">
         <h1 className="flex items-center gap-2 text-xl font-bold">
           <HeartHandshake className="h-5 w-5 text-indigo-500" /> Support

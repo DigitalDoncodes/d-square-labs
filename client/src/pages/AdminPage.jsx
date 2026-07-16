@@ -224,7 +224,7 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="animate-in mx-auto max-w-4xl px-4 py-6">
+    <div className="animate-in mx-auto w-full max-w-3xl px-4 py-6">
       <h1 className="mb-1 flex items-center gap-2 text-xl font-bold">
         <Crown className="h-5 w-5 text-amber-500" /> Admin Console
       </h1>

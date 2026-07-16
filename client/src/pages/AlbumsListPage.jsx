@@ -75,7 +75,7 @@ export default function AlbumsListPage() {
               rel="noreferrer"
               className="card-hover group relative block overflow-hidden rounded-2xl border border-gray-200/80 bg-white dark:border-gray-800/80 dark:bg-gray-900"
             >
-              <div className="relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-500 to-blue-500">
+              <div className="relative flex h-40 items-center justify-center overflow-hidden bg-indigo-500">
                 {album.cover ? (
                   <img
                     src={album.cover}

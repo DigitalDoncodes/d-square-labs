@@ -80,7 +80,7 @@ export default function OpportunitiesPage() {
     .sort((a, b) => new Date(a.deadline || 0) - new Date(b.deadline || 0));
 
   return (
-    <Page className="mx-auto max-w-3xl px-4 py-6 space-y-6">
+    <Page className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold flex items-center gap-2">

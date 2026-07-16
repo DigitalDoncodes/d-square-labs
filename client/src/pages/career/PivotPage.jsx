@@ -98,8 +98,8 @@ export default function PivotPage() {
   const total = plan?.skillGaps?.length || 0;
 
   return (
-    <Page>
-      <div className="mx-auto max-w-2xl px-4 py-6 space-y-6">
+    <Page bare>
+      <div className="mx-auto w-full max-w-2xl px-4 py-6 space-y-6">
         <PageHeader
           title="Career Pivot Tracker"
           subtitle="From your pre-MBA domain to your target role — map the gap, track the journey."

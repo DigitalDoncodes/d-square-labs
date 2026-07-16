@@ -293,7 +293,7 @@ export default function AIToolsPage() {
   useDocumentTitle('AI Tools');
 
   return (
-    <Page className="mx-auto max-w-3xl px-4 py-6">
+    <Page>
       <PageHeader
         icon={Sparkles}
         title="AI Tools Studio"

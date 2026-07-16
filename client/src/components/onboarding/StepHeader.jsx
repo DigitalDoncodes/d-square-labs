@@ -10,7 +10,7 @@ export default function StepHeader({ title, subtitle, icon }) {
       className="mb-8 text-center"
     >
       {icon && (
-        <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-3xl shadow-lg shadow-indigo-500/20">
+        <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 text-3xl shadow-lg shadow-indigo-500/20">
           {icon}
         </div>
       )}

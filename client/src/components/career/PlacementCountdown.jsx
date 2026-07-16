@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import { CalendarClock, ArrowRight } from 'lucide-react';
 import { getMeta } from '../../api/meta';
 
+// Hue carries the meaning (rose = imminent, amber = approaching, indigo = distant);
+// the surface stays flat so urgency reads from colour, not decoration.
 const urgencyClass = (days) => {
-  if (days <= 30) return 'from-rose-500/10 to-orange-500/10 border-rose-200 dark:border-rose-800/60';
-  if (days <= 90) return 'from-amber-500/10 to-yellow-500/10 border-amber-200 dark:border-amber-800/60';
-  return 'from-indigo-500/10 to-blue-500/10 border-indigo-200/80 dark:border-indigo-800/60';
+  if (days <= 30) return 'bg-rose-500/10 border-rose-200 dark:border-rose-800/60';
+  if (days <= 90) return 'bg-amber-500/10 border-amber-200 dark:border-amber-800/60';
+  return 'bg-indigo-500/10 border-indigo-200/80 dark:border-indigo-800/60';
 };
 
 const urgencyText = (days) => {
@@ -32,7 +34,7 @@ export default function PlacementCountdown({ compact = false }) {
   const remainingDays = days % 7;
 
   return (
-    <div className={`mb-4 rounded-2xl border bg-gradient-to-br p-5 ${urgencyClass(days)}`}>
+    <div className={`mb-4 rounded-2xl border p-5 ${urgencyClass(days)}`}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <CalendarClock className={`h-5 w-5 shrink-0 ${urgencyText(days)}`} />

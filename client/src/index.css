@@ -68,21 +68,8 @@
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07);
   }
 
-  /* Button system — one primary, one secondary, one ghost. */
-  .btn-primary {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-indigo-500 disabled:opacity-50;
-  }
-  .btn-secondary {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors duration-150 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-800;
-  }
-  .btn-ghost {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium text-gray-500 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200;
-  }
-
-  /* Danger/destructive variant. */
-  .btn-danger {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-rose-500 disabled:opacity-50;
-  }
+  /* Buttons live in components/common/Button.jsx, not here — it is the single
+     source of truth for variant/size. A CSS twin would drift out of sync. */
 
   /* Input system. */
   .input {

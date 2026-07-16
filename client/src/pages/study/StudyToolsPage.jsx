@@ -164,7 +164,7 @@ export default function StudyToolsPage() {
   );
 
   return (
-    <Page className="mx-auto max-w-3xl px-4 py-6 space-y-5">
+    <Page className="space-y-5">
       <PageHeader icon={Timer} title="Focus" subtitle="Deep work tools that build streaks, not stress" />
 
       {/* Stats row */}

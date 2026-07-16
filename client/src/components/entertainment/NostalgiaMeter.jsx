@@ -14,7 +14,7 @@ export default function NostalgiaMeter({ score = 85 }) {
 
       <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-blue-500 transition-all duration-1000 ease-out"
+          className="h-full rounded-full bg-indigo-500 transition-all duration-1000 ease-out"
           style={{ width: `${score}%` }}
         />
       </div>

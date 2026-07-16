@@ -130,7 +130,7 @@ export default function ProjectsPage() {
   };
 
   return (
-    <Page className="mx-auto max-w-5xl px-4 py-6">
+    <Page>
       {selected && selectedData ? (
         <>
           <div className="mb-4 flex items-center gap-3">

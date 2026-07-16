@@ -74,7 +74,7 @@ export default function InterviewQuestionsPage() {
   };
 
   return (
-    <Page className="mx-auto max-w-3xl px-4 py-6">
+    <Page>
       <div className="mb-4">
         <h1 className="text-xl font-bold">Interview Question Bank</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">

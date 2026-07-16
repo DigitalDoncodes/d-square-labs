@@ -30,7 +30,7 @@ export default function InviteCard() {
   };
 
   return (
-    <div className="card-hover mt-4 flex flex-col gap-3 rounded-2xl border border-indigo-200/70 bg-gradient-to-r from-indigo-50 to-blue-50 p-5 dark:border-indigo-900/50 dark:from-indigo-950/40 dark:to-blue-950/30 sm:flex-row sm:items-center sm:justify-between">
+    <div className="card-hover mt-4 flex flex-col gap-3 rounded-2xl border border-indigo-200/70 bg-indigo-50 p-5 dark:border-indigo-900/50 dark:bg-indigo-950/40 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-3">
         <div className="rounded-xl bg-indigo-100 p-2.5 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400">
           <Gift className="h-5 w-5" />

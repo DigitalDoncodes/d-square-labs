@@ -197,7 +197,7 @@ export default function IntelligencePage() {
               <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-500">
                 <Sparkles className="h-3.5 w-3.5" /> Top story
               </p>
-              <div className="rounded-2xl bg-gradient-to-br from-indigo-500/10 to-blue-500/10 p-0.5">
+              <div className="rounded-2xl bg-indigo-500/10 p-0.5">
                 <IntelligenceCard article={topStory} onToggleBookmark={onToggleBookmark} />
               </div>
             </div>

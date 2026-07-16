@@ -68,3 +68,18 @@ export const TIER_COLOR_MAP = {
   pro: 'amber',
   max: 'purple',
 };
+
+// Human-readable tier names.
+export const TIER_LABEL = {
+  free:  'Free',
+  trial: 'Trial',
+  pro:   'Pro',
+  max:   'Max',
+};
+
+// Resolve a tier ID to its label + colour theme in one call.
+// Falls back to Pro so an unknown tier degrades to a sensible gate.
+export const tierTheme = (tier) => {
+  const key = TIER_COLOR_MAP[tier] ? tier : 'pro';
+  return { label: TIER_LABEL[key], colors: TIER_COLORS[TIER_COLOR_MAP[key]] };
+};

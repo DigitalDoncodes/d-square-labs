@@ -186,7 +186,7 @@ function TechniqueSection({ icon: Icon, iconClass, title, items }) {
 export default function WellbeingPage() {
   useDocumentTitle('Wellbeing');
   return (
-    <Page className="mx-auto max-w-3xl px-4 py-6">
+    <Page>
       <div className="mb-5">
         <h1 className="text-xl font-bold">Breathing</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">

@@ -1,0 +1,130 @@
+# LivingSurface V2 — Migration Report
+
+## Sprint 2 Deliverable
+
+---
+
+## Files Modified
+
+| File | Change |
+|------|--------|
+| `client/src/components/experience/LivingSurface.jsx` | Complete rewrite — 6-section narrative replacing widget-grid layout |
+| `REFERENCE_EXPERIENCE.md` | New — design blueprint document |
+
+No other files were modified. No backend code was touched.
+
+---
+
+## Components Removed from LivingSurface Imports
+
+| Component | File | Status |
+|-----------|------|--------|
+| `AICoach` | `experience/AICoach.jsx` | No longer imported (kept in repo) |
+| `DailyMissionCard` | `experience/DailyMissionCard.jsx` | Replaced by inline Card + shared Button |
+| `ExplainableRecCard` | `experience/ExplainableRecCard.jsx` | Replaced by inline Card + shared Button |
+| `GoalProgress` | `experience/GoalProgress.jsx` | Replaced by Card + inline progress bar |
+| `ReadinessTrend` | `experience/ReadinessTrend.jsx` | Replaced by Card + ScoreRing |
+| `WeeklyReview` | `experience/WeeklyReview.jsx` | Replaced by Card + delta trend |
+| `SmartCard` | `experience/SmartCard.jsx` | No longer needed |
+| `useAdaptiveLayout` | `experience/AdaptiveWorkspace.jsx` | Fixed narrative order replaces adaptive grid |
+
+All removed components remain in the repository for backward compatibility.
+None are currently imported by any page other than their own definitions.
+
+---
+
+## Shared Components Introduced
+
+| Component | Usage in LivingSurface |
+|-----------|----------------------|
+| `Card` | All 6 sections — variant="hover" for mission, variant="passive" for measure/reflect |
+| `Button` | Mission CTA, recommendation accept/dismiss, retry, empty-state actions |
+| `ScoreRing` | Readiness display in Section 4 |
+| `AIInsight` | Section 3 — client-side synthesized insight |
+| `Skeleton` | Per-section loading states (MissionSkeleton, MeasureCardSkeleton) |
+| `Page` | Page entrance wrapper (CSS `animate-in`) |
+| `Stagger` / `StaggerItem` | Sequential section entrance (CSS stagger delays) |
+
+### API functions still used (from `experience.js`)
+
+- `getDailyMission` — Section 2
+- `getRecommendationStream` — Section 5
+- `getReadiness` — Section 1, 4
+- `getGoalProgress` — Section 4
+- `getWeeklyReview` — Section 4
+- `transitionLifecycle` — Section 5 accept/dismiss actions
+
+No new API calls were introduced.
+
+---
+
+## Narrative Structure Mapping
+
+| Section | Question | Data Source | Components |
+|---------|----------|-------------|------------|
+| 1. Arrival | "Where am I today?" | `user.name`, time, readiness, tasks, caseData | Inline JSX |
+| 2. Focus | "What should I do first?" | `getDailyMission()` | Card, Button |
+| 3. Understand | "Why?" | Client-synthesized from readiness/tasks/streak/notes | AIInsight |
+| 4. Measure | "Am I improving?" | `getReadiness()`, `getGoalProgress()`, `getWeeklyReview()` | 3× Card, ScoreRing |
+| 5. Act | "What else can I do?" | `getRecommendationStream()` | Card, Button |
+| 6. Reflect | "Did today matter?" | caseData, notes, reflection.quote | 2× Card |
+
+---
+
+## Design Rule Compliance
+
+| Rule | Status |
+|------|--------|
+| Uses shared `Card` for all surfaces | ✅ 100% |
+| Uses shared `Button` for all buttons | ✅ 100% |
+| Body text is `text-sm` | ✅ |
+| No emoji in UI elements | ✅ (replaced with Lucide Medal/Sprout/Zap/Star) |
+| Full dark mode on every element | ✅ |
+| Loading states per section | ✅ (5 independent loading states) |
+| Empty states per section | ✅ (calm, contextual) |
+| Error states per section | ✅ (with retry) |
+| Page entrance via CSS `animate-in` | ✅ via `Page` component |
+| Staggered section entrance | ✅ via `Stagger`/`StaggerItem` |
+| Lucide icons at correct sizes | ✅ (h-4/h-5/h-3 as specified) |
+| Page width | Superseded — the canonical container is `CONTAINER` (`max-w-3xl px-4`) from `motion.jsx`, applied by `<Page>`. `PATTERN_LIBRARY.md` is authoritative on tokens; this report is a point-in-time record of the Sprint 2 rewrite. |
+| No inline styles | ✅ |
+| No gradients | ✅ — `AIInsight` was flattened in the Sprint 4 consistency pass; the deferred item in "Remaining Technical Debt" §1 is now closed. |
+| No new API calls | ✅ |
+
+---
+
+## Remaining Technical Debt
+
+1. **AIInsight component uses a gradient background** (`bg-gradient-to-r from-indigo-50 to-blue-50/60`). This violates DESIGN_PRINCIPLES.md (Premium is Not Decoration — no gradients). Not fixed because it is a shared component used by multiple pages; cleaning it belongs in a design-system-wide pass.
+
+2. **Old widget components orphaned**: `DailyMissionCard`, `ExplainableRecCard`, `GoalProgress`, `ReadinessTrend`, `WeeklyReview`, `SmartCard`, `AICoach` (in experience/), and `AdaptiveWorkspace` are no longer imported by any page but remain in the codebase. They should be removed in a dedicated cleanup sprint after verifying no dynamic imports or lazy routes reference them.
+
+3. **Insight derivation is client-side heuristic**: The AI Insight in Section 3 is generated by a priority-chain of conditions (worst readiness component → overdue tasks → streak → goal progress → notes). This works with existing data but is static. A future sprint could move this to the server for more context-aware insights without adding API endpoints — the server already has the student profile via the intelligence layer.
+
+4. **Mission CTA navigates to `/planner` unconditionally**: The "Start this mission" button always goes to the planner. Some missions may be study-specific or career-specific. This is a hardcoded link — future work could derive the target workspace from the mission data.
+
+5. **Recommendation accept/dismiss uses local state**: Accepted/dismissed recommendations are tracked in React state only (no persistence beyond page refresh beyond the API call). The API call succeeds but the local state (`acceptedRecs`/`dismissedRecs` Sets) is the source of truth for the current session. If the API fails, the local state still updates. This is acceptable for MVP but optimistic UI with rollback would be more robust.
+
+6. **No pull-to-refresh or manual reload affordance**: The page fetches data on mount only. A future enhancement could add pull-to-refresh or a subtle manual refresh button in the header.
+
+---
+
+## Recommendations Before Sprint 3
+
+### Priority: High
+
+1. **Audit and remove orphaned components**: Run a dead-code analysis across `experience/` directory. Components not imported by any route or lazy chunk should be deleted to prevent bitrot.
+
+2. **Centralize insight derivation on the server**: Move the `deriveInsight` logic to the backend (it already has the intelligence layer in `server/ai/intelligence-layer`). Return a top-insight field from `getRecommendationStream` or a new lightweight endpoint. This would make insights context-aware (e.g., account for exam schedules, placement timelines).
+
+### Priority: Medium
+
+3. **Standardize the AIInsight component's visual style**: Remove the gradient background to comply with Principles 8 (no gradients). Use a flat indigo-tinted surface instead.
+
+4. **Add keyboard shortcut to focus the mission**: Pressing `⌘1` or similar on the dashboard could auto-scroll/focus the mission CTA, reducing friction for returning users.
+
+### Priority: Low
+
+5. **Persist accepted/dismissed recommendations to the stream**: Currently, accepting or dismissing a recommendation sends an API call but the stream data is re-fetched only on page reload. A future version could invalidate the stream cache or optimistically remove dismissed entries from the local entries array.
+
+6. **Consider subtle ambient sounds for arrival**: A barely-audible chime on page load (for users who opt in) could reinforce the "calm arrival" feeling. This is strictly optional and should never be on by default.

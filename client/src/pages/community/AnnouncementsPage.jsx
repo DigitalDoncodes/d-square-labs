@@ -16,7 +16,7 @@ export default function AnnouncementsPage() {
   if (!announcements) return <div className="mx-auto max-w-3xl px-4 py-6"><FeedSkeleton count={5} /></div>;
 
   return (
-    <Page className="mx-auto max-w-3xl px-4 py-6">
+    <Page>
       <h1 className="mb-4 text-xl font-bold">Announcements</h1>
       {announcements.length === 0 ? (
         <EmptyState icon={Megaphone} title="No announcements yet" subtitle="Batch updates from the admin will appear here." />

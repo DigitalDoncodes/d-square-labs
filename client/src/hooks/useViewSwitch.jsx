@@ -10,7 +10,7 @@ export default function useViewSwitch(views, defaultView) {
   const active = searchParams.get('view') || defaultView;
 
   const switcher = (
-    <div className="mx-auto max-w-5xl px-4 pt-4">
+    <div className="mx-auto w-full max-w-3xl px-4 pt-4">
       <div className="inline-flex rounded-xl border border-gray-200 p-1 dark:border-gray-800">
         {views.map((v) => (
           <button

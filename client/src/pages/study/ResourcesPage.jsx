@@ -115,7 +115,7 @@ export default function ResourcesPage() {
   const folderItems = openFolder ? (items || []).filter((i) => (i.subject || 'General') === openFolder) : [];
 
   return (
-    <Page className="mx-auto max-w-4xl px-4 py-6">
+    <Page>
       <PageHeader
         icon={FileText}
         title="Resource Library"

@@ -1,11 +1,9 @@
-// Pulse-shimmer skeleton primitives — compose these to match the real layout.
-// Base shimmer: a rounded rect that pulses. Pass className to size it.
+// Shimmer skeleton primitives — compose these to match the real layout.
+// The shimmer itself is `.skeleton` in index.css (single definition, shared
+// with non-React surfaces). Pass className to size it; utilities win over the
+// component layer, so per-instance overrides like `rounded-full` still apply.
 export function Skeleton({ className = '' }) {
-  return (
-    <div
-      className={`animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700/60 ${className}`}
-    />
-  );
+  return <div className={`skeleton ${className}`} />;
 }
 
 // One card skeleton — matches the note/company card grid layout.

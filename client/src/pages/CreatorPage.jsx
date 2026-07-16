@@ -40,7 +40,7 @@ export default function CreatorPage() {
 
       <main className="flex-1">
         <section className="mx-auto max-w-3xl px-4 py-14 text-center">
-          <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-blue-500 text-4xl font-extrabold text-white shadow-lg">
+          <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-indigo-600 text-4xl font-extrabold text-white shadow-lg">
             DM
           </div>
           <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-500">

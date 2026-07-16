@@ -36,16 +36,16 @@ export default function SubjectPage() {
 
   if (!subject) {
     return (
-      <Page className="mx-auto max-w-3xl px-4 py-6">
+      <Page>
         <EmptyState icon={BookOpen} title="No subject selected" subtitle="Pick a subject from the Study overview." />
       </Page>
     );
   }
 
-  if (!notes) return <div className="mx-auto max-w-5xl px-4 py-6"><CardGridSkeleton count={6} /></div>;
+  if (!notes) return <div className="mx-auto w-full max-w-3xl px-4 py-6"><CardGridSkeleton count={6} /></div>;
 
   return (
-    <Page className="mx-auto max-w-3xl px-4 py-6">
+    <Page>
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <Link to="/study" className="mb-1 inline-flex items-center gap-1 text-xs text-gray-400 hover:text-indigo-600">

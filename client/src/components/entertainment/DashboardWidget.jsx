@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 export default function EntertainmentDashboardWidget() {
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-purple-950/20 to-slate-900 p-6 border border-purple-500/20 shadow-lg hover:border-purple-500/40 transition-all">
+    <div className="card-hover rounded-2xl border border-purple-500/20 bg-gray-900 p-6 transition-colors hover:border-purple-500/40">
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
           <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400">

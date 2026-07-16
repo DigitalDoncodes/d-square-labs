@@ -55,10 +55,10 @@ export default function SummaryStep() {
         </p>
       </div>
 
-      <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-purple-50 p-5 dark:border-indigo-900/40 dark:from-indigo-950/30 dark:to-purple-950/20">
+      <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-5 dark:border-indigo-900/40 dark:bg-indigo-950/30">
         {/* Name badge */}
         <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-lg font-bold text-white shadow-md shadow-indigo-500/25">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-indigo-600 text-lg font-bold text-white shadow-md shadow-indigo-500/25">
             {d.name?.[0]?.toUpperCase() || '?'}
           </div>
           <div>

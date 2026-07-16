@@ -26,10 +26,10 @@ export default function CommunityHubPage() {
     );
   }, []);
 
-  if (!data) return <div className="mx-auto max-w-5xl px-4 py-6"><FeedSkeleton count={4} /></div>;
+  if (!data) return <div className="mx-auto w-full max-w-3xl px-4 py-6"><FeedSkeleton count={4} /></div>;
 
   return (
-    <Page className="mx-auto max-w-5xl px-4 py-6">
+    <Page>
       <div className="mb-4">
         <h1 className="text-xl font-bold">Community</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">Everything the batch shares</p>

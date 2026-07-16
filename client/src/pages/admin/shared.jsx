@@ -6,7 +6,7 @@ export const inputClass = 'input';
 // Common frame for every admin subpage: back link + title + icon.
 export function AdminShell({ title, icon: Icon, subtitle, children }) {
   return (
-    <div className="animate-in mx-auto max-w-4xl px-4 py-6">
+    <div className="animate-in mx-auto w-full max-w-3xl px-4 py-6">
       <Link
         to="/admin"
         className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"

@@ -11,7 +11,7 @@ const ROUTINES = [
 
 export default function WellbeingRoutinesPage() {
   return (
-    <Page className="mx-auto max-w-3xl px-4 py-6">
+    <Page>
       <div className="mb-5">
         <h1 className="flex items-center gap-2 text-xl font-bold">
           <Sunrise className="h-5 w-5 text-orange-500" /> Small routines, big difference

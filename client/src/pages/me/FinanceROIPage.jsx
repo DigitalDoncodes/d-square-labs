@@ -61,8 +61,8 @@ export default function FinanceROIPage() {
   const net10yr       = salaryjump * 10 - totalInvestment - totalInterest;
 
   return (
-    <Page>
-      <div className="mx-auto max-w-2xl px-4 py-6 space-y-8">
+    <Page bare>
+      <div className="mx-auto w-full max-w-2xl px-4 py-6 space-y-8">
         <PageHeader
           title="MBA ROI Calculator"
           subtitle="Is the MBA worth it? Plug in your numbers and find out — payback period, EMI, and 10-year net gain."

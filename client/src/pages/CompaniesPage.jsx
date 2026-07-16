@@ -30,7 +30,7 @@ export default function CompaniesPage() {
   }, [sector]);
 
   return (
-    <div className="animate-in mx-auto max-w-5xl px-4 py-6">
+    <div className="animate-in mx-auto w-full max-w-3xl px-4 py-6">
       <div className="mb-6 text-center">
         <h1 className="text-3xl font-bold">
           Company <span className="accent-text">prep cards</span>

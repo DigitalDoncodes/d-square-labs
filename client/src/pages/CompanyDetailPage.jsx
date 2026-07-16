@@ -161,7 +161,7 @@ export default function CompanyDetailPage() {
   const MetaIcon = meta.icon;
 
   return (
-    <div className="animate-in mx-auto max-w-4xl px-4 py-6">
+    <div className="animate-in mx-auto w-full max-w-3xl px-4 py-6">
       <Link
         to="/career/companies"
         className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
@@ -170,7 +170,7 @@ export default function CompanyDetailPage() {
       </Link>
 
       {/* Header */}
-      <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-indigo-200/70 bg-gradient-to-r from-indigo-50 to-blue-50 p-6 dark:border-indigo-900/50 dark:from-indigo-950/40 dark:to-blue-950/30 sm:flex-row sm:items-center">
+      <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-indigo-200/70 bg-indigo-50 p-6 dark:border-indigo-900/50 dark:bg-indigo-950/40 sm:flex-row sm:items-center">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-indigo-600 shadow-sm dark:bg-gray-900 dark:text-indigo-400">
           <MetaIcon className="h-7 w-7" />
         </div>

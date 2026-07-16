@@ -11,12 +11,7 @@
 import { Link } from 'react-router-dom';
 import { Crown, Lock } from 'lucide-react';
 import { useSubscription } from '../../context/SubscriptionContext';
-import { TIER_COLORS, TIER_COLOR_MAP } from '../../utils/tiers';
-
-const TIER_LABEL = {
-  pro: { label: 'Pro', color: 'amber' },
-  max: { label: 'Max', color: 'purple' },
-};
+import { tierTheme } from '../../utils/tiers';
 
 const DEFAULT_DESCRIPTIONS = {
   pro: 'Unlock AI-powered tools for placement preparation.',
@@ -28,8 +23,7 @@ export default function TierGate({ required = 'pro', description, inline = false
   // Fail open while context loads (brief flash avoided by subscription fetch on mount)
   if (!sub || sub.hasAccess(required)) return children;
 
-  const meta = TIER_LABEL[required] || TIER_LABEL.pro;
-  const c = TIER_COLORS[meta.color];
+  const { label, colors: c } = tierTheme(required);
   const desc = description || DEFAULT_DESCRIPTIONS[required];
 
   if (inline) {
@@ -38,7 +32,7 @@ export default function TierGate({ required = 'pro', description, inline = false
         to="/subscribe"
         className={`inline-flex items-center gap-1.5 rounded-lg border border-dashed px-3 py-1.5 text-xs font-semibold transition-opacity hover:opacity-80 ${c.inline}`}
       >
-        <Crown className="h-3 w-3" /> Upgrade to {meta.label}
+        <Crown className="h-3 w-3" /> Upgrade to {label}
       </Link>
     );
   }
@@ -50,10 +44,10 @@ export default function TierGate({ required = 'pro', description, inline = false
       </div>
       <div className="max-w-xs">
         <div className={`mb-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${c.badge}`}>
-          <Crown className="h-3 w-3" /> DATAD {meta.label}
+          <Crown className="h-3 w-3" /> DATAD {label}
         </div>
         <p className="font-semibold text-gray-800 dark:text-gray-200">
-          ✨ Unlock with DATAD {meta.label}
+          ✨ Unlock with DATAD {label}
         </p>
         <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">{desc}</p>
       </div>

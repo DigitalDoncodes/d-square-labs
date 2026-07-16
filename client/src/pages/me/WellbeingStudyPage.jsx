@@ -11,7 +11,7 @@ const STUDY_TECHNIQUES = [
 
 export default function WellbeingStudyPage() {
   return (
-    <Page className="mx-auto max-w-3xl px-4 py-6">
+    <Page>
       <div className="mb-5">
         <h1 className="flex items-center gap-2 text-xl font-bold">
           <Lightbulb className="h-5 w-5 text-amber-500" /> Study techniques that actually work

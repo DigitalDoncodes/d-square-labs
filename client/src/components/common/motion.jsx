@@ -1,9 +1,19 @@
 // Entrance animations are CSS-driven (see index.css) so content always settles
 // visible even if the tab is backgrounded / the JS animation loop is throttled.
 
-// Page-level entrance wrapper.
-export function Page({ children, className }) {
-  return <div className={`animate-in ${className || ''}`}>{children}</div>;
+// The one measure the product reads at. WorkspaceLayout's tab row uses this
+// same constant, so tabs always line up with the content they label — that
+// alignment is why the width lives in one place instead of per page.
+export const CONTAINER = 'mx-auto w-full max-w-3xl px-4';
+
+// Page-level entrance wrapper + canonical measure.
+// Pass `bare` for pages that own their own full-bleed layout (editors, landing).
+export function Page({ children, className, bare = false }) {
+  return (
+    <div className={`animate-in ${bare ? '' : `${CONTAINER} py-6`} ${className || ''}`}>
+      {children}
+    </div>
+  );
 }
 
 // Container whose direct children fade+rise in sequence (CSS nth-child delays).

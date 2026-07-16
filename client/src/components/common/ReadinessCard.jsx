@@ -20,7 +20,7 @@ const barColor = (frac) => {
 // Pristine "not started" card — shows curiosity CTA instead of 0s
 function StartCard() {
   return (
-    <div className="card-hover mb-4 rounded-2xl border border-indigo-200/60 bg-gradient-to-br from-indigo-50 to-white p-5 dark:border-indigo-800/40 dark:from-indigo-950/30 dark:to-gray-900">
+    <div className="card-hover mb-4 rounded-2xl border border-indigo-200/60 bg-indigo-50 p-5 dark:border-indigo-800/40 dark:bg-indigo-950/30">
       <h2 className="mb-1 flex items-center gap-2 font-semibold">
         <Gauge className="h-4 w-4 text-indigo-500" /> Placement Readiness
       </h2>

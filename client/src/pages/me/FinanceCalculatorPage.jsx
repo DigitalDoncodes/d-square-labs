@@ -133,7 +133,7 @@ function EmiCalculator() {
 
 export default function FinanceCalculatorPage() {
   return (
-    <Page className="mx-auto max-w-3xl px-4 py-6">
+    <Page>
       <div className="mb-5">
         <h1 className="text-xl font-bold">Calculator</h1>
         <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">

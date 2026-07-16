@@ -99,7 +99,7 @@ const AI_TOOLS_PRO = [
 function ProPanel({ tierExpiresAt, daysLeft }) {
   const soonExpiry = daysLeft !== null && daysLeft <= 7;
   return (
-    <div className="mb-4 rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50 to-yellow-50/60 p-5 dark:border-amber-800/50 dark:from-amber-900/20 dark:to-yellow-900/10">
+    <div className="mb-4 rounded-2xl border border-amber-200/80 bg-amber-50 p-5 dark:border-amber-800/50 dark:bg-amber-900/20">
       <div className="mb-3 flex items-center gap-2">
         <Zap className="h-4 w-4 text-amber-500" />
         <h2 className="font-semibold text-amber-800 dark:text-amber-300">Your AI tools</h2>
@@ -146,7 +146,7 @@ function ProPanel({ tierExpiresAt, daysLeft }) {
 function MaxPanel({ tierExpiresAt, daysLeft }) {
   const soonExpiry = daysLeft !== null && daysLeft <= 7;
   return (
-    <div className="mb-4 rounded-2xl border border-purple-200/80 bg-gradient-to-br from-purple-50 to-indigo-50/60 p-5 dark:border-purple-800/50 dark:from-purple-900/20 dark:to-indigo-900/10">
+    <div className="mb-4 rounded-2xl border border-purple-200/80 bg-purple-50 p-5 dark:border-purple-800/50 dark:bg-purple-900/20">
       <div className="mb-3 flex items-center gap-2">
         <Crown className="h-4 w-4 text-purple-500" />
         <h2 className="font-semibold text-purple-800 dark:text-purple-300">⭐ DATAD Max</h2>

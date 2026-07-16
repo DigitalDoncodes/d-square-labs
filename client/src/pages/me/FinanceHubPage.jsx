@@ -1,17 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   GraduationCap, Calculator, TrendingUp, PiggyBank, Umbrella, LineChart, Landmark, Sprout, Banknote,
+  TrendingDown, Pencil,
 } from 'lucide-react';
 import useViewSwitch from '../../hooks/useViewSwitch';
 import useDocumentTitle from '../../hooks/useDocumentTitle';
+import { getSummary } from '../../api/finance';
 import { Page } from '../../components/common/motion';
+import { Skeleton } from '../../components/common/Skeleton';
+import BudgetBar from '../../components/finance/BudgetBar';
 import FinancePage from '../FinancePage';
 
-const inr = (n) =>
-  '₹' + Math.round(n).toLocaleString('en-IN');
+const formatINR = (n) => '₹' + Math.round(n || 0).toLocaleString('en-IN');
+const currentMonth = () => new Date().toISOString().slice(0, 7);
 
-// ── Lessons ──────────────────────────────────────────────────────────────────
-// Short, honest, jargon-free. The goal is confidence, not accounting.
 const LESSONS = [
   {
     icon: Umbrella,
@@ -45,7 +47,6 @@ const LESSONS = [
   },
 ];
 
-// ── Calculators ──────────────────────────────────────────────────────────────
 function CalcCard({ title, icon: Icon, children, result }) {
   return (
     <div className="rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
@@ -105,9 +106,9 @@ function SipCalculator() {
       icon={TrendingUp}
       result={
         <Result lines={[
-          ['You invest', inr(invested)],
-          ['Growth', inr(value - invested)],
-          [`Value after ${years || 0} years`, inr(value)],
+          ['You invest', formatINR(invested)],
+          ['Growth', formatINR(value - invested)],
+          [`Value after ${years || 0} years`, formatINR(value)],
         ]} />
       }
     >
@@ -131,9 +132,9 @@ function CompoundCalculator() {
       icon={Sprout}
       result={
         <Result lines={[
-          ['You invest once', inr(Number(amount) || 0)],
-          ['Growth', inr(value - (Number(amount) || 0))],
-          [`Value after ${years || 0} years`, inr(value)],
+          ['You invest once', formatINR(Number(amount) || 0)],
+          ['Growth', formatINR(value - (Number(amount) || 0))],
+          [`Value after ${years || 0} years`, formatINR(value)],
         ]} />
       }
     >
@@ -158,7 +159,7 @@ function EmergencyFundCalculator() {
       icon={Umbrella}
       result={
         <Result lines={[
-          ['Your safety net target', inr(target)],
+          ['Your safety net target', formatINR(target)],
           ['Reached in', timeTo ? `${timeTo} month${timeTo === 1 ? '' : 's'}` : '—'],
         ]} />
       }
@@ -181,9 +182,9 @@ function BudgetCalculator() {
       icon={PiggyBank}
       result={
         <Result lines={[
-          ['Needs (50%)', inr(i * 0.5)],
-          ['Wants (30%)', inr(i * 0.3)],
-          ['Save & invest (20%)', inr(i * 0.2)],
+          ['Needs (50%)', formatINR(i * 0.5)],
+          ['Wants (30%)', formatINR(i * 0.3)],
+          ['Save & invest (20%)', formatINR(i * 0.2)],
         ]} />
       }
     >
@@ -206,9 +207,9 @@ function EmiCalculator() {
       icon={Banknote}
       result={
         <Result lines={[
-          ['Total repaid', inr(emi * n)],
-          ['Of which interest', inr(emi * n - p)],
-          ['Monthly EMI', inr(emi)],
+          ['Total repaid', formatINR(emi * n)],
+          ['Of which interest', formatINR(emi * n - p)],
+          ['Monthly EMI', formatINR(emi)],
         ]} />
       }
     >
@@ -221,9 +222,19 @@ function EmiCalculator() {
   );
 }
 
-// ── Page ─────────────────────────────────────────────────────────────────────
 export default function FinanceHubPage() {
   useDocumentTitle('Finance');
+  const [summary, setSummary] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const month = currentMonth();
+
+  useEffect(() => {
+    getSummary(month)
+      .then((res) => setSummary(res.data))
+      .catch(() => {})
+      .finally(() => setSummaryLoading(false));
+  }, [month]);
+
   const { active, switcher } = useViewSwitch(
     [
       { key: 'learn', label: 'Learn' },
@@ -233,7 +244,6 @@ export default function FinanceHubPage() {
     'learn'
   );
 
-  // The tracker is the old Finance page, unchanged — just no longer the headline.
   if (active === 'tracker') {
     return (
       <>
@@ -246,7 +256,47 @@ export default function FinanceHubPage() {
   return (
     <>
       {switcher}
-      <Page className="mx-auto max-w-3xl px-4 py-6">
+      <Page>
+        {/* BUDGET BAR — the signature */}
+        {summaryLoading ? (
+          <div className="mb-6 space-y-2">
+            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-2 w-full rounded-full" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+        ) : summary ? (
+          <div className="mb-6 rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400">Monthly budget</h2>
+              <span className="text-[10px] text-gray-400">{month}</span>
+            </div>
+            <BudgetBar spent={summary.total} budget={summary.budget} />
+            <div className="mt-3 grid grid-cols-3 gap-3 text-center">
+              <div>
+                <p className="flex items-center justify-center gap-1 text-[10px] text-gray-400">
+                  <TrendingUp className="h-3 w-3 text-green-600" /> Income
+                </p>
+                <p className="text-sm font-bold text-green-700 dark:text-green-400">{formatINR(summary.income)}</p>
+              </div>
+              <div>
+                <p className="flex items-center justify-center gap-1 text-[10px] text-gray-400">
+                  <TrendingDown className="h-3 w-3 text-red-500" /> Spent
+                </p>
+                <p className="text-sm font-bold text-gray-800 dark:text-gray-100">{formatINR(summary.total)}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400">Balance</p>
+                <p className={`text-sm font-bold ${summary.balance < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                  {formatINR(summary.balance)}
+                </p>
+              </div>
+            </div>
+            {!summary.budget && (
+              <p className="mt-2 text-xs text-gray-400">Set a monthly budget to track overspending.</p>
+            )}
+          </div>
+        ) : null}
+
         {active === 'learn' ? (
           <>
             <div className="mb-6">

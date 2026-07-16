@@ -17,7 +17,7 @@ export default function WelcomeStep() {
       transition={{ duration: 0.4 }}
       className="space-y-6 text-center"
     >
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-3xl shadow-lg shadow-indigo-500/25">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-600 text-3xl shadow-lg shadow-indigo-500/25">
         🎓
       </div>
 

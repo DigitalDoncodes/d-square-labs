@@ -66,7 +66,7 @@ export default function FinanceTrackerPage() {
   };
 
   return (
-    <Page className="mx-auto max-w-3xl px-4 py-6">
+    <Page>
       <div className="mb-5">
         <h1 className="text-xl font-bold">Tracker</h1>
         <p className="mt-0.5 text-xs text-gray-400">All your income and expenses, month by month.</p>

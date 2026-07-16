@@ -184,7 +184,7 @@ export default function PlacementsPage() {
     : null;
 
   return (
-    <Page className="mx-auto max-w-4xl px-4 py-6">
+    <Page>
       <PageHeader
         icon={Briefcase}
         title="Placement Hub"

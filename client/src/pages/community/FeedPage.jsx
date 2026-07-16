@@ -42,7 +42,7 @@ function PostCard({ post: initialPost }) {
   const isAchievement = post.type === 'achievement';
 
   return (
-    <div className={`rounded-2xl border bg-white p-5 dark:bg-gray-900 ${isAchievement ? 'border-amber-300 dark:border-amber-700 bg-gradient-to-br from-amber-50 dark:from-amber-900/20' : 'border-gray-200/80 dark:border-gray-800/80'}`}>
+    <div className={`rounded-2xl border bg-white p-5 dark:bg-gray-900 ${isAchievement ? 'border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/20' : 'border-gray-200/80 dark:border-gray-800/80'}`}>
       <div className="mb-3 flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
           {post.author?.name?.[0]?.toUpperCase() || '?'}
@@ -146,7 +146,7 @@ export default function FeedPage() {
   };
 
   return (
-    <Page className="mx-auto max-w-2xl px-4 py-6">
+    <Page>
       <PageHeader
         icon={MessageSquare}
         title="Community Feed"

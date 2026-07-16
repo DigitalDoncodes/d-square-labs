@@ -15,7 +15,7 @@ function Avatar({ name, avatar, size = 'md' }) {
   const sizes = { sm: 'h-8 w-8 text-xs', md: 'h-12 w-12 text-base', lg: 'h-20 w-20 text-2xl' };
   if (avatar) return <img src={avatar} alt={name} className={`${sizes[size]} rounded-full object-cover`} />;
   return (
-    <div className={`${sizes[size]} flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 font-bold text-white`}>
+    <div className={`${sizes[size]} flex items-center justify-center rounded-full bg-indigo-500 font-bold text-white`}>
       {name?.[0]?.toUpperCase() || '?'}
     </div>
   );
@@ -98,7 +98,7 @@ export default function DirectoryPage() {
   const [domainFilter, setDomainFilter] = useState('');
 
   return (
-    <Page className="mx-auto max-w-4xl px-4 py-6">
+    <Page>
       <PageHeader
         icon={Users}
         title="Student Directory"
