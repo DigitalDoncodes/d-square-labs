@@ -9,7 +9,6 @@ import { listAnnouncements } from '../../api/admin';
 import { listPosts } from '../../api/posts';
 import { formatDate } from '../../utils/dateUtils';
 import { FeedSkeleton } from '../../components/common/Skeleton';
-import UpcomingGrid from '../../components/common/UpcomingGrid';
 import { Page } from '../../components/common/motion';
 
 export default function CommunityHubPage() {
@@ -126,7 +125,6 @@ export default function CommunityHubPage() {
         </Link>
       </div>
 
-      <UpcomingGrid workspace="community" />
     </Page>
   );
 }

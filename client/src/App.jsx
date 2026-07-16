@@ -13,8 +13,7 @@ import AppShell from './components/layout/AppShell';
 import WorkspaceLayout from './components/layout/WorkspaceLayout';
 import Loader from './components/common/Loader';
 import ErrorBoundary from './components/common/ErrorBoundary';
-import { UPCOMING_FEATURES } from './utils/upcomingFeatures';
-import { UPCOMING_WORKSPACE, upcomingPath } from './utils/workspaces';
+
 
 // Route-level code splitting: each page loads on demand, keeping the initial
 // bundle small. Vite emits one chunk per page.
@@ -37,7 +36,6 @@ const IntelligencePage = lazy(() => import('./pages/IntelligencePage'));
 const ResumePage = lazy(() => import('./pages/ResumePage'));
 const ResumePreviewPage = lazy(() => import('./pages/ResumePreviewPage'));
 const SupportPage = lazy(() => import('./pages/SupportPage'));
-const ComingSoonPage = lazy(() => import('./pages/ComingSoonPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const AdminStudentsPage = lazy(() => import('./pages/admin/AdminStudentsPage'));
 const AdminStudioPage = lazy(() => import('./pages/admin/AdminStudioPage'));
@@ -130,12 +128,6 @@ function LegacyRedirect({ from, to }) {
   return <Navigate to={`${to}${rest}${location.search}`} replace />;
 }
 
-// Coming-soon routes nested inside their workspace ("/career/soon/placements").
-const soonRoutes = (workspace) =>
-  UPCOMING_FEATURES.filter((f) => UPCOMING_WORKSPACE[f.slug] === workspace).map((f) => (
-    <Route key={f.slug} path={`soon/${f.slug}`} element={<ComingSoonPage feature={f} />} />
-  ));
-
 export default function App() {
   return (
     <PWAProvider>
@@ -183,7 +175,6 @@ export default function App() {
                   <Route path="projects" element={<Navigate to="/study/work?view=projects" replace />} />
                   <Route path="study-tools" element={<Navigate to="/study/focus" replace />} />
                   <Route path="ai-tools" element={<Navigate to="/study/notes" replace />} />
-                  {soonRoutes('study')}
                 </Route>
 
                 <Route path="/career" element={<WorkspaceLayout workspace="career" title="Career" />}>
@@ -202,7 +193,6 @@ export default function App() {
                   <Route path="skills" element={<Navigate to="/community/skills" replace />} />
                   <Route path="pivot" element={<PivotPage />} />
                   <Route path="stories" element={<StarStoriesPage />} />
-                  {soonRoutes('career')}
                 </Route>
 
                 <Route path="/community" element={<WorkspaceLayout workspace="community" title="Community" />}>
@@ -220,7 +210,6 @@ export default function App() {
                   <Route path="discussions" element={<Navigate to="/community/feed?view=discussions" replace />} />
                   <Route path="gallery" element={<Navigate to="/community/memories" replace />} />
                   <Route path="archive" element={<Navigate to="/community/memories?view=archive" replace />} />
-                  {soonRoutes('community')}
                 </Route>
 
                 <Route path="/me" element={<WorkspaceLayout workspace="me" title="Life" />}>
@@ -273,10 +262,6 @@ export default function App() {
                 <Route path="/companies/*" element={<LegacyRedirect from="/companies" to="/career/companies" />} />
                 <Route path="/albums" element={<Navigate to="/community/gallery" replace />} />
                 <Route path="/entertainment/*" element={<LegacyRedirect from="/entertainment" to="/community/archive" />} />
-                {/* 'community' slug would collide with the real /community workspace */}
-                {UPCOMING_FEATURES.filter((f) => f.slug !== 'community').map((f) => (
-                  <Route key={f.slug} path={`/${f.slug}`} element={<Navigate to={upcomingPath(f.slug)} replace />} />
-                ))}
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
             </Routes>

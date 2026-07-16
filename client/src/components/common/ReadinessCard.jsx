@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Gauge, ArrowRight, Sparkles, Lock } from 'lucide-react';
 import { getReadiness } from '../../api/readiness';
+import ScoreRing from './ScoreRing';
 
 const COMPONENT_LINKS = {
   resume: '/career/resume',
@@ -10,45 +11,11 @@ const COMPONENT_LINKS = {
   planner: '/me/planner',
 };
 
-const ringColor = (score) => {
-  if (score >= 75) return 'stroke-emerald-500';
-  if (score >= 45) return 'stroke-amber-500';
-  return 'stroke-indigo-500'; // never red for low scores
-};
-
 const barColor = (frac) => {
   if (frac >= 0.75) return 'bg-emerald-500';
   if (frac >= 0.4) return 'bg-amber-500';
   return 'bg-indigo-400';
 };
-
-function Ring({ score }) {
-  const R = 42;
-  const C = 2 * Math.PI * R;
-  const [offset, setOffset] = useState(C);
-
-  useEffect(() => {
-    const t = requestAnimationFrame(() =>
-      setOffset(C - (Math.min(score, 100) / 100) * C)
-    );
-    return () => cancelAnimationFrame(t);
-  }, [score, C]);
-
-  return (
-    <div className="relative h-28 w-28 shrink-0">
-      <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-        <circle cx="50" cy="50" r={R} fill="none" strokeWidth="9" className="stroke-gray-100 dark:stroke-gray-800" />
-        <circle cx="50" cy="50" r={R} fill="none" strokeWidth="9" strokeLinecap="round"
-          strokeDasharray={C} strokeDashoffset={offset}
-          className={`${ringColor(score)} transition-[stroke-dashoffset] duration-1000 ease-out`} />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold tabular-nums">{score}</span>
-        <span className="text-[10px] text-gray-400">/ 100</span>
-      </div>
-    </div>
-  );
-}
 
 // Pristine "not started" card — shows curiosity CTA instead of 0s
 function StartCard() {
@@ -78,7 +45,7 @@ function StartCard() {
         </div>
         <Link
           to="/career/resume"
-          className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
+          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
         >
           <Sparkles className="h-4 w-4" /> Start building your profile
         </Link>
@@ -108,7 +75,7 @@ export default function ReadinessCard() {
       </h2>
 
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-        <Ring score={data.score} />
+        <ScoreRing score={data.score} />
         <div className="min-w-0 flex-1 space-y-2.5">
           {data.components.map((c) => {
             const frac = c.max ? c.points / c.max : 0;

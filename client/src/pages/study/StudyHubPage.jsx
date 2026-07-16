@@ -6,7 +6,6 @@ import { listNotes } from '../../api/notes';
 import { listTasks } from '../../api/tasks';
 import { daysUntil, formatDate } from '../../utils/dateUtils';
 import { CardGridSkeleton } from '../../components/common/Skeleton';
-import UpcomingGrid from '../../components/common/UpcomingGrid';
 import { Page } from '../../components/common/motion';
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 
@@ -178,7 +177,6 @@ export default function StudyHubPage() {
         <DailyCaseCard />
       </div>
 
-      <UpcomingGrid workspace="study" />
     </Page>
   );
 }

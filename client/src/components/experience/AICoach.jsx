@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Sparkles, Send, X, MessageCircle, Lightbulb, Target, ChevronDown, Loader2 } from 'lucide-react';
+import { Sparkles, Send, X, Lightbulb, Target, ChevronDown, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { sendMessage, getChatHistory } from '../../api/chat';
+import { sendMessage } from '../../api/chat';
+import ChatBubble from '../common/ChatBubble';
+import TypingIndicator from '../common/TypingIndicator';
 
 const GREETING_TEMPLATES = {
   morning: [
@@ -36,28 +38,6 @@ function getGreeting() {
     period: period.charAt(0).toUpperCase() + period.slice(1),
     line: templates[Math.floor(Math.random() * templates.length)],
   };
-}
-
-function Bubble({ role, content }) {
-  const isUser = role === 'user';
-  return (
-    <div className={`flex gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
-      {!isUser && (
-        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/50">
-          <Sparkles className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
-        </span>
-      )}
-      <div
-        className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-          isUser
-            ? 'rounded-tr-sm bg-indigo-600 text-white'
-            : 'rounded-tl-sm bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100'
-        }`}
-      >
-        {content}
-      </div>
-    </div>
-  );
 }
 
 export default function AICoach({ mission, readiness, name }) {
@@ -166,7 +146,7 @@ export default function AICoach({ mission, readiness, name }) {
       {/* Messages */}
       <div className="h-64 space-y-3 overflow-y-auto px-4 py-4">
         {messages.map((m, i) => (
-          <Bubble key={i} role={m.role} content={m.content} />
+          <ChatBubble key={i} role={m.role} content={m.content} />
         ))}
         {!chatStarted && !loading && (
           <div className="flex flex-wrap gap-2 pt-1">
@@ -185,22 +165,7 @@ export default function AICoach({ mission, readiness, name }) {
             })}
           </div>
         )}
-        {loading && (
-          <div className="flex gap-2">
-            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/50">
-              <Sparkles className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
-            </span>
-            <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm bg-gray-100 px-4 py-3 dark:bg-gray-800">
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  className="h-1.5 w-1.5 rounded-full bg-gray-400 dark:bg-gray-500"
-                  style={{ animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        {loading && <TypingIndicator />}
         <div ref={bottomRef} />
       </div>
 
@@ -216,8 +181,7 @@ export default function AICoach({ mission, readiness, name }) {
             placeholder="Ask your coach anything…"
             maxLength={2000}
             disabled={loading}
-            className="flex-1 resize-none bg-transparent text-sm leading-relaxed text-gray-800 placeholder-gray-400 focus:outline-none dark:text-gray-100"
-            style={{ maxHeight: 80 }}
+            className="flex-1 resize-none bg-transparent text-sm leading-relaxed text-gray-800 placeholder-gray-400 focus:outline-none dark:text-gray-100 max-h-20"
             onInput={(e) => {
               e.target.style.height = 'auto';
               e.target.style.height = e.target.scrollHeight + 'px';

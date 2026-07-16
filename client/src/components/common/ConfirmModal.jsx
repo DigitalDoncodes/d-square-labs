@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import Button from './Button';
 
 /**
  * Reusable confirmation dialog built on the same design language as Modal.
@@ -74,20 +75,16 @@ export default function ConfirmModal({
         )}
 
         <div className="mt-5 flex justify-end gap-2">
-          <button onClick={onClose} className="btn-secondary">
+          <Button variant="secondary" onClick={onClose}>
             {cancelLabel}
-          </button>
-          <button
+          </Button>
+          <Button
             ref={confirmRef}
+            variant={danger ? 'danger' : 'primary'}
             onClick={() => { onConfirm(); onClose(); }}
-            className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium text-white transition-colors duration-150 ${
-              danger
-                ? 'bg-rose-600 hover:bg-rose-500'
-                : 'bg-indigo-600 hover:bg-indigo-500'
-            }`}
           >
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

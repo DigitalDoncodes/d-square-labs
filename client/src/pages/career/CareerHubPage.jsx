@@ -7,7 +7,6 @@ import { listCompanies, getCompanyNews } from '../../api/companies';
 import ReadinessCard from '../../components/common/ReadinessCard';
 import PlacementCountdown from '../../components/career/PlacementCountdown';
 import PlacementJourney from '../../components/career/PlacementJourney';
-import UpcomingGrid from '../../components/common/UpcomingGrid';
 import { getReadiness } from '../../api/readiness';
 import { Page } from '../../components/common/motion';
 
@@ -214,7 +213,6 @@ export default function CareerHubPage() {
         </div>
       )}
 
-      <UpcomingGrid workspace="career" />
     </Page>
   );
 }

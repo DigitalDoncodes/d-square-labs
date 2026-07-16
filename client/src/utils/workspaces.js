@@ -59,12 +59,6 @@ export const WORKSPACE_TABS = {
   ],
 };
 
-// Where each upcoming (coming-soon) module lives once it ships.
-// All 11 modules have shipped — this map is now empty but kept for future modules.
-export const UPCOMING_WORKSPACE = {};
-
-export const upcomingPath = (slug) => `/${UPCOMING_WORKSPACE[slug] || 'me'}/soon/${slug}`;
-
 // Legacy route → new route, so old bookmarks and in-app links keep working.
 export const LEGACY_REDIRECTS = {
   '/notes': '/study/notes',

@@ -4,6 +4,8 @@ import toast from 'react-hot-toast';
 import { sendMessage, getChatHistory, clearChat } from '../../api/chat';
 import { useAuth } from '../../context/AuthContext';
 import ConfirmModal from '../common/ConfirmModal';
+import ChatBubble from '../common/ChatBubble';
+import TypingIndicator from '../common/TypingIndicator';
 
 const WELCOME = `Hi! I'm DATAD AI — your academic companion.\n\nAsk me anything: study strategies, career advice, resume tips, or just "what should I focus on today?"`;
 
@@ -12,52 +14,6 @@ const PROMPT_CHIPS = [
   'Give me a quick study framework',
   'How do I answer "Tell me about yourself?"',
 ];
-
-function Bubble({ role, content }) {
-  const isUser = role === 'user';
-  return (
-    <div className={`flex gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
-      {!isUser && (
-        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/50">
-          <Sparkles className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
-        </span>
-      )}
-      <div
-        className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-          isUser
-            ? 'rounded-tr-sm bg-indigo-600 text-white'
-            : 'rounded-tl-sm bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100'
-        }`}
-      >
-        {content.split('\n').map((line, i) => (
-          <span key={i}>
-            {line}
-            {i < content.split('\n').length - 1 && <br />}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function TypingIndicator() {
-  return (
-    <div className="flex gap-2">
-      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/50">
-        <Sparkles className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
-      </span>
-      <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm bg-gray-100 px-4 py-3 dark:bg-gray-800">
-        {[0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className="h-1.5 w-1.5 rounded-full bg-gray-400 dark:bg-gray-500"
-            style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export default function ChatBot() {
   const { user } = useAuth();
@@ -132,8 +88,7 @@ export default function ChatBot() {
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label="Open DATAD AI chat"
-        className="fixed bottom-24 right-4 z-50 flex h-13 w-13 items-center justify-center rounded-full bg-indigo-600 shadow-lg shadow-indigo-500/30 transform hover:scale-105 hover:bg-indigo-700 active:scale-95 lg:bottom-6 print:hidden"
-        style={{ height: 52, width: 52 }}
+        className="fixed bottom-24 right-4 z-50 flex h-[52px] w-[52px] items-center justify-center rounded-full bg-indigo-600 shadow-lg shadow-indigo-500/30 transform hover:scale-105 hover:bg-indigo-700 active:scale-95 lg:bottom-6 print:hidden"
       >
         {open
           ? <ChevronDown className="h-5 w-5 text-white" />
@@ -142,8 +97,7 @@ export default function ChatBot() {
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-44 right-4 z-50 flex w-[22rem] flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl shadow-black/10 dark:border-gray-800/80 dark:bg-gray-950 lg:bottom-24 print:hidden"
-          style={{ maxHeight: '70vh', minHeight: 400 }}
+        <div className="fixed bottom-44 right-4 z-50 flex w-[22rem] flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl shadow-black/10 dark:border-gray-800/80 dark:bg-gray-950 lg:bottom-24 print:hidden max-h-[70vh] min-h-[400px]"
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-100 bg-indigo-600 px-4 py-3 dark:border-gray-800">
@@ -177,7 +131,7 @@ export default function ChatBot() {
           {/* Messages */}
           <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
             {messages.map((m, i) => (
-              <Bubble key={i} role={m.role} content={m.content} />
+              <ChatBubble key={i} role={m.role} content={m.content} />
             ))}
             {/* Prompt chips — shown only before first user message */}
             {!messages.some((m) => m.role === 'user') && !loading && (
@@ -209,8 +163,7 @@ export default function ChatBot() {
                 placeholder="Ask anything…"
                 maxLength={2000}
                 disabled={loading}
-                className="flex-1 resize-none bg-transparent text-sm leading-relaxed text-gray-800 placeholder-gray-400 focus:outline-none dark:text-gray-100"
-                style={{ maxHeight: 120 }}
+                className="flex-1 resize-none bg-transparent text-sm leading-relaxed text-gray-800 placeholder-gray-400 focus:outline-none dark:text-gray-100 max-h-[120px]"
                 onInput={(e) => {
                   e.target.style.height = 'auto';
                   e.target.style.height = e.target.scrollHeight + 'px';
@@ -244,12 +197,7 @@ export default function ChatBot() {
         confirmLabel="Clear"
       />
 
-      <style>{`
-        @keyframes bounce {
-          0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-          40% { transform: translateY(-5px); opacity: 1; }
-        }
-      `}</style>
+
     </>
   );
 }
