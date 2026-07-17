@@ -12,9 +12,23 @@ const HYBRID_V2_INTENTS = [
   'chat',
   'explain',
   'summarise',
+  'summarize',
   'research',
   'resume_review',
   'career_advice',
+  'review',
+  'interview',
+  'planner',
+  'compare',
+  'teach',
+  'generate',
+  'resume',
+  'career',
+  'reflection',
+  'reason',
+  'brainstorm',
+  'coach',
+  'motivation',
 ];
 
 const modes = ['v1_only', 'v2_only', 'shadow', 'hybrid'];
@@ -64,7 +78,7 @@ function _normalizeRequest(request) {
   return n;
 }
 
-async function process(request) {
+async function processRequest(request) {
   const normalized = _normalizeRequest(request);
 
   // Build Student Intelligence Profile before routing
@@ -199,18 +213,36 @@ async function _execV1(request) {
 
   // Support conversation history via messages array (chat use case)
   if (messages) {
-    const p = require('./providers').getProvider(provider);
     const enrichedMessages = profileContext
       ? [
           { role: 'system', content: enrichedSystem || '' },
           ...messages.filter((m) => m.role !== 'system'),
         ]
       : messages;
-    const raw = await p.complete({
-      messages: enrichedMessages,
-      system: enrichedSystem || undefined,
-      maxTokens,
-    });
+
+    // getProvider() only checks isAvailable() — a static "has a key" check,
+    // not a live reachability probe — so a configured-but-unreachable
+    // provider (e.g. Ollama with no local daemon running) can be handed
+    // back as "available" and then fail on the real call, with nothing to
+    // catch it. Try every statically-available candidate in order instead
+    // of just the first, so one dead provider doesn't take chat down.
+    const { getProviderChain } = require('./providers');
+    const chain = getProviderChain(provider);
+    if (!chain.length) throw new Error('No AI provider available.');
+
+    let raw, lastErr, attempts = 0;
+    for (const p of chain) {
+      attempts++;
+      try {
+        raw = await p.complete({ messages: enrichedMessages, system: enrichedSystem || undefined, maxTokens });
+        lastErr = null;
+        break;
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    if (lastErr) throw new Error(`Chat failed on all ${attempts} available provider(s): ${lastErr.message}`);
+
     result = raw.text;
     meta = {
       provider: raw.provider,
@@ -220,7 +252,7 @@ async function _execV1(request) {
       completionTokens: raw.completionTokens,
       latencyMs: raw.latencyMs,
       estimatedCostUsd: 0,
-      attempts: 1,
+      attempts,
     };
   } else {
     const runResult = await v1Runner.run({
@@ -442,7 +474,7 @@ async function persistExecutionMetrics(gatewayResult, extra) {
 }
 
 module.exports = {
-  process,
+  process: processRequest,
   setMode,
   getMode,
   getAllModes,
