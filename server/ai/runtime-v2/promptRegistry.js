@@ -1,4 +1,5 @@
 const v1Prompts = require('../prompts');
+const { withDaxIdentity } = require('../dax');
 
 const PROMPT_REGISTRY = {};
 
@@ -107,6 +108,15 @@ const PROMPT_TASK_MAP = {
   'fact-verify':          { promptId: 'fact-verify',          tags: ['verification'] },
   'plan':                 { promptId: 'planner-suggest',      tags: ['planner'] },
   'knowledge-graph':      { promptId: 'knowledge-graph',      tags: ['knowledge', 'graph'] },
+  'flashcard-generate':   { promptId: 'flashcard-generate',   tags: ['generate', 'flashcard'] },
+  'quiz-generate':        { promptId: 'quiz-generate',        tags: ['generate', 'quiz'] },
+  // These four previously pointed at another task's promptId (finance-assist
+  // -> 'chat', dashboard-insights -> 'daily-briefing', etc.) — each now gets
+  // its own registered entry below instead of borrowing generic content.
+  'finance-assist':       { promptId: 'finance-assist',       tags: ['finance', 'chat'] },
+  'dashboard-insights':   { promptId: 'dashboard-insights',   tags: ['insights', 'dashboard'] },
+  'company-research':     { promptId: 'company-research',     tags: ['company', 'research'] },
+  'resume-ats':           { promptId: 'resume-ats',           tags: ['resume', 'ats'] },
 };
 
 function getPromptForTask(taskName) {
@@ -114,6 +124,33 @@ function getPromptForTask(taskName) {
   if (!mapping) return null;
   return getPrompt(mapping.promptId);
 }
+
+const V1_PROMPT_TASK_MAP = {
+  'summarise-note':       'summariseNote',
+  'news-summary':         null,
+  'moderate-post':        null,
+  'resume-tip':           'resumeTip',
+  'daily-reflection':     'dailyReflection',
+  'daily-briefing':       'dailyBriefing',
+  'daily-case':           'dailyCase',
+  'company-enrich':       'companyEnrich',
+  'interview-questions':  'interviewQuestions',
+  'planner-suggest':      null,
+  chat:                   null,
+  'review-resume':        null,
+  'career-advice':        null,
+  'case-framework':       null,
+  'interview-simulator':  null,
+  'compare-companies':    null,
+  'weekly-newsletter':    'weeklyNewsletter',
+  'news-enhance':         'newsEnhance',
+  'flashcard-generate':   'flashcardGenerate',
+  'quiz-generate':        'quizGenerate',
+  'finance-assist':       'financeAssist',
+  'dashboard-insights':   'dashboardInsights',
+  'company-research':     'companyResearch',
+  'resume-ats':           'resumeAts',
+};
 
 function getPromptForIntent(intent, taskName) {
   if (taskName) {
@@ -142,8 +179,32 @@ function getPromptForIntent(intent, taskName) {
   };
 
   const fallbackId = intentPromptMap[intent];
-  if (fallbackId) return getPrompt(fallbackId);
-  return getPrompt('chat');
+  let prompt = null;
+  if (fallbackId) prompt = getPrompt(fallbackId);
+
+  if (!prompt) {
+    prompt = _resolveV1Prompt(taskName || fallbackId, intent);
+  }
+
+  return prompt || getPrompt('chat') || { system: '', user: '', promptId: 'chat', currentVersion: '1.0' };
+}
+
+function _resolveV1Prompt(promptId, intent) {
+  try {
+    const v1Key = V1_PROMPT_TASK_MAP[promptId];
+    if (!v1Key || !v1Prompts[v1Key]) return null;
+
+    const promptFn = v1Prompts[v1Key];
+    const v1 = promptFn({});
+    return {
+      system: v1.system,
+      user: v1.user,
+      promptId: `v1:${promptId}`,
+      currentVersion: '1.0',
+    };
+  } catch {
+    return null;
+  }
 }
 
 function buildTypedPrompt(promptId, variables) {
@@ -163,6 +224,44 @@ function buildTypedPrompt(promptId, variables) {
 
   return { system, user, promptId, version: prompt.currentVersion };
 }
+
+// Migration Blueprint Phase 2 (P2-1): seed the registry with real content.
+//
+// registerPrompt() was defined but never called, so PROMPT_REGISTRY was
+// always empty — every getPromptForTask() lookup returned null, and
+// getPromptForIntent() fell through to _resolveV1Prompt(), which is null
+// for roughly half the tasks (see V1_PROMPT_TASK_MAP above) and broken for
+// 'summarise-note' specifically (maps to a v1Prompts key that doesn't
+// exist). Net effect, confirmed by live trace: several of the most-used
+// AIEnhancement actions ran with system:'' — no persona, no Dax identity.
+//
+// Fix is to seed for real, not patch the fallback further. Each entry below
+// is the exact specialisation daxService.js's HANDLERS already use for the
+// same task on the Dax-branded path — composed through withDaxIdentity()
+// here too, so a request routed through this registry gets the same voice
+// and the same identity as the Dax-branded equivalent, not a second,
+// unbranded assistant. `user` is left empty deliberately: the runtime-v2
+// caller (studentIntelligenceEngine.enhance()) already builds user content
+// generically from `data` via buildUserPrompt() when a template is absent —
+// that part of the design was already correct; only `system` was missing.
+[
+  ['summarise-note', 'You are helping with study work. Be concise, precise, and practically useful for a student preparing for placements and exams.'],
+  ['review-resume', 'You are coaching on career direction, with the judgement of a senior placement counsellor. Be direct, specific, and actionable.'],
+  ['case-framework', 'You are coaching a case interview. Write clear, structured frameworks.'],
+  ['planner-suggest', 'You are planning the student’s week. Help prioritise tasks and study plans for campus placements.'],
+  ['career-advice', 'You are advising on campus recruitment. Give personalised, specific advice grounded in the student profile and company data provided.'],
+  ['interview-simulator', 'You are running a realistic mock interview as a senior interviewer at a top campus recruiter would. Be specific and demanding; tailor everything to the student profile provided.'],
+  ['compare-companies', 'You are comparing campus recruiters. Be decisive and concrete — the student needs a verdict, not a survey.'],
+  ['flashcard-generate', 'You are creating study flashcards. Be precise, factual, and well-structured.'],
+  ['quiz-generate', 'You are creating practice quizzes. Questions should test genuine understanding.'],
+  ['finance-assist', 'You are a personal finance coach for students. Give practical, India-relevant financial advice.'],
+  ['dashboard-insights', 'You are analysing a student’s progress. Give honest, data-driven insights.'],
+  ['company-research', 'You are researching companies for placement preparation. Be thorough and accurate.'],
+  ['resume-ats', 'You are an ATS expert. Analyse resumes the way ATS software does.'],
+  ['chat', 'You are in conversation with the student. Be concise, direct, and practically useful.'],
+].forEach(([promptId, specialisation]) => {
+  registerPrompt(promptId, { system: withDaxIdentity(specialisation), user: '', tags: (PROMPT_TASK_MAP[promptId]?.tags) || [] });
+});
 
 module.exports = {
   registerPrompt,
