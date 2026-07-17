@@ -383,13 +383,26 @@ const HANDLERS = {
     async execute(userId, body) {
       const { topic, count = 10 } = body;
       if (!topic?.trim()) throw new ValidationError('topic is required');
-      const { result, meta } = await runPipeline({
+      const runArgs = {
         task: 'flashcard-generate',
         systemPrompt: withDaxIdentity('You are creating study flashcards. Be precise, factual, and well-structured.'),
         userPrompt: `Generate ${count} flashcards on the topic: "${topic}".\n\nReturn ONLY valid JSON:\n{"flashcards":[{"id":1,"question":"...","answer":"...","concept":"..."}]}`,
         json: true,
         userId,
-      });
+      };
+
+      let result, meta;
+      if (RUNTIME_V2_TASKS.has('flashcard-generate')) {
+        try {
+          ({ result, meta } = await _executeViaRuntimeV2(runArgs));
+        } catch (err) {
+          console.warn(`[dax] Runtime V2 path failed for flashcard-generate, falling back to V1: ${err.message}`);
+        }
+      }
+      if (!result) {
+        ({ result, meta } = await runPipeline(runArgs));
+      }
+
       return { ...result, _meta: { provider: meta.provider, confidence: meta.confidence } };
     },
   },
@@ -399,13 +412,26 @@ const HANDLERS = {
     async execute(userId, body) {
       const { topic, count = 5, difficulty = 'medium' } = body;
       if (!topic?.trim()) throw new ValidationError('topic is required');
-      const { result, meta } = await runPipeline({
+      const runArgs = {
         task: 'quiz-generate',
         systemPrompt: withDaxIdentity('You are creating practice quizzes. Questions should test genuine understanding.'),
         userPrompt: `Generate ${count} multiple-choice questions on "${topic}" at ${difficulty} difficulty.\n\nReturn ONLY valid JSON:\n{"title":"Quiz title","questions":[{"id":1,"question":"...","options":["A","B","C","D"],"correctAnswer":"A","explanation":"..."}]}`,
         json: true,
         userId,
-      });
+      };
+
+      let result, meta;
+      if (RUNTIME_V2_TASKS.has('quiz-generate')) {
+        try {
+          ({ result, meta } = await _executeViaRuntimeV2(runArgs));
+        } catch (err) {
+          console.warn(`[dax] Runtime V2 path failed for quiz-generate, falling back to V1: ${err.message}`);
+        }
+      }
+      if (!result) {
+        ({ result, meta } = await runPipeline(runArgs));
+      }
+
       return { ...result, _meta: { provider: meta.provider, confidence: meta.confidence } };
     },
   },
