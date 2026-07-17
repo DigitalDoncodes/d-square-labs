@@ -50,7 +50,7 @@ function generate(profile) {
     s.push(createRecommendation({
       type: 'planner-suggestion',
       title: 'Create a Career Pivot Plan',
-      description: `You've expressed interest in ${memory.targetRoles?.slice(0, 2).join(', ') || identity.dreamRole || 'MBA roles'}. A structured pivot plan maps your transition from current skills to target role.`,
+      description: `You've expressed interest in ${memory.targetRoles?.slice(0, 2).join(', ') || identity.dreamRole || 'your target roles'}. A structured pivot plan maps your transition from current skills to target role.`,
       reason: 'No pivot plan exists despite expressed career interests. Structured planning increases placement success rate.',
       confidence: 70,
       urgency: scores?.careerReadiness != null && scores.careerReadiness < 50 ? 60 : 35,

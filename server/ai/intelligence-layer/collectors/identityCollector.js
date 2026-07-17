@@ -29,7 +29,7 @@ async function collect(userId) {
       studentType: user.studentType || 'fresher',
       workExYears: user.workExYears || 0,
       programs: user.programs || [],
-      activeProgram: user.activeProgram || 'mba',
+      activeProgram: user.activeProgram || null,
       interests: user.interests || [],
       joinedAt: user.createdAt,
       batch: meta?.batchName || (studentIdentity?.batch || profile?.batch || ''),

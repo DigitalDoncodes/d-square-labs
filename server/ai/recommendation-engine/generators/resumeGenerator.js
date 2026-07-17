@@ -63,7 +63,7 @@ function generate(profile) {
         type: 'resume-suggestion',
         title: 'Expand Your Skills Section',
         description: `Your resume lists only ${career.skillCount || 0} skill${(career.skillCount || 0) === 1 ? '' : 's'}. Adding 8–15 relevant skills improves ATS matching.`,
-        reason: `Only ${career.skillCount || 0} skill${(career.skillCount || 0) === 1 ? '' : 's'} listed. Most ATS filters expect 8–15 skills for MBA roles.`,
+        reason: `Only ${career.skillCount || 0} skill${(career.skillCount || 0) === 1 ? '' : 's'} listed. Most ATS filters expect 8–15 relevant skills.`,
         confidence: 75,
         urgency: 45,
         expectedImpact: 'Improves ATS screening pass rate.',
