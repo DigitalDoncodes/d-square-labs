@@ -445,14 +445,27 @@ const HANDLERS = {
   'dashboard-insights': {
     async execute(userId, body) {
       const mem = await getUserMemory(userId);
-      const { result, meta } = await runPipeline({
+      const runArgs = {
         task: 'dashboard-insights',
         systemPrompt: withDaxIdentity('You are analysing a student\u2019s progress. Give honest, data-driven insights.'),
         userPrompt: `Analyse my current progress and give me actionable insights for placement preparation.\n\nReturn JSON:\n{"overallAssessment":"one sentence","strengths":["strength 1","strength 2","strength 3"],"focusAreas":["area 1","area 2"],"nextBestAction":"one specific action I should take today","confidence":0.8}`,
         memoryContext: formatMemoryContext(mem),
         json: true,
         userId,
-      });
+      };
+
+      let result, meta;
+      if (RUNTIME_V2_TASKS.has('dashboard-insights')) {
+        try {
+          ({ result, meta } = await _executeViaRuntimeV2(runArgs));
+        } catch (err) {
+          console.warn(`[dax] Runtime V2 path failed for dashboard-insights, falling back to V1: ${err.message}`);
+        }
+      }
+      if (!result) {
+        ({ result, meta } = await runPipeline(runArgs));
+      }
+
       appendTopic(userId, 'dashboard insights').catch(() => {});
       return { ...result, _meta: { provider: meta.provider, confidence: meta.confidence } };
     },
