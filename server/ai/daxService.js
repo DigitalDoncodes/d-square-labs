@@ -186,14 +186,26 @@ const HANDLERS = {
       if (!note.content?.trim()) throw new ValidationError('Note has no content to summarise');
 
       const mem = await getUserMemory(userId);
-      const { result, meta } = await runPipeline({
+      const runArgs = {
         task: 'summarise-note',
         systemPrompt: withDaxIdentity('You are helping with study work. Be concise, precise, and practically useful for a student preparing for placements and exams.'),
         userPrompt: `Summarise the following note in three parts:\n1. A 2-3 sentence executive summary.\n2. Five bullet-point key takeaways (each ≤ 15 words).\n3. Relevant business frameworks or concepts mentioned (comma-separated, max 5).\n\nNote title: ${note.title}\nSubject: ${note.subject}\nContent:\n${note.content}\n\nReply in this exact JSON format:\n{"summary":"…","keyPoints":["…","…","…","…","…"],"frameworks":"…"}`,
         memoryContext: formatMemoryContext(mem),
         json: true,
         userId,
-      });
+      };
+
+      let result, meta;
+      if (RUNTIME_V2_TASKS.has('summarise-note')) {
+        try {
+          ({ result, meta } = await _executeViaRuntimeV2(runArgs));
+        } catch (err) {
+          console.warn(`[dax] Runtime V2 path failed for summarise-note, falling back to V1: ${err.message}`);
+        }
+      }
+      if (!result) {
+        ({ result, meta } = await runPipeline(runArgs));
+      }
 
       upsertEmbedding({
         collection: 'notes',
@@ -262,13 +274,25 @@ const HANDLERS = {
     admin: true,
     async execute(userId, body) {
       const { title, category, scenario, question } = body;
-      const { result, meta } = await runPipeline({
+      const runArgs = {
         task: 'case-framework',
         systemPrompt: withDaxIdentity('You are coaching a case interview. Write clear, structured frameworks.'),
         userPrompt: `Generate a concise suggested framework (3-5 bullet points, ≤ 200 words total) for this daily case.\n\nCategory: ${category}\nTitle: ${title}\nScenario: ${scenario}\nQuestion: ${question}\n\nReply with plain text only — no JSON, no markdown headers.`,
         json: false,
         userId,
-      });
+      };
+
+      let result, meta;
+      if (RUNTIME_V2_TASKS.has('case-framework')) {
+        try {
+          ({ result, meta } = await _executeViaRuntimeV2(runArgs));
+        } catch (err) {
+          console.warn(`[dax] Runtime V2 path failed for case-framework, falling back to V1: ${err.message}`);
+        }
+      }
+      if (!result) {
+        ({ result, meta } = await runPipeline(runArgs));
+      }
       return { framework: result, _meta: { provider: meta.provider, model: meta.model } };
     },
   },
@@ -281,7 +305,7 @@ const HANDLERS = {
         getUserMemory(userId),
       ]);
 
-      const { result, meta } = await runPipeline({
+      const runArgs = {
         task: 'planner-suggest',
         systemPrompt: withDaxIdentity('You are planning the student\u2019s week. Help prioritise tasks and study plans for campus placements.'),
         userPrompt: `Based on this student's current tasks and notes, suggest 3 priority actions for today.\n\nReturn JSON:\n{"priorities":["action 1","action 2","action 3"],"focusArea":"one sentence","motivationalNote":"one sentence"}`,
@@ -290,7 +314,19 @@ const HANDLERS = {
         sourceCount: Object.values(ragCtx.sources).filter(Boolean).length,
         json: true,
         userId,
-      });
+      };
+
+      let result, meta;
+      if (RUNTIME_V2_TASKS.has('planner-suggest')) {
+        try {
+          ({ result, meta } = await _executeViaRuntimeV2(runArgs));
+        } catch (err) {
+          console.warn(`[dax] Runtime V2 path failed for planner-suggest, falling back to V1: ${err.message}`);
+        }
+      }
+      if (!result) {
+        ({ result, meta } = await runPipeline(runArgs));
+      }
 
       appendTopic(userId, 'planner suggestions').catch(() => {});
       return { ...result, _meta: { provider: meta.provider, confidence: meta.confidence } };
@@ -306,7 +342,7 @@ const HANDLERS = {
         getUserMemory(userId),
       ]);
 
-      const { result, meta } = await runPipeline({
+      const runArgs = {
         task: 'career-advice',
         systemPrompt: withDaxIdentity('You are advising on campus recruitment. Give personalised, specific advice grounded in the student profile and company data provided.'),
         userPrompt: `Student question: ${question || 'How should I prepare for this company?'}\n\nReturn JSON:\n{"answer":"detailed 3-4 sentence answer","actionItems":["item 1","item 2","item 3"],"keyFocus":"one sentence on where to concentrate effort"}`,
@@ -315,7 +351,19 @@ const HANDLERS = {
         sourceCount: Object.values(ragCtx.sources).filter(Boolean).length,
         json: true,
         userId,
-      });
+      };
+
+      let result, meta;
+      if (RUNTIME_V2_TASKS.has('career-advice')) {
+        try {
+          ({ result, meta } = await _executeViaRuntimeV2(runArgs));
+        } catch (err) {
+          console.warn(`[dax] Runtime V2 path failed for career-advice, falling back to V1: ${err.message}`);
+        }
+      }
+      if (!result) {
+        ({ result, meta } = await runPipeline(runArgs));
+      }
 
       appendTopic(userId, 'career advice').catch(() => {});
       return { ...result, _meta: { provider: meta.provider, confidence: meta.confidence } };
@@ -331,7 +379,7 @@ const HANDLERS = {
         getUserMemory(userId),
       ]);
 
-      const { result, meta } = await runPipeline({
+      const runArgs = {
         task: 'interview-simulator',
         systemPrompt: withDaxIdentity('You are running a realistic mock interview as a senior interviewer at a top campus recruiter would. Be specific and demanding; tailor everything to the student profile provided.'),
         userPrompt: `Run one round of a mock placement interview.\nTarget role: ${role || 'any campus role'}\nTarget company: ${company || 'a typical campus recruiter'}\nQuestion category: ${category || 'mixed (HR / technical / case)'}\n\nReturn JSON:\n{"question":"one interview question tailored to this student","framework":"the structure or framework a strong answer should follow","idealAnswer":"a model answer outline in 3-4 sentences","followUps":["likely follow-up 1","likely follow-up 2"],"trap":"one sentence on the mistake most candidates make on this question"}`,
@@ -340,7 +388,19 @@ const HANDLERS = {
         sourceCount: Object.values(ragCtx.sources).filter(Boolean).length,
         json: true,
         userId,
-      });
+      };
+
+      let result, meta;
+      if (RUNTIME_V2_TASKS.has('interview-simulator')) {
+        try {
+          ({ result, meta } = await _executeViaRuntimeV2(runArgs));
+        } catch (err) {
+          console.warn(`[dax] Runtime V2 path failed for interview-simulator, falling back to V1: ${err.message}`);
+        }
+      }
+      if (!result) {
+        ({ result, meta } = await runPipeline(runArgs));
+      }
 
       appendTopic(userId, 'mock interview').catch(() => {});
       return { ...result, _meta: { provider: meta.provider, confidence: meta.confidence } };
@@ -364,14 +424,26 @@ const HANDLERS = {
       const brief = (c) =>
         `${c.name} (sector: ${c.sector})\nOverview: ${c.overview}\nWhat they look for: ${c.whatTheyLookFor || 'n/a'}\nSalary: ${c.salaryRange || 'n/a'}\nRoles: ${c.roles.join(', ') || 'n/a'}\nProcess: ${c.rounds.join(' → ') || 'n/a'}`;
 
-      const { result, meta } = await runPipeline({
+      const runArgs = {
         task: 'compare-companies',
         systemPrompt: withDaxIdentity('You are comparing campus recruiters. Be decisive and concrete \u2014 the student needs a verdict, not a survey.'),
         userPrompt: `Compare these two recruiters for a student deciding where to focus preparation.\n\nCompany A:\n${brief(a)}\n\nCompany B:\n${brief(b)}\n\nReturn JSON:\n{"verdict":"2-3 sentence overall comparison and recommendation","chooseAIf":"one sentence — the student profile that should prefer ${a.name}","chooseBIf":"one sentence — the student profile that should prefer ${b.name}","prepDifference":"2-3 sentences on how preparation differs between the two"}`,
         memoryContext: formatMemoryContext(mem),
         json: true,
         userId,
-      });
+      };
+
+      let result, meta;
+      if (RUNTIME_V2_TASKS.has('compare-companies')) {
+        try {
+          ({ result, meta } = await _executeViaRuntimeV2(runArgs));
+        } catch (err) {
+          console.warn(`[dax] Runtime V2 path failed for compare-companies, falling back to V1: ${err.message}`);
+        }
+      }
+      if (!result) {
+        ({ result, meta } = await runPipeline(runArgs));
+      }
 
       appendTopic(userId, `compared ${a.name} vs ${b.name}`).catch(() => {});
       return { ...result, companies: { a: a.name, b: b.name }, _meta: { provider: meta.provider, confidence: meta.confidence } };
