@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { BrainCircuit, Loader2, Pencil, Sparkles, Trash2, X } from 'lucide-react';
 import { listCases, createCase, updateCase, deleteCase } from '../../api/dailyCase';
-import { generateFramework } from '../../api/ai';
+import { generateFramework } from '../../api/dax';
 import { AdminShell, inputClass } from './shared';
 import Loader from '../../components/common/Loader';
 import ConfirmModal from '../../components/common/ConfirmModal';

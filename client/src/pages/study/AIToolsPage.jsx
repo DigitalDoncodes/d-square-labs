@@ -3,7 +3,7 @@ import { Sparkles, FileSearch, FileText, MessageSquare, Search, Loader2, Chevron
 import { DAX_CAPABILITY } from '../../utils/dax';
 import PageHeader from '../../components/common/PageHeader';
 import toast from 'react-hot-toast';
-import { summariseDoc, reviewResume, askCareerAdvice, semanticSearch, simulateInterview, compareCompanies } from '../../api/aiTools';
+import { summariseDoc, reviewResume, askCareerAdvice, semanticSearch, simulateInterview, compareCompanies } from '../../api/dax';
 import { listCompanies } from '../../api/companies';
 import TierGate from '../../components/common/TierGate';
 import useDocumentTitle from '../../hooks/useDocumentTitle';

@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react';
 import { Brain, Check, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getDaxMemory, updateDaxMemory, forgetDaxMemory } from '../../api/ai';
+import { getDaxMemory, updateDaxMemory, forgetDaxMemory } from '../../api/dax';
 import Button from './Button';
 import ConfirmModal from './ConfirmModal';
 import { Skeleton } from './Skeleton';

@@ -70,10 +70,19 @@ app.use('/api/entertainment', entertainmentRoutes);
 app.use('/api/companies', require('./routes/companyRoutes'));
 app.use('/api/readiness', require('./routes/readinessRoutes'));
 app.use('/api/journal', require('./routes/journalRoutes'));
-app.use('/api/chat', require('./routes/chatRoutes'));
+app.use('/api/dax', require('./routes/daxRoutes'));
+app.use('/api/enhance', require('./routes/enhanceRoutes'));
+// Migration Blueprint Phase 1 (P1-3): /api/chat and /api/ai are unmounted,
+// not deleted. Traced every client call site — nothing targets either path
+// anymore (the client moved to /api/dax). Unmounting first, rather than
+// deleting the files, makes this reversible: if anything external was still
+// depending on either route, it 404s immediately and shows up in logs,
+// instead of a file deletion needing a git revert to undo. Delete the files
+// in Phase 4 once an observation window confirms zero traffic.
+// app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/daily-case', require('./routes/dailyCaseRoutes'));
 app.use('/api/posts', require('./routes/postRoutes'));
-app.use('/api/ai', require('./routes/aiRoutes'));
+// app.use('/api/ai', require('./routes/aiRoutes'));
 app.use('/api/placements', require('./routes/placementRoutes'));
 app.use('/api/internships', require('./routes/internshipRoutes'));
 app.use('/api/skills', require('./routes/skillRoutes'));
@@ -93,6 +102,11 @@ app.use('/api/pivot', require('./routes/pivotRoutes'));
 // Module system — program enrollment and switching
 app.use('/api/modules', require('./routes/moduleRoutes'));
 
+// Universal Search — registry-based search across all providers
+const { registerAll: registerSearchProviders, searchRouter } = require('./search');
+registerSearchProviders();
+app.use('/api/search', searchRouter);
+
 // Content Studio — centralized publishing engine.
 // Rollback: set STUDIO_ENABLED=false to hide it (per-module uploads unaffected).
 if (process.env.STUDIO_ENABLED !== 'false') {
@@ -105,6 +119,14 @@ app.use('/api/reflection', require('./routes/reflectionRoutes'));
 app.use('/api/resume-tip', require('./routes/resumeTipRoutes'));
 app.use('/api/automation', require('./routes/automationRoutes'));
 app.use('/api/recommendations', require('./routes/recommendationRoutes'));
+
+// ── AI Observability ────────────────────────────────────────────────────────
+// Installs non-invasive wrappers around aiGateway and runner to capture
+// every AI request's metadata (provider, model, latency, tokens, cost, etc.)
+// without modifying any existing AI code.
+const aiTelemetry = require('./ai/telemetry');
+aiTelemetry.install();
+app.use('/api/admin/ai', require('./routes/observabilityRoutes'));
 
 // Public read for placement countdown (available to all authenticated members).
 const { generalLimiter: _gl } = require('./middleware/rateLimiters');

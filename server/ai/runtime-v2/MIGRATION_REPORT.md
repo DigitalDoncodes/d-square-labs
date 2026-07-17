@@ -1,5 +1,15 @@
 # AI Runtime V2 Migration Report
 
+> **Superseded.** This document's "Future Migration Plan" (below) proposed
+> V2 eventually replacing V1 as a competing runtime, ending in "V1
+> Decommission." That direction was never adopted past step 1 — the app has
+> run in `v1_only` mode the entire time. The current, active direction is
+> the opposite: **Dax (the V1-rooted orchestrator) is canonical; Runtime V2
+> is infrastructure that gets adopted underneath it, not a rival runtime.**
+> See `/MIGRATION_BLUEPRINT.md` at the repo root for the plan actually being
+> executed. This document is kept for historical context on why
+> `aiGateway.js` and its four modes exist — don't follow its phase table.
+
 ## Modified Files
 
 | File | Change | Impact |

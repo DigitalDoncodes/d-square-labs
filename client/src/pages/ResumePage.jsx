@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { Eye, Plus, Save, Trash2, Sparkles, ChevronDown, ChevronUp, Loader2, Layout } from 'lucide-react';
 import { DAX_CAPABILITY } from '../utils/dax';
 import { getMyResume, saveResume } from '../api/resume';
-import { reviewResume } from '../api/ai';
+import { reviewResume } from '../api/dax';
 import { useAuth } from '../context/AuthContext';
 import { FeedSkeleton } from '../components/common/Skeleton';
 import TierGate from '../components/common/TierGate';
