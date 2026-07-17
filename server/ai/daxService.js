@@ -476,13 +476,26 @@ const HANDLERS = {
     async execute(userId, body) {
       const { companyName, sector } = body;
       if (!companyName?.trim()) throw new ValidationError('companyName is required');
-      const { result, meta } = await runPipeline({
+      const runArgs = {
         task: 'company-research',
         systemPrompt: withDaxIdentity('You are researching companies for placement preparation. Be thorough and accurate.'),
         userPrompt: `Research this company for a student targeting campus placements.\nCompany: ${companyName}\nSector: ${sector || 'Not specified'}\n\nReturn JSON:\n{"overview":"3-4 sentence overview with India context","culture":"2-3 sentences on work culture","selectionProcess":"typical selection rounds","tips":["tip 1","tip 2","tip 3","tip 4","tip 5"],"keyMetrics":["metric 1","metric 2"],"recentNews":"1-2 sentences on recent developments"}`,
         json: true,
         userId,
-      });
+      };
+
+      let result, meta;
+      if (RUNTIME_V2_TASKS.has('company-research')) {
+        try {
+          ({ result, meta } = await _executeViaRuntimeV2(runArgs));
+        } catch (err) {
+          console.warn(`[dax] Runtime V2 path failed for company-research, falling back to V1: ${err.message}`);
+        }
+      }
+      if (!result) {
+        ({ result, meta } = await runPipeline(runArgs));
+      }
+
       appendTopic(userId, `researched ${companyName}`).catch(() => {});
       return { ...result, _meta: { provider: meta.provider, confidence: meta.confidence } };
     },
@@ -505,13 +518,26 @@ const HANDLERS = {
       ].join('\n');
 
       const { targetRole } = body;
-      const { result, meta } = await runPipeline({
+      const runArgs = {
         task: 'resume-ats',
         systemPrompt: withDaxIdentity('You are an ATS expert. Analyse resumes the way ATS software does.'),
         userPrompt: `Analyse this resume for ATS compatibility targeting a ${targetRole || 'campus placement'} role.\n\nResume:\n${resumeText}\n\nReturn JSON:\n{"atsScore":75,"keywordMatch":{"matched":["kw1","kw2"],"missing":["kw3","kw4"]},"formattingIssues":["issue 1"],"sectionCompleteness":{"summary":"good","experience":"needs improvement","skills":"good","education":"complete"},"recommendations":["rec 1","rec 2","rec 3"]}`,
         json: true,
         userId,
-      });
+      };
+
+      let result, meta;
+      if (RUNTIME_V2_TASKS.has('resume-ats')) {
+        try {
+          ({ result, meta } = await _executeViaRuntimeV2(runArgs));
+        } catch (err) {
+          console.warn(`[dax] Runtime V2 path failed for resume-ats, falling back to V1: ${err.message}`);
+        }
+      }
+      if (!result) {
+        ({ result, meta } = await runPipeline(runArgs));
+      }
+
       appendTopic(userId, 'resume ATS analysis').catch(() => {});
       return { ...result, _meta: { provider: meta.provider, confidence: meta.confidence } };
     },
