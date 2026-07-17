@@ -18,9 +18,10 @@ function useReveal(threshold = 0.15) {
       ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
       { threshold }
     );
-    obsserve.observe(el);
+    obs.observe(el);
     return () => obs.disconnect();
   }, [threshold]);
+  return [ref, visible];
 }
 
 function Reveal({ children, delay = 0, className = '' }) {

@@ -7,9 +7,14 @@ import { listCompanies, getCompanyNews } from '../../api/companies';
 import ReadinessCard from '../../components/common/ReadinessCard';
 import PlacementCountdown from '../../components/career/PlacementCountdown';
 import PlacementJourney from '../../components/career/PlacementJourney';
+import ReadinessBreakdown from '../../components/career/ReadinessBreakdown';
 import { getReadiness } from '../../api/readiness';
 import { Page } from '../../components/common/motion';
 import { Skeleton } from '../../components/common/Skeleton';
+import AIEnhancement from '../../components/common/AIEnhancement';
+import TierGate from '../../components/common/TierGate';
+
+const NEWS_LIMIT = 6;
 
 const SOURCE_DOT = {
   'Economic Times':    'bg-orange-400',
@@ -25,147 +30,123 @@ export default function CareerHubPage() {
   const { hasAccess } = useSubscription();
   const [companies, setCompanies] = useState([]);
   const [newsMap, setNewsMap] = useState({});
-  const [readinessComponents, setReadinessComponents] = useState([]);
+  const [readiness, setReadiness] = useState(null);
 
   useEffect(() => {
-    getReadiness().then((r) => setReadinessComponents(r.data?.components || [])).catch(() => {});
+    getReadiness().then((r) => setReadiness(r.data)).catch(() => {});
     listCompanies()
       .then((res) => {
-        const top = res.data.slice(0, 6);
+        const top = res.data.slice(0, NEWS_LIMIT);
         setCompanies(top);
         top.forEach((c) => {
           getCompanyNews(c.name)
-            .then((r) => {
-              if (r.data?.length) {
-                setNewsMap((prev) => ({ ...prev, [c.name]: r.data.slice(0, 2) }));
-              }
-            })
-            .catch(() => {});
+            .then((r) => setNewsMap((prev) => ({ ...prev, [c.name]: r.data?.slice(0, 2) ?? [] })))
+            .catch(() => setNewsMap((prev) => ({ ...prev, [c.name]: [] })));
         });
       })
       .catch(() => {});
   }, []);
 
-  const dateLabel = new Date().toLocaleDateString('en-IN', {
-    weekday: 'short', day: 'numeric', month: 'short',
-  });
+  const newsCount = Object.values(newsMap).flat().length;
 
   return (
-    <Page>
-      {/* TOP BAR — date only */}
-      <div className="flex items-center justify-between py-4">
-        <span className="text-xs font-medium tracking-wide text-gray-400">
-          Career
-        </span>
-        <span className="text-xs font-medium tracking-wide text-gray-400">
-          {dateLabel}
-        </span>
+    <Page className="mx-auto max-w-4xl px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Career</h1>
+        <p className="text-sm text-gray-500 mt-0.5">Your placement journey</p>
       </div>
 
-      {/* PLACEMENT JOURNEY — the 5-step horizontal line is the signature */}
-      <div className="py-8">
-        <PlacementJourney components={readinessComponents} />
+      {/* ── AI ENHANCEMENT: Career roadmap ── */}
+      <div className="mb-6">
+        <TierGate required="max">
+          <AIEnhancement page="career" action="roadmap" variant="card" dismissKey="career-roadmap" />
+        </TierGate>
       </div>
 
-      {/* PLACEMENT COUNTDOWN — compact alert */}
-      <PlacementCountdown />
-
-      {/* READINESS — compact */}
-      <ReadinessCard />
-
-      {/* TOOLS — resume, questions, companies as icon row */}
-      <div className="mb-6 grid grid-cols-3 gap-3">
-        <Link
-          to="/career/resume"
-          className="flex flex-col items-center gap-2 rounded-2xl border border-gray-200/80 bg-white p-4 text-center transition-colors hover:border-indigo-200 hover:bg-indigo-50/30 dark:border-gray-800/80 dark:bg-gray-900 dark:hover:border-indigo-800/60 dark:hover:bg-indigo-950/20"
-        >
-          <FileText className="h-5 w-5 text-indigo-500" />
-          <div>
-            <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">Resume</p>
-            <p className="text-[10px] text-gray-400">Build & preview</p>
-          </div>
-        </Link>
-
-        <Link
-          to="/career/questions"
-          className="relative flex flex-col items-center gap-2 rounded-2xl border border-gray-200/80 bg-white p-4 text-center transition-colors hover:border-indigo-200 hover:bg-indigo-50/30 dark:border-gray-800/80 dark:bg-gray-900 dark:hover:border-indigo-800/60 dark:hover:bg-indigo-950/20"
-        >
-          <div className="relative">
-            <MessageSquare className="h-5 w-5 text-indigo-500" />
-            {!hasAccess('pro') && (
-              <Lock className="absolute -right-2 -top-1.5 h-3 w-3 text-amber-500" />
-            )}
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">Questions</p>
-            <p className="text-[10px] text-gray-400">Interview prep</p>
-          </div>
-        </Link>
-
-        <Link
-          to="/career/companies"
-          className="flex flex-col items-center gap-2 rounded-2xl border border-gray-200/80 bg-white p-4 text-center transition-colors hover:border-indigo-200 hover:bg-indigo-50/30 dark:border-gray-800/80 dark:bg-gray-900 dark:hover:border-indigo-800/60 dark:hover:bg-indigo-950/20"
-        >
-          <Building2 className="h-5 w-5 text-indigo-500" />
-          <div>
-            <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">Companies</p>
-            <p className="text-[10px] text-gray-400">Target tracker</p>
-          </div>
-        </Link>
+      {/* ── AI ENHANCEMENT: Next-step recommendation ── */}
+      <div className="mb-8">
+        <AIEnhancement page="recommend" action="next" variant="minimal" />
       </div>
 
-      {/* COMPANY NEWS — compact strip */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+        <div className="lg:col-span-1 space-y-6">
+          <PlacementCountdown />
+          {/* ReadinessCard takes `data` and self-fetches if omitted — pass the
+              hub's copy so we don't issue a second getReadiness(). */}
+          <ReadinessCard data={readiness} />
+        </div>
+
+        <div className="lg:col-span-2 space-y-6">
+          {/* PlacementJourney wants the components array, ReadinessBreakdown
+              wants the whole payload as `data`. */}
+          <PlacementJourney components={readiness?.components || []} />
+          <ReadinessBreakdown data={readiness} />
+        </div>
+      </div>
+
+      <div className="mb-8">
+        <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-4">Quick Links</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <QuickLink to="/career/resume" icon={FileText} label="Resume" />
+          <QuickLink to="/career/companies" icon={Building2} label="Companies" />
+          <QuickLink to="/career/questions" icon={MessageSquare} label="Interview Qs" />
+          <QuickLink to="/career/opportunities" icon={ArrowRight} label="Opportunities" />
+        </div>
+      </div>
+
       {companies.length > 0 && (
-        <>
-          <div className="border-t border-gray-200/60 dark:border-gray-800/60" />
-          <div className="py-6">
-            <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-              Company news
-              <span className="ml-auto text-[10px] font-normal lowercase tracking-normal text-gray-400">live</span>
-            </h2>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {companies.map((c) => {
-                const headlines = newsMap[c.name];
-                return (
-                  <div key={c._id} className="rounded-xl border border-gray-100 p-3 dark:border-gray-800">
-                    <Link
-                      to={`/career/companies/${c.slug}`}
-                      className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-indigo-600 hover:underline dark:text-indigo-400"
-                    >
-                      {c.name}
-                    </Link>
-                    {!headlines ? (
-                      <div className="space-y-1.5">
-                        <Skeleton className="h-3 w-full" />
-                        <Skeleton className="h-3 w-4/5" />
-                      </div>
-                    ) : headlines.length === 0 ? (
-                      <p className="text-xs text-gray-400">No recent news.</p>
-                    ) : (
-                      <ul className="space-y-1.5">
-                        {headlines.map((h, i) => (
-                          <li key={i}>
-                            <a href={h.link} target="_blank" rel="noopener noreferrer" className="group block">
-                              <p className="line-clamp-2 text-xs leading-snug text-gray-700 group-hover:text-indigo-600 dark:text-gray-300 dark:group-hover:text-indigo-400">
-                                {h.title}
-                              </p>
-                              <div className="mt-1 flex items-center gap-1">
-                                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${SOURCE_DOT[h.source] || 'bg-gray-300'}`} />
-                                <span className="text-[10px] text-gray-400">{h.source}</span>
-                                <ExternalLink className="h-2.5 w-2.5 text-gray-300 group-hover:text-indigo-400 dark:text-gray-600" />
-                              </div>
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+        <div>
+          <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-4">
+            Company News
+            <span className="ml-2 text-xs font-normal text-gray-400">({newsCount} stories)</span>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {companies.map((c) => {
+              const news = newsMap[c.name] || [];
+              return (
+                <Link key={c._id} to={`/career/companies/${c.slug}`} className="group rounded-2xl border border-gray-100 p-4 hover:border-indigo-200 hover:shadow-sm transition-all dark:border-gray-800 dark:hover:border-indigo-800/50">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                      {c.name?.charAt(0)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-gray-800 truncate dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">{c.name}</p>
+                      {c.industry && <p className="text-[11px] text-gray-400 truncate">{c.industry}</p>}
+                    </div>
+                    <ExternalLink className="h-3.5 w-3.5 text-gray-300 group-hover:text-indigo-500 dark:text-gray-600" />
                   </div>
-                );
-              })}
-            </div>
+                  {news.length > 0 ? (
+                    news.slice(0, 1).map((n, i) => (
+                      <div key={i} className="mt-1">
+                        <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">{n.title}</p>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          {n.source && (
+                            <span className="flex items-center gap-1">
+                              <span className={`inline-block h-1.5 w-1.5 rounded-full ${SOURCE_DOT[n.source] || 'bg-gray-300'}`} />
+                              <span className="text-[10px] text-gray-400">{n.source}</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="mt-1 text-[11px] text-gray-400">No recent news</p>
+                  )}
+                </Link>
+              );
+            })}
           </div>
-        </>
+        </div>
       )}
     </Page>
+  );
+}
+
+function QuickLink({ to, icon: Icon, label }) {
+  return (
+    <Link to={to} className="flex items-center gap-2.5 rounded-xl border border-gray-100 px-4 py-3 text-sm font-medium text-gray-600 hover:border-indigo-200 hover:text-indigo-600 dark:border-gray-800 dark:text-gray-300 dark:hover:border-indigo-800/60 dark:hover:text-indigo-400 transition-colors">
+      <Icon className="h-4 w-4 shrink-0" />
+      {label}
+    </Link>
   );
 }

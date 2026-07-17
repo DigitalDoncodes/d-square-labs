@@ -2,7 +2,9 @@ const formatINR = (n) => '₹' + n.toLocaleString('en-IN');
 
 // Single-series magnitude comparison: one hue, thin bars with rounded data-ends,
 // direct value labels in ink tokens (identity carried by row labels, not color).
-export default function CategoryChart({ data }) {
+// `data` defaults to [] so a missing/renamed prop degrades to the empty state
+// instead of throwing on `undefined.length` and taking the whole page down.
+export default function CategoryChart({ data = [] }) {
   if (!data.length) {
     return <p className="py-6 text-center text-sm text-gray-400">No expenses this month yet</p>;
   }

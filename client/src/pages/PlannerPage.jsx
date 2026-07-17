@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { CalendarDays, Check, Pencil, Plus, Trash2, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { listTasks, createTask, updateTask, deleteTask } from '../api/tasks';
-import { plannerSuggest } from '../api/ai';
 import { useAuth } from '../context/AuthContext';
 import { SUBJECTS, TASK_TYPES, TASK_STATUSES } from '../utils/constants';
 import { formatDate, daysUntil } from '../utils/dateUtils';
@@ -14,31 +13,22 @@ import ConfirmModal from '../components/common/ConfirmModal';
 import TierGate from '../components/common/TierGate';
 import CrownBadge from '../components/common/CrownBadge';
 import Button from '../components/common/Button';
+import AIEnhancement from '../components/common/AIEnhancement';
+import { DAX_CAPABILITY } from '../utils/dax';
 
-function AIPlannerPanel() {
+function AIPlannerPanel({ tasks }) {
   const [state, setState] = useState('idle');
   const [result, setResult] = useState(null);
-
-  const run = async () => {
-    setState('loading');
-    try {
-      const res = await plannerSuggest();
-      setResult(res.data);
-      setState('done');
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Dax could not suggest priorities');
-      setState('error');
-    }
-  };
+  const [showAI, setShowAI] = useState(false);
 
   if (state === 'idle' || state === 'error') {
     return (
       <button
-        onClick={run}
+        onClick={() => setShowAI((s) => !s)}
         className="flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800/60 dark:bg-indigo-900/30 dark:text-indigo-300"
       >
         <Sparkles className="h-4 w-4" />
-        {state === 'error' ? 'Ask Dax again' : "Ask Dax what to focus on today"}
+        {showAI ? 'Hide Dax' : "Ask Dax what to focus on today"}
       </button>
     );
   }
@@ -51,277 +41,193 @@ function AIPlannerPanel() {
     );
   }
 
+  return null;
+}
+
+export default function PlannerPage() {
+  const { user } = useAuth();
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+
+  const fetchTasks = async () => {
+    try {
+      const res = await listTasks();
+      setTasks(res.data?.data || res.data || []);
+    } catch { toast.error('Could not load tasks'); }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchTasks(); }, []);
+
+  const openCreate = () => {
+    setEditingTask(null);
+    reset({ title: '', type: 'assignment', subject: '', dueDate: '' });
+    setShowForm(true);
+  };
+
+  const openEdit = (task) => {
+    setEditingTask(task);
+    reset({ title: task.title, type: task.type, subject: task.subject || '', dueDate: task.dueDate ? task.dueDate.slice(0, 10) : '' });
+    setShowForm(true);
+  };
+
+  const onSubmit = async (data) => {
+    try {
+      if (editingTask) {
+        await updateTask(editingTask._id, data);
+        toast.success('Task updated');
+      } else {
+        await createTask(data);
+        toast.success('Task created');
+      }
+      setShowForm(false);
+      fetchTasks();
+    } catch (err) { toast.error(err.response?.data?.message || 'Could not save task'); }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteTask(deleteTarget._id);
+      toast.success('Task deleted');
+      setDeleteTarget(null);
+      fetchTasks();
+    } catch { toast.error('Could not delete task'); }
+  };
+
+  const handleStatusToggle = async (task) => {
+    const nextStatus = task.status === 'done' ? 'pending' : 'done';
+    try {
+      await updateTask(task._id, { status: nextStatus });
+      fetchTasks();
+    } catch { toast.error('Could not update task'); }
+  };
+
+  const sorted = [...tasks].sort((a, b) => {
+    const order = { urgent: 0, high: 1, medium: 2, low: 3 };
+    return (order[a.priority] ?? 2) - (order[b.priority] ?? 2);
+  });
+
+  const { pending, overdue, completed } = {
+    pending: sorted.filter((t) => t.status !== 'done' && daysUntil(t.dueDate) >= 0),
+    overdue: sorted.filter((t) => t.status !== 'done' && daysUntil(t.dueDate) < 0),
+    completed: sorted.filter((t) => t.status === 'done'),
+  };
+
   return (
-    <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800/60 dark:bg-indigo-900/20">
-      <div className="mb-2 flex items-center justify-between">
-        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-          <Sparkles className="h-3.5 w-3.5" /> Dax’s priorities for today
-        </p>
-        <button onClick={run} className="text-indigo-400 hover:text-indigo-600">
-          <RefreshCw className="h-3.5 w-3.5" />
-        </button>
+    <div className="mx-auto max-w-2xl px-4 py-8">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Planner</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Manage your tasks and deadlines</p>
+        </div>
+        <Button onClick={openCreate} variant="primary" size="sm" icon={Plus}>Add</Button>
       </div>
-      {result?.focusArea && (
-        <p className="mb-3 text-sm font-medium text-indigo-800 dark:text-indigo-200">{result.focusArea}</p>
+
+      {/* ── AI Enhancement: Schedule optimisation ── */}
+      <div className="mb-6">
+        <TierGate required="trial">
+          <AIEnhancement
+            page="planner"
+            action="optimize"
+            variant="card"
+            dismissKey="planner-optimize"
+          />
+        </TierGate>
+      </div>
+
+      {loading ? <FeedSkeleton count={4} />
+      : tasks.length === 0 ? (
+        <EmptyState icon={CalendarDays} title="No tasks yet" description="Plan your first task to get started." action={{ label: 'Create task', onClick: openCreate }} />
+      ) : (
+        <div className="space-y-8">
+
+          {overdue.length > 0 && (
+            <section>
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-rose-500 mb-3">Overdue ({overdue.length})</h2>
+              <div className="space-y-2">
+                {overdue.map((task) => <TaskRow key={task._id} task={task} onEdit={openEdit} onDelete={setDeleteTarget} onToggle={handleStatusToggle} />)}
+              </div>
+            </section>
+          )}
+
+          <section>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Upcoming ({pending.length})</h2>
+            {pending.length === 0 ? (
+              <p className="text-sm text-gray-400">All caught up — nothing pending.</p>
+            ) : (
+              <div className="space-y-2">
+                {pending.map((task) => <TaskRow key={task._id} task={task} onEdit={openEdit} onDelete={setDeleteTarget} onToggle={handleStatusToggle} />)}
+              </div>
+            )}
+          </section>
+
+          {completed.length > 0 && (
+            <section>
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Completed ({completed.length})</h2>
+              <div className="space-y-2 opacity-60">
+                {completed.map((task) => <TaskRow key={task._id} task={task} onEdit={openEdit} onDelete={setDeleteTarget} onToggle={handleStatusToggle} />)}
+              </div>
+            </section>
+          )}
+        </div>
       )}
-      <ol className="mb-3 space-y-1.5">
-        {(result?.priorities || []).map((p, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm text-indigo-700 dark:text-indigo-300">
-            <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-indigo-200 text-[10px] font-bold text-indigo-700 dark:bg-indigo-800 dark:text-indigo-200">{i + 1}</span>
-            {p}
-          </li>
-        ))}
-      </ol>
-      {result?.motivationalNote && (
-        <p className="text-xs italic text-indigo-500 dark:text-indigo-400">{result.motivationalNote}</p>
-      )}
+
+      <Modal open={showForm} onClose={() => setShowForm(false)} title={editingTask ? 'Edit task' : 'New task'}>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Title</label>
+            <input {...register('title', { required: true })} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800" />
+            {errors.title && <p className="mt-1 text-xs text-rose-500">Required</p>}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Type</label>
+              <select {...register('type')} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800">
+                {TASK_TYPES?.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Due</label>
+              <input type="date" {...register('dueDate')} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800" />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>Cancel</Button>
+            <Button type="submit" variant="primary" size="sm">{editingTask ? 'Update' : 'Create'}</Button>
+          </div>
+        </form>
+      </Modal>
+
+      <ConfirmModal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} title="Delete task?" message="This cannot be undone." confirmLabel="Delete" />
     </div>
   );
 }
 
-const statusStyles = {
-  pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-  'in-progress': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-  done: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
-};
-
-const dueLabel = (dueDate) => {
-  const days = daysUntil(dueDate);
-  if (days < 0) return { text: `${-days}d overdue`, cls: 'text-red-500 font-medium' };
-  if (days === 0) return { text: 'Due today', cls: 'text-amber-500 font-medium' };
-  if (days === 1) return { text: 'Due tomorrow', cls: 'text-amber-500' };
-  return { text: `Due in ${days}d`, cls: 'text-gray-400' };
-};
-
-export default function PlannerPage() {
-  const [tasks, setTasks] = useState(null);
-  const [statusFilter, setStatusFilter] = useState('');
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null); // task being edited, or null for new
-  const [confirmDelete, setConfirmDelete] = useState(null); // task _id to delete
-  const { register, handleSubmit, reset, formState } = useForm();
-  const { user } = useAuth();
-
-  const load = () =>
-    listTasks(statusFilter ? { status: statusFilter } : {}).then((res) => setTasks(res.data));
-  useEffect(() => {
-    load();
-  }, [statusFilter]);
-
-  const openNew = () => {
-    setEditing(null);
-    reset({ title: '', type: TASK_TYPES[0]?.value, subject: '', dueDate: '', assignToSelf: false });
-    setModalOpen(true);
-  };
-
-  const openEdit = (task) => {
-    setEditing(task);
-    reset({
-      title: task.title,
-      type: task.type,
-      subject: task.subject || '',
-      dueDate: task.dueDate ? task.dueDate.slice(0, 10) : '',
-      assignToSelf: !!task.assignee,
-    });
-    setModalOpen(true);
-  };
-
-  const onSave = async (data) => {
-    try {
-      if (editing) {
-        await updateTask(editing._id, {
-          title: data.title,
-          type: data.type,
-          subject: data.subject,
-          dueDate: data.dueDate,
-        });
-        toast.success('Task updated');
-      } else {
-        await createTask(data);
-        toast.success('Task added');
-      }
-      reset();
-      setModalOpen(false);
-      load();
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to save task');
-    }
-  };
-
-  const cycleStatus = async (task) => {
-    const order = ['pending', 'in-progress', 'done'];
-    const next = order[(order.indexOf(task.status) + 1) % order.length];
-    try {
-      await updateTask(task._id, { status: next });
-      load();
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update status');
-    }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      await deleteTask(id);
-      toast.success('Task deleted');
-      load();
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to delete task');
-    }
-  };
-
-  const canModify = (task) =>
-    task.createdBy?._id === user?.id || task.assignee?._id === user?.id;
-
+function TaskRow({ task, onEdit, onDelete, onToggle }) {
+  const isPast = daysUntil(task.dueDate) < 0 && task.status !== 'done';
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold">Study Planner</h1>
-        <div className="flex items-center gap-2">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            aria-label="Filter by status"
-            className="rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
-          >
-            <option value="">All statuses</option>
-            {TASK_STATUSES.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
-            ))}
-          </select>
-          <Button onClick={openNew} size="sm">Add task</Button>
+    <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 transition-colors ${task.status === 'done' ? 'border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/50' : isPast ? 'border-rose-100 bg-rose-50/50 dark:border-rose-900/30 dark:bg-rose-950/10' : 'border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900'}`}>
+      <button onClick={() => onToggle(task)} className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${task.status === 'done' ? 'border-emerald-400 bg-emerald-400' : isPast ? 'border-rose-300' : 'border-gray-300'}`}>
+        {task.status === 'done' && <Check className="h-3 w-3 text-white" />}
+      </button>
+      <div className="min-w-0 flex-1">
+        <p className={`text-sm ${task.status === 'done' ? 'line-through text-gray-400' : 'font-medium text-gray-800 dark:text-gray-100'}`}>{task.title}</p>
+        <div className="flex items-center gap-2 mt-0.5">
+          {task.type && <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400">{task.type}</span>}
+          {task.subject && <><span className="text-gray-300">·</span><span className="text-[10px] text-gray-400">{task.subject}</span></>}
+          {task.dueDate && <><span className="text-gray-300">·</span><span className={`text-[10px] ${isPast ? 'text-rose-500 font-medium' : 'text-gray-400'}`}>{formatDate(task.dueDate)}</span></>}
         </div>
       </div>
-
-      <div className="mb-4">
-        <div className="mb-2 flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Dax Planner</span>
-          <CrownBadge required="pro" />
-        </div>
-        <TierGate required="pro" inline description="Dax prioritises your tasks for today based on deadlines, readiness score, and your goals.">
-          <AIPlannerPanel />
-        </TierGate>
+      <div className="flex items-center gap-1">
+        <button onClick={() => onEdit(task)} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"><Pencil className="h-3.5 w-3.5" /></button>
+        <button onClick={() => onDelete(task)} className="rounded-lg p-1.5 text-gray-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30"><Trash2 className="h-3.5 w-3.5" /></button>
       </div>
-
-      {!tasks ? (
-        <FeedSkeleton count={5} />
-      ) : tasks.length === 0 ? (
-        <EmptyState
-          icon={CalendarDays}
-          title="No tasks yet"
-          subtitle="Add deadlines, case studies and exam prep so nothing slips through the cracks"
-          cta={{ label: 'Add your first task', onClick: () => setModalOpen(true) }}
-        />
-      ) : (
-        <div className="space-y-2">
-          {tasks.map((task) => {
-            const due = dueLabel(task.dueDate);
-            return (
-              <div
-                key={task._id}
-                className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
-              >
-                <button
-                  onClick={() => canModify(task) && cycleStatus(task)}
-                  aria-label="Cycle task status"
-                  disabled={!canModify(task)}
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusStyles[task.status]} ${canModify(task) ? 'cursor-pointer' : 'cursor-default'}`}
-                >
-                  {task.status === 'done' ? <Check className="h-3.5 w-3.5" /> : task.status}
-                </button>
-                <div className="min-w-0 flex-1">
-                  <p className={`font-medium ${task.status === 'done' ? 'text-gray-400 line-through' : ''}`}>
-                    {task.title}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {TASK_TYPES.find((t) => t.value === task.type)?.label}
-                    {task.subject && ` · ${task.subject}`}
-                    {' · '}{formatDate(task.dueDate)}
-                    {task.assignee ? ` · ${task.assignee.name}` : ' · Whole batch'}
-                  </p>
-                </div>
-                <span className={`text-xs ${due.cls}`}>{task.status === 'done' ? '' : due.text}</span>
-                {canModify(task) && (
-                  <button
-                    onClick={() => openEdit(task)}
-                    aria-label="Edit task"
-                    className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                )}
-                {canModify(task) && (
-                  <button
-                    onClick={() => setConfirmDelete(task._id)}
-                    aria-label="Delete task"
-                    className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      <ConfirmModal
-        open={!!confirmDelete}
-        onClose={() => setConfirmDelete(null)}
-        onConfirm={() => handleDelete(confirmDelete)}
-        title="Delete task"
-        message="This task will be permanently deleted."
-        danger
-        confirmLabel="Delete"
-      />
-
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Edit task' : 'Add task'}>
-        <form onSubmit={handleSubmit(onSave)} className="space-y-4">
-          <div>
-            <label htmlFor="task-title" className="mb-1 block text-sm font-medium">Title</label>
-            <input
-              id="task-title"
-              {...register('title', { required: true })}
-              placeholder="e.g. Submit Marketing Case 3"
-              className="input"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="task-type" className="mb-1 block text-sm font-medium">Type</label>
-              <select id="task-type" {...register('type')} className="input">
-                {TASK_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="task-subject" className="mb-1 block text-sm font-medium">Subject</label>
-              <select id="task-subject" {...register('subject')} className="input">
-                <option value="">None</option>
-                {SUBJECTS.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div>
-            <label htmlFor="task-due" className="mb-1 block text-sm font-medium">Due date</label>
-            <input
-              id="task-due"
-              type="date"
-              {...register('dueDate', { required: true })}
-              className="input"
-            />
-          </div>
-          {!editing && (
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" {...register('assignToSelf')} className="rounded" />
-              Assign to me (otherwise it's for the whole batch)
-            </label>
-          )}
-          <Button type="submit" fullWidth disabled={formState.isSubmitting}>{formState.isSubmitting ? 'Saving…' : editing ? 'Save changes' : 'Add task'}</Button>
-        </form>
-      </Modal>
     </div>
   );
 }

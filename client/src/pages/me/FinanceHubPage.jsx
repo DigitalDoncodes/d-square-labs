@@ -1,346 +1,246 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import {
-  GraduationCap, Calculator, TrendingUp, PiggyBank, Umbrella, LineChart, Landmark, Sprout, Banknote,
-  TrendingDown, Pencil,
+  TrendingUp, TrendingDown, Pencil, Plus, Download, ArrowRight,
+  List, Calculator, BookOpen,
 } from 'lucide-react';
-import useViewSwitch from '../../hooks/useViewSwitch';
 import useDocumentTitle from '../../hooks/useDocumentTitle';
-import { getSummary } from '../../api/finance';
+import { listExpenses, createExpense, getSummary, setBudget } from '../../api/finance';
+import Modal from '../../components/common/Modal';
+import Button from '../../components/common/Button';
+import BudgetBar from '../../components/finance/BudgetBar';
+import CategoryChart from '../../components/finance/CategoryChart';
 import { Page } from '../../components/common/motion';
 import { Skeleton } from '../../components/common/Skeleton';
-import BudgetBar from '../../components/finance/BudgetBar';
-import FinancePage from '../FinancePage';
+import AIEnhancement from '../../components/common/AIEnhancement';
+import TierGate from '../../components/common/TierGate';
 
-const formatINR = (n) => '₹' + Math.round(n || 0).toLocaleString('en-IN');
+const CATEGORIES = ['Food', 'Travel', 'Rent', 'Books & Courses', 'Entertainment', 'Shopping', 'Other'];
+const SOURCES    = ['Allowance', 'Stipend', 'Salary', 'Freelance', 'Scholarship', 'Gift', 'Other'];
+const formatINR  = (n) => '₹' + Number(n || 0).toLocaleString('en-IN');
 const currentMonth = () => new Date().toISOString().slice(0, 7);
 
-const LESSONS = [
-  {
-    icon: Umbrella,
-    title: 'The emergency fund comes first',
-    body: 'Before any investing: 3–6 months of living costs in a savings account or liquid fund. It is not for returns — it is so a broken laptop or a gap between offers never becomes a crisis. Build it slowly; even ₹500/month counts.',
-  },
-  {
-    icon: PiggyBank,
-    title: 'The 50/30/20 rule',
-    body: 'Of whatever money comes in: about 50% for needs (rent, food, fees), 30% for wants (trips, eating out — guilt-free), 20% saved or invested. On a student budget the exact split matters less than having one at all.',
-  },
-  {
-    icon: Sprout,
-    title: 'The power of compounding',
-    body: 'Money grows on its own growth. ₹5,000/month at 12% becomes ~₹11.6 lakh in 10 years — but ~₹1.76 crore in 30. The last decade earns more than the first two combined. Starting at 25 instead of 35 roughly triples the outcome. Time matters more than amount.',
-  },
-  {
-    icon: TrendingUp,
-    title: 'SIPs: investing on autopilot',
-    body: 'A SIP (Systematic Investment Plan) invests a fixed amount into a mutual fund every month, automatically. You buy more units when markets are down, fewer when up — no timing, no willpower needed. It is the single best habit to start with your first salary.',
-  },
-  {
-    icon: LineChart,
-    title: 'Mutual funds vs. picking stocks',
-    body: 'A mutual fund pools money from many people and spreads it across dozens of companies — one bad company cannot sink you. Low-cost index funds (following Nifty 50) beat most professionals over long periods. Picking individual stocks is a hobby; funds are a plan.',
-  },
-  {
-    icon: Landmark,
-    title: 'Long-term wealth is boring',
-    body: 'The reliable formula: earn, keep fixed costs low, automate a monthly SIP, ignore market noise, let decades do the work. Nobody gets rich from tips and trading apps; plenty do from thirty years of unglamorous consistency.',
-  },
+const exportCSV = (expenses, month) => {
+  const rows = [['Date', 'Type', 'Category / Source', 'Note', 'Amount (INR)']];
+  expenses.forEach((e) => {
+    rows.push([
+      e.date ? e.date.slice(0, 10) : '',
+      e.kind === 'income' ? 'Income' : 'Expense',
+      e.kind === 'income' ? (e.source || '') : (e.category || ''),
+      e.note || '',
+      e.kind === 'income' ? e.amount : -e.amount,
+    ]);
+  });
+  const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `finance-${month}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+const QUICK_LINKS = [
+  { to: '/me/finance/tracker',    icon: List,       label: 'All transactions' },
+  { to: '/me/finance/calculator', icon: Calculator,  label: 'Calculators' },
+  { to: '/me/finance/learn',      icon: BookOpen,    label: 'Learn' },
+  { to: '/me/finance/roi',        icon: TrendingUp,  label: 'ROI' },
 ];
-
-function CalcCard({ title, icon: Icon, children, result }) {
-  return (
-    <div className="rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
-      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-        <Icon className="h-4 w-4 text-indigo-500" /> {title}
-      </h3>
-      <div className="space-y-2.5">{children}</div>
-      {result}
-    </div>
-  );
-}
-
-function Field({ label, value, onChange, suffix }) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">{label}</span>
-      <div className="relative">
-        <input
-          type="number"
-          min="0"
-          value={value}
-          onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))}
-          className="input"
-        />
-        {suffix && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">{suffix}</span>}
-      </div>
-    </label>
-  );
-}
-
-function Result({ lines }) {
-  return (
-    <div className="mt-4 rounded-xl bg-indigo-50/70 p-3 dark:bg-indigo-950/30">
-      {lines.map(([label, value], i) => (
-        <div key={label} className="flex items-baseline justify-between py-0.5">
-          <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
-          <span className={i === lines.length - 1 ? 'text-base font-bold text-indigo-600 dark:text-indigo-300' : 'text-sm font-medium'}>
-            {value}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function SipCalculator() {
-  const [monthly, setMonthly] = useState(5000);
-  const [years, setYears] = useState(10);
-  const [rate, setRate] = useState(12);
-  const n = (Number(years) || 0) * 12;
-  const r = (Number(rate) || 0) / 100 / 12;
-  const invested = (Number(monthly) || 0) * n;
-  const value = r > 0 ? (Number(monthly) || 0) * ((((1 + r) ** n - 1) / r) * (1 + r)) : invested;
-  return (
-    <CalcCard
-      title="SIP growth"
-      icon={TrendingUp}
-      result={
-        <Result lines={[
-          ['You invest', formatINR(invested)],
-          ['Growth', formatINR(value - invested)],
-          [`Value after ${years || 0} years`, formatINR(value)],
-        ]} />
-      }
-    >
-      <Field label="Monthly investment" value={monthly} onChange={setMonthly} suffix="₹/month" />
-      <div className="grid grid-cols-2 gap-2.5">
-        <Field label="For how long" value={years} onChange={setYears} suffix="years" />
-        <Field label="Expected return" value={rate} onChange={setRate} suffix="%/yr" />
-      </div>
-    </CalcCard>
-  );
-}
-
-function CompoundCalculator() {
-  const [amount, setAmount] = useState(100000);
-  const [years, setYears] = useState(20);
-  const [rate, setRate] = useState(12);
-  const value = (Number(amount) || 0) * (1 + (Number(rate) || 0) / 100) ** (Number(years) || 0);
-  return (
-    <CalcCard
-      title="One-time investment compounding"
-      icon={Sprout}
-      result={
-        <Result lines={[
-          ['You invest once', formatINR(Number(amount) || 0)],
-          ['Growth', formatINR(value - (Number(amount) || 0))],
-          [`Value after ${years || 0} years`, formatINR(value)],
-        ]} />
-      }
-    >
-      <Field label="Amount invested today" value={amount} onChange={setAmount} suffix="₹" />
-      <div className="grid grid-cols-2 gap-2.5">
-        <Field label="Left to grow for" value={years} onChange={setYears} suffix="years" />
-        <Field label="Expected return" value={rate} onChange={setRate} suffix="%/yr" />
-      </div>
-    </CalcCard>
-  );
-}
-
-function EmergencyFundCalculator() {
-  const [expenses, setExpenses] = useState(15000);
-  const [months, setMonths] = useState(6);
-  const [saving, setSaving] = useState(2000);
-  const target = (Number(expenses) || 0) * (Number(months) || 0);
-  const timeTo = Number(saving) > 0 ? Math.ceil(target / Number(saving)) : null;
-  return (
-    <CalcCard
-      title="Emergency fund target"
-      icon={Umbrella}
-      result={
-        <Result lines={[
-          ['Your safety net target', formatINR(target)],
-          ['Reached in', timeTo ? `${timeTo} month${timeTo === 1 ? '' : 's'}` : '—'],
-        ]} />
-      }
-    >
-      <Field label="Monthly living costs" value={expenses} onChange={setExpenses} suffix="₹/month" />
-      <div className="grid grid-cols-2 gap-2.5">
-        <Field label="Months of cover" value={months} onChange={setMonths} suffix="months" />
-        <Field label="You can save" value={saving} onChange={setSaving} suffix="₹/month" />
-      </div>
-    </CalcCard>
-  );
-}
-
-function BudgetCalculator() {
-  const [income, setIncome] = useState(20000);
-  const i = Number(income) || 0;
-  return (
-    <CalcCard
-      title="50/30/20 budget split"
-      icon={PiggyBank}
-      result={
-        <Result lines={[
-          ['Needs (50%)', formatINR(i * 0.5)],
-          ['Wants (30%)', formatINR(i * 0.3)],
-          ['Save & invest (20%)', formatINR(i * 0.2)],
-        ]} />
-      }
-    >
-      <Field label="Monthly money in (allowance, stipend, salary)" value={income} onChange={setIncome} suffix="₹/month" />
-    </CalcCard>
-  );
-}
-
-function EmiCalculator() {
-  const [amount, setAmount] = useState(1000000);
-  const [years, setYears] = useState(7);
-  const [rate, setRate] = useState(10);
-  const p = Number(amount) || 0;
-  const n = (Number(years) || 0) * 12;
-  const r = (Number(rate) || 0) / 100 / 12;
-  const emi = r > 0 && n > 0 ? (p * r * (1 + r) ** n) / ((1 + r) ** n - 1) : n > 0 ? p / n : 0;
-  return (
-    <CalcCard
-      title="Loan EMI (e.g. education loan)"
-      icon={Banknote}
-      result={
-        <Result lines={[
-          ['Total repaid', formatINR(emi * n)],
-          ['Of which interest', formatINR(emi * n - p)],
-          ['Monthly EMI', formatINR(emi)],
-        ]} />
-      }
-    >
-      <Field label="Loan amount" value={amount} onChange={setAmount} suffix="₹" />
-      <div className="grid grid-cols-2 gap-2.5">
-        <Field label="Tenure" value={years} onChange={setYears} suffix="years" />
-        <Field label="Interest rate" value={rate} onChange={setRate} suffix="%/yr" />
-      </div>
-    </CalcCard>
-  );
-}
 
 export default function FinanceHubPage() {
   useDocumentTitle('Finance');
-  const [summary, setSummary] = useState(null);
-  const [summaryLoading, setSummaryLoading] = useState(true);
-  const month = currentMonth();
 
-  useEffect(() => {
-    getSummary(month)
-      .then((res) => setSummary(res.data))
-      .catch(() => {})
-      .finally(() => setSummaryLoading(false));
-  }, [month]);
+  const [expenses, setExpenses] = useState([]);
+  const [summary, setSummary] = useState({ income: 0, expense: 0 });
+  const [loading, setLoading] = useState(true);
+  const [month, setMonth] = useState(currentMonth());
+  const [showModal, setShowModal] = useState(false);
+  const [budgetEdit, setBudgetEdit] = useState(false);
+  const [budget, setBudgetState] = useState(null);
 
-  const { active, switcher } = useViewSwitch(
-    [
-      { key: 'learn', label: 'Learn' },
-      { key: 'calculators', label: 'Calculators' },
-      { key: 'tracker', label: 'Tracker' },
-    ],
-    'learn'
-  );
+  const { register, handleSubmit, reset } = useForm();
 
-  if (active === 'tracker') {
-    return (
-      <>
-        {switcher}
-        <FinancePage />
-      </>
-    );
-  }
+  const fetchData = useCallback(async (m) => {
+    setLoading(true);
+    try {
+      const [expRes, sumRes] = await Promise.all([listExpenses(m), getSummary(m)]);
+      setExpenses(expRes.data?.data || expRes.data || []);
+      setSummary(sumRes.data || { income: 0, expense: 0 });
+    } catch { toast.error('Could not load finances'); }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchData(month); }, [month, fetchData]);
+
+  const onSubmit = async (data) => {
+    try {
+      await createExpense({ ...data, month });
+      toast.success(data.kind === 'income' ? 'Income added' : 'Expense added');
+      setShowModal(false);
+      reset({ kind: 'expense', category: '', source: '', amount: '', note: '', date: new Date().toISOString().slice(0, 10) });
+      fetchData(month);
+    } catch (err) { toast.error(err.response?.data?.message || 'Could not save'); }
+  };
+
+  const saveBudget = async () => {
+    try {
+      const b = await setBudget({ amount: budget, month });
+      setBudgetState(b.data?.budget || b.data || b);
+      toast.success('Budget updated');
+      setBudgetEdit(false);
+    } catch { toast.error('Could not update budget'); }
+  };
+
+  const totalIncome = expenses.filter((e) => e.kind === 'income').reduce((s, e) => s + e.amount, 0);
+  const totalExpense = expenses.filter((e) => e.kind === 'expense').reduce((s, e) => s + e.amount, 0);
+  const balance = totalIncome - totalExpense;
+
+  // CategoryChart takes [{ category, total }], not the raw expense list.
+  // Roll spending up by category, largest first.
+  const byCategory = Object.entries(
+    expenses
+      .filter((e) => e.kind === 'expense')
+      .reduce((acc, e) => {
+        const key = e.category || 'Other';
+        acc[key] = (acc[key] || 0) + e.amount;
+        return acc;
+      }, {})
+  )
+    .map(([category, total]) => ({ category, total }))
+    .sort((a, b) => b.total - a.total);
 
   return (
-    <>
-      {switcher}
-      <Page>
-        {/* BUDGET BAR — the signature */}
-        {summaryLoading ? (
-          <div className="mb-6 space-y-2">
-            <Skeleton className="h-4 w-48" />
-            <Skeleton className="h-2 w-full rounded-full" />
-            <Skeleton className="h-3 w-32" />
+    <Page className="mx-auto max-w-2xl px-4 py-8">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Finance</h1>
+          <p className="text-sm text-gray-500">Track your money</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" icon={Download} onClick={() => exportCSV(expenses, month)}>CSV</Button>
+          <Button variant="primary" size="sm" icon={Plus} onClick={() => { reset({ kind: 'expense', category: '', source: '', amount: '', note: '', date: new Date().toISOString().slice(0, 10) }); setShowModal(true); }}>Add</Button>
+        </div>
+      </div>
+
+      {/* ── AI ENHANCEMENT: Budgeting advice ── */}
+      <div className="mb-6">
+        <TierGate required="pro">
+          <AIEnhancement page="finance" action="advise" variant="card" dismissKey="finance-advise" />
+        </TierGate>
+      </div>
+
+      <div className="mb-6">
+        <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800" />
+      </div>
+
+      {loading ? (
+        <div className="space-y-4">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <StatCard icon={TrendingUp} label="Income" value={formatINR(totalIncome)} color="text-emerald-600" />
+            <StatCard icon={TrendingDown} label="Expenses" value={formatINR(totalExpense)} color="text-rose-600" />
+            <StatCard icon={Pencil} label="Balance" value={formatINR(balance)} color={balance >= 0 ? 'text-indigo-600' : 'text-rose-600'} />
           </div>
-        ) : summary ? (
-          <div className="mb-6 rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400">Monthly budget</h2>
-              <span className="text-[10px] text-gray-400">{month}</span>
+
+          <div className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Budget</h2>
+              <button onClick={() => setBudgetEdit((s) => !s)} className="text-xs font-medium text-indigo-600 hover:text-indigo-500">
+                {budgetEdit ? 'Cancel' : 'Set budget'}
+              </button>
             </div>
-            <BudgetBar spent={summary.total} budget={summary.budget} />
-            <div className="mt-3 grid grid-cols-3 gap-3 text-center">
-              <div>
-                <p className="flex items-center justify-center gap-1 text-[10px] text-gray-400">
-                  <TrendingUp className="h-3 w-3 text-green-600" /> Income
-                </p>
-                <p className="text-sm font-bold text-green-700 dark:text-green-400">{formatINR(summary.income)}</p>
+            {budgetEdit ? (
+              <div className="flex items-center gap-2">
+                <input type="number" value={budget ?? ''} onChange={(e) => setBudgetState(Number(e.target.value))} className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800" placeholder="Monthly budget" />
+                <Button variant="primary" size="sm" onClick={saveBudget}>Save</Button>
               </div>
-              <div>
-                <p className="flex items-center justify-center gap-1 text-[10px] text-gray-400">
-                  <TrendingDown className="h-3 w-3 text-red-500" /> Spent
-                </p>
-                <p className="text-sm font-bold text-gray-800 dark:text-gray-100">{formatINR(summary.total)}</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-gray-400">Balance</p>
-                <p className={`text-sm font-bold ${summary.balance < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                  {formatINR(summary.balance)}
-                </p>
-              </div>
-            </div>
-            {!summary.budget && (
-              <p className="mt-2 text-xs text-gray-400">Set a monthly budget to track overspending.</p>
+            ) : (
+              <BudgetBar spent={totalExpense} budget={budget} />
             )}
           </div>
-        ) : null}
 
-        {active === 'learn' ? (
-          <>
-            <div className="mb-6">
-              <h1 className="flex items-center gap-2 text-xl font-bold">
-                <GraduationCap className="h-5 w-5 text-indigo-500" /> Money, explained simply
-              </h1>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Six ideas that matter more than any stock tip. Read them once now, thank yourself at 40.
-              </p>
-            </div>
-            <div className="space-y-3">
-              {LESSONS.map((l) => (
-                <section key={l.title} className="rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
-                  <h2 className="mb-1.5 flex items-center gap-2 text-sm font-semibold">
-                    <l.icon className="h-4 w-4 text-indigo-500" /> {l.title}
-                  </h2>
-                  <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">{l.body}</p>
-                </section>
+          <div className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800 mb-6">
+            <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">Spending by category</h2>
+            <CategoryChart data={byCategory} />
+          </div>
+
+          {expenses.length > 0 ? (
+            <div className="space-y-2">
+              {expenses.slice(0, 20).map((e) => (
+                <div key={e._id} className="flex items-center justify-between rounded-xl border border-gray-100 px-4 py-3 dark:border-gray-800">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{e.note || (e.kind === 'income' ? e.source : e.category)}</p>
+                    <p className="text-[11px] text-gray-400">{e.date?.slice(0, 10)} {e.category && `· ${e.category}`}</p>
+                  </div>
+                  <span className={`text-sm font-semibold tabular-nums ${e.kind === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {e.kind === 'income' ? '+' : '-'}{formatINR(e.amount)}
+                  </span>
+                </div>
               ))}
             </div>
-            <p className="mt-6 text-center text-xs text-gray-400">
-              Education, not advice — for decisions involving real money, a SEBI-registered advisor beats any app.
-            </p>
-          </>
-        ) : (
-          <>
-            <div className="mb-6">
-              <h1 className="flex items-center gap-2 text-xl font-bold">
-                <Calculator className="h-5 w-5 text-indigo-500" /> See it with your own numbers
-              </h1>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                The lessons, made concrete. Change a number and watch what time does to it.
-              </p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SipCalculator />
-              <CompoundCalculator />
-              <EmergencyFundCalculator />
-              <BudgetCalculator />
-              <EmiCalculator />
-            </div>
-          </>
-        )}
-      </Page>
-    </>
+          ) : (
+            <p className="text-sm text-gray-400 text-center py-8">No transactions yet. Add your first income or expense.</p>
+          )}
+
+          <div className="mt-6 grid grid-cols-4 gap-3">
+            {QUICK_LINKS.map((l) => (
+              <Link key={l.to} to={l.to} className="flex flex-col items-center gap-1.5 rounded-xl border border-gray-100 py-3 text-xs font-medium text-gray-500 hover:border-indigo-200 hover:text-indigo-600 dark:border-gray-800 dark:hover:border-indigo-800/60">
+                <l.icon className="h-4 w-4" />
+                {l.label}
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
+
+      <Modal open={showModal} onClose={() => setShowModal(false)} title="Add transaction">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="flex gap-3">
+            <label className="flex items-center gap-2 text-sm"><input type="radio" value="expense" {...register('kind')} defaultChecked /> Expense</label>
+            <label className="flex items-center gap-2 text-sm"><input type="radio" value="income" {...register('kind')} /> Income</label>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Category / Source</label>
+            <select {...register('category')} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800">
+              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Amount (₹)</label>
+            <input type="number" step="0.01" {...register('amount', { required: true })} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Note</label>
+            <input {...register('note')} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
+            <input type="date" {...register('date')} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800" />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" size="sm" onClick={() => setShowModal(false)}>Cancel</Button>
+            <Button type="submit" variant="primary" size="sm">Add</Button>
+          </div>
+        </form>
+      </Modal>
+    </Page>
+  );
+}
+
+function StatCard({ icon: Icon, label, value, color }) {
+  return (
+    <div className="rounded-xl border border-gray-100 p-4 dark:border-gray-800">
+      <div className="flex items-center gap-2 mb-1">
+        <Icon className="h-3.5 w-3.5 text-gray-400" />
+        <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">{label}</span>
+      </div>
+      <p className={`text-lg font-bold tabular-nums ${color}`}>{value}</p>
+    </div>
   );
 }
