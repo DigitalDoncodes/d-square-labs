@@ -53,7 +53,7 @@ export default function ExperienceStep() {
         <div className="grid grid-cols-2 gap-3">
           {[
             { value: 'fresher',    Icon: GraduationCap, title: 'Fresher',         sub: 'Straight from undergrad' },
-            { value: 'experienced', Icon: Briefcase,     title: 'Work experience', sub: '1+ years before MBA' },
+            { value: 'experienced', Icon: Briefcase,     title: 'Work experience', sub: '1+ years before this program' },
           ].map(({ value, Icon, title, sub }) => (
             <button
               key={value}

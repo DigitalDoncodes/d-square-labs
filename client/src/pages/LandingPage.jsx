@@ -23,7 +23,7 @@ const FEATURES = [
   {
     icon: BrainCircuit,
     title: 'Daily case practice',
-    desc: 'One MBA case every morning with frameworks — the habit that compounds.',
+    desc: 'One case study every morning with frameworks — the habit that compounds.',
     to: '/',
   },
   {
@@ -133,7 +133,7 @@ export default function LandingPage() {
           <ShieldCheck className="h-3.5 w-3.5" /> Built by your batch, for your batch · No ads · No tracking
         </p>
         <h1 className="text-4xl font-black leading-tight tracking-tight sm:text-6xl">
-          Your entire MBA,
+          Your entire student life,
           <br />
           <span className="text-indigo-400">one calm place.</span>
         </h1>

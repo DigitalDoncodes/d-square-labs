@@ -157,7 +157,7 @@ export default function StarStoriesPage() {
       <div className="mx-auto w-full max-w-2xl px-4 py-6 space-y-6">
         <PageHeader
           title="STAR Story Bank"
-          subtitle="Your pre-MBA work experience, structured for behavioral interviews. One story = one interview answer."
+          subtitle="Your prior work experience, structured for behavioral interviews. One story = one interview answer."
         />
 
         <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-4 dark:bg-indigo-950/30 dark:border-indigo-900/40">

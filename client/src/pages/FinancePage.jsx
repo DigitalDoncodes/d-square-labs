@@ -216,7 +216,7 @@ const LEARN_TOPICS = [
     points: [
       'A rupee today is worth more than a rupee tomorrow — it can be invested and grow.',
       'PV = FV / (1+r)^n  ·  FV = PV × (1+r)^n',
-      'MBA use case: comparing investment options, valuing cash flows, DCF models.',
+      'Used for comparing investment options, valuing cash flows, DCF models.',
     ],
   },
   {
@@ -256,7 +256,7 @@ const LEARN_TOPICS = [
     ],
   },
   {
-    title: 'MBA Career Finance',
+    title: 'Career Finance',
     color: 'cyan',
     points: [
       'Track your CTC vs in-hand: PF, gratuity, and taxes reduce take-home significantly.',
@@ -283,7 +283,7 @@ function LearnTab() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        Core finance concepts every MBA student should know — from classroom to career.
+        Core finance concepts every student should know — from classroom to career.
       </p>
       <div className="grid gap-4 sm:grid-cols-2">
         {LEARN_TOPICS.map((t) => (
@@ -529,7 +529,7 @@ export default function FinancePage() {
       {tab === 'calculator' && (
         <div className="space-y-5">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Quick calculators for common MBA finance decisions.
+            Quick calculators for common student finance decisions.
           </p>
           <SIPCalculator />
           <EMICalculator />

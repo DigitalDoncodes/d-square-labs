@@ -10,7 +10,7 @@ export default function WellbeingSupportPage() {
           <HeartHandshake className="h-5 w-5 text-indigo-500" /> Support
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          The MBA is a marathon run at sprint pace. It's okay to need a moment.
+          Student life is a marathon run at sprint pace. It's okay to need a moment.
         </p>
       </div>
 

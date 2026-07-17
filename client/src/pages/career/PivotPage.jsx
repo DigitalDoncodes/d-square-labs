@@ -102,7 +102,7 @@ export default function PivotPage() {
       <div className="mx-auto w-full max-w-2xl px-4 py-6 space-y-6">
         <PageHeader
           title="Career Pivot Tracker"
-          subtitle="From your pre-MBA domain to your target role — map the gap, track the journey."
+          subtitle="From your current domain to your target role — map the gap, track the journey."
         />
 
         {/* Overview card */}
@@ -122,7 +122,7 @@ export default function PivotPage() {
                     options={DOMAINS}
                     value={form.fromDomain}
                     onChange={(val) => setForm((f) => ({ ...f, fromDomain: val }))}
-                    label="Pre-MBA domain"
+                    label="Current domain"
                     placeholder="Select…"
                     allowOther={true}
                     variant="dropdown"
@@ -130,7 +130,7 @@ export default function PivotPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">Pre-MBA role / title</label>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Current role / title</label>
                   <input value={form.fromRole} onChange={set('fromRole')} placeholder="e.g. Software Engineer" className={inp} />
                 </div>
               </div>

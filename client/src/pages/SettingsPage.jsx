@@ -28,7 +28,7 @@ const TIER_META = {
 const TIER_BENEFITS = {
   free:  ['Notes (create & read)', 'Resume builder (manual)', 'Planner & journal', 'Finance tracker', 'Company list (browse)', 'Community & gallery'],
   trial: ['Everything in Pro for 7 days', 'Dax Summaries', 'Dax Resume Review', 'Company prep cards', 'Dax Research', 'Dax Planner'],
-  pro:   ['Dax Summaries', 'Dax Resume Review & feedback', 'Company prep cards (full detail)', 'Daily personalized Dax briefing', 'Interview question bank', 'Daily MBA cases', 'Dax Planner', 'Dax Research', 'Career readiness score'],
+  pro:   ['Dax Summaries', 'Dax Resume Review & feedback', 'Company prep cards (full detail)', 'Daily personalized Dax briefing', 'Interview question bank', 'Daily case studies', 'Dax Planner', 'Dax Research', 'Career readiness score'],
   max:   ['Everything in Pro', 'Dax Career Coach (deep strategy)', 'Priority Dax processing', 'Dax Research across notes + companies', 'Multi-company comparison', 'Priority support'],
 };
 

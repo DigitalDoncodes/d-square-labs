@@ -4,7 +4,7 @@ const FEATURES = [
   { emoji: '📚', label: 'Smart notes & study tools' },
   { emoji: '💼', label: 'Career & placement tracker' },
   { emoji: '🤝', label: 'Batch community & directory' },
-  { emoji: '🧠', label: 'Daily MBA case practice' },
+  { emoji: '🧠', label: 'Daily case-study practice' },
   { emoji: '💰', label: 'Finance & budget tracker' },
   { emoji: '✨', label: 'Briefings from Dax' },
 ];
