@@ -22,7 +22,7 @@ router.get('/', (req, res, next) => {
 router.get('/my', async (req, res, next) => {
   try {
     const user = await User.findById(req.user.userId).select('programs activeProgram').lean();
-    res.json({ programs: user?.programs || ['mba'], activeProgram: user?.activeProgram || 'mba' });
+    res.json({ programs: user?.programs || ['general'], activeProgram: user?.activeProgram || 'general' });
   } catch (err) { next(err); }
 });
 

@@ -157,6 +157,7 @@ const PORT = process.env.PORT || 5000;
 const { register: registerSchedulers } = require('./schedulers');
 const { register: registerModule, bootAll } = require('./modules/registry');
 
+registerModule('general', require('./modules/general'));
 registerModule('mba', require('./modules/mba'));
 
 connectDB()

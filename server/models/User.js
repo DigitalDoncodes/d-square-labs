@@ -40,8 +40,8 @@ const userSchema = new mongoose.Schema(
     subscriptionRef: { type: String, default: null }, // last verified payment ref
 
     // Module system: programs this user is enrolled in + active one
-    programs: { type: [{ type: String }], default: ['mba'] },
-    activeProgram: { type: String, default: 'mba' },
+    programs: { type: [{ type: String }], default: ['general'] },
+    activeProgram: { type: String, default: 'general' },
   },
   { timestamps: true }
 );

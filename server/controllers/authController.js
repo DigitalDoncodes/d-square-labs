@@ -52,7 +52,7 @@ const uniqueReferralCode = async (name) => {
 
 const signToken = (user) =>
   jwt.sign(
-    { userId: user._id, name: user.name, email: user.email, role: user.role || 'member', tier: user.tier || 'free', studentType: user.studentType || 'fresher', programs: user.programs || ['mba'], activeProgram: user.activeProgram || 'mba' },
+    { userId: user._id, name: user.name, email: user.email, role: user.role || 'member', tier: user.tier || 'free', studentType: user.studentType || 'fresher', programs: user.programs || ['general'], activeProgram: user.activeProgram || 'general' },
     process.env.JWT_SECRET,
     { expiresIn: '7d' }
   );
@@ -164,9 +164,21 @@ exports.register = async (req, res, next) => {
     const studentType = years === 0 || ['fresher', 'intern'].includes(expType) ? 'fresher' : 'experienced';
     const workExYears = years > 0 ? years : null;
 
-    // Update user with computed studentType and workExYears
+    // Map the student's chosen course to a registered module slug. Only
+    // 'mba' has a dedicated module today (with MBA-specific tooling like
+    // case-interview prep); every other course — including "Other" free
+    // text — lands on 'general', the discipline-agnostic default with the
+    // same full feature set. This is the one place a course selection
+    // actually reaches the module/feature-routing system; previously
+    // programs/activeProgram were hardcoded to ['mba']/'mba' regardless
+    // of what a student picked at signup.
+    const programSlug = (course || '').trim().toLowerCase() === 'mba' ? 'mba' : 'general';
+
+    // Update user with computed studentType, workExYears, and program
     user.studentType = studentType;
     user.workExYears = workExYears;
+    user.programs = [programSlug];
+    user.activeProgram = programSlug;
     await user.save();
 
     if (referrer) {
