@@ -108,16 +108,24 @@ async function _executeViaRuntimeV2({ task, systemPrompt, userPrompt, ragContext
     throw err;
   }
 
+  // Provider .generate() implementations don't all use the same field name —
+  // openaiCompatible.js's generate() delegates to complete(), which returns
+  // `.text`, not `.output`. Reading response.output alone left `text`
+  // undefined inside validator.js whenever a real (non-stubbed) provider
+  // resolved, which crashed on text.toLowerCase(). Match the same defensive
+  // read studentIntelligenceEngine.enhance() already uses for this exact reason.
+  const rawOutput = response.output || response.text || response;
+
   // Verify on the raw output, before parsing — matches
   // studentIntelligenceEngine.enhance()'s order (verify, then parse).
   const verification = await responseVerifierV2.verifyResponse({
-    output: response.output, task, intent: routing.intent, sourceCount, promptId: task, version: '1.0',
+    output: rawOutput, task, intent: routing.intent, sourceCount, promptId: task, version: '1.0',
   });
   if (verification.status === 'failed') {
     throw new Error(`response verification failed: ${(verification.issues || []).join('; ') || 'no issues reported'}`);
   }
 
-  const result = json ? parseJSON(response.output, task) : response.output;
+  const result = json ? parseJSON(rawOutput, task) : rawOutput;
   const estimatedCostUsd = costOptimizerV2.estimateCost({
     provider: routing.provider, model: routing.model,
     promptTokens: response.promptTokens, completionTokens: response.completionTokens,
@@ -408,14 +416,27 @@ const HANDLERS = {
       const { question } = body;
       if (!question?.trim()) throw new ValidationError('question is required');
       const mem = await getUserMemory(userId);
-      const { result, meta } = await runPipeline({
+      const runArgs = {
         task: 'finance-assist',
         systemPrompt: withDaxIdentity('You are a personal finance coach for students. Give practical, India-relevant financial advice.'),
         userPrompt: `Answer this finance question for a student:\n${question}\n\nReturn JSON:\n{"answer":"detailed 2-3 sentence answer","actionItems":["item 1","item 2","item 3"],"keyConcept":"one key financial concept explained simply"}`,
         memoryContext: formatMemoryContext(mem),
         json: true,
         userId,
-      });
+      };
+
+      let result, meta;
+      if (RUNTIME_V2_TASKS.has('finance-assist')) {
+        try {
+          ({ result, meta } = await _executeViaRuntimeV2(runArgs));
+        } catch (err) {
+          console.warn(`[dax] Runtime V2 path failed for finance-assist, falling back to V1: ${err.message}`);
+        }
+      }
+      if (!result) {
+        ({ result, meta } = await runPipeline(runArgs));
+      }
+
       return { ...result, _meta: { provider: meta.provider, confidence: meta.confidence } };
     },
   },
