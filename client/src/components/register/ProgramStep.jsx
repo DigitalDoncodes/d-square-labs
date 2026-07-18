@@ -123,7 +123,7 @@ export default function ProgramStep() {
           <label className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-gray-400">
             Roll number <span className="text-gray-400 font-normal">(opt)</span>
           </label>
-          <input {...register('rollNumber')} placeholder="2024MBA001" className="input" />
+          <input {...register('rollNumber')} placeholder="e.g. 2024CS001" className="input" />
         </div>
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-gray-400">
