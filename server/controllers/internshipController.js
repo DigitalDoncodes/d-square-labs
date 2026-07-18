@@ -29,6 +29,8 @@ exports.create = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+const INTERNSHIP_UPDATABLE_FIELDS = ['title', 'company', 'location', 'remote', 'stipend', 'duration', 'applyLink', 'deadline', 'eligibility', 'tags'];
+
 exports.update = async (req, res, next) => {
   try {
     const item = await Internship.findById(req.params.id);
@@ -36,7 +38,7 @@ exports.update = async (req, res, next) => {
     if (!item.postedBy.equals(req.user.userId) && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorised' });
     }
-    Object.assign(item, req.body);
+    INTERNSHIP_UPDATABLE_FIELDS.forEach((f) => { if (req.body[f] !== undefined) item[f] = req.body[f]; });
     await item.save();
     res.json(item);
   } catch (err) { next(err); }

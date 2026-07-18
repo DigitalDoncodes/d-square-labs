@@ -35,12 +35,14 @@ exports.createListing = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+const LISTING_UPDATABLE_FIELDS = ['skill', 'description', 'mode', 'availability', 'contact', 'tags'];
+
 exports.updateListing = async (req, res, next) => {
   try {
     const item = await SkillListing.findById(req.params.id);
     if (!item) return res.status(404).json({ message: 'Not found' });
     if (!item.user.equals(req.user.userId)) return res.status(403).json({ message: 'Not authorised' });
-    Object.assign(item, req.body);
+    LISTING_UPDATABLE_FIELDS.forEach((f) => { if (req.body[f] !== undefined) item[f] = req.body[f]; });
     await item.save();
     res.json(item);
   } catch (err) { next(err); }

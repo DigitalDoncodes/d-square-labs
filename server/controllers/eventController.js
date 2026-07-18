@@ -37,6 +37,8 @@ exports.createEvent = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+const EVENT_UPDATABLE_FIELDS = ['title', 'description', 'date', 'endDate', 'location', 'online', 'meetLink', 'organizer', 'category', 'image', 'registrationOpen', 'maxAttendees'];
+
 exports.updateEvent = async (req, res, next) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -44,7 +46,7 @@ exports.updateEvent = async (req, res, next) => {
     if (!event.createdBy.equals(req.user.userId) && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorised' });
     }
-    Object.assign(event, req.body);
+    EVENT_UPDATABLE_FIELDS.forEach((f) => { if (req.body[f] !== undefined) event[f] = req.body[f]; });
     await event.save();
     res.json(event);
   } catch (err) { next(err); }

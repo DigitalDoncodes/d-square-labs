@@ -33,6 +33,8 @@ exports.create = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+const RESOURCE_UPDATABLE_FIELDS = ['title', 'subject', 'semester', 'professor', 'type', 'url', 'fileSize', 'tags'];
+
 exports.update = async (req, res, next) => {
   try {
     const item = await Resource.findById(req.params.id);
@@ -40,7 +42,7 @@ exports.update = async (req, res, next) => {
     if (!item.uploadedBy.equals(req.user.userId) && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorised' });
     }
-    Object.assign(item, req.body);
+    RESOURCE_UPDATABLE_FIELDS.forEach((f) => { if (req.body[f] !== undefined) item[f] = req.body[f]; });
     await item.save();
     res.json(item);
   } catch (err) { next(err); }

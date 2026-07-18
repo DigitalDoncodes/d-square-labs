@@ -44,12 +44,14 @@ exports.getProject = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+const PROJECT_UPDATABLE_FIELDS = ['title', 'description', 'subject', 'deadline'];
+
 exports.updateProject = async (req, res, next) => {
   try {
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ message: 'Not found' });
     if (!project.createdBy.equals(req.user.userId)) return res.status(403).json({ message: 'Not authorised' });
-    Object.assign(project, req.body);
+    PROJECT_UPDATABLE_FIELDS.forEach((f) => { if (req.body[f] !== undefined) project[f] = req.body[f]; });
     await project.save();
     res.json(project);
   } catch (err) { next(err); }
@@ -117,11 +119,15 @@ exports.createTask = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+const TASK_UPDATABLE_FIELDS = ['title', 'description', 'assignee', 'status', 'dueDate'];
+
 exports.updateTask = async (req, res, next) => {
   try {
     const task = await ProjectTask.findById(req.params.taskId);
     if (!task) return res.status(404).json({ message: 'Not found' });
-    Object.assign(task, req.body);
+    const project = await Project.findById(task.project);
+    if (!project || !isMember(project, req.user.userId)) return res.status(403).json({ message: 'Not a member' });
+    TASK_UPDATABLE_FIELDS.forEach((f) => { if (req.body[f] !== undefined) task[f] = req.body[f]; });
     await task.save();
     res.json(task);
   } catch (err) { next(err); }

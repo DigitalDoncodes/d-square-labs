@@ -29,12 +29,14 @@ exports.create = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+const UPDATABLE_FIELDS = ['title', 'description', 'price', 'category', 'condition', 'images', 'contact', 'tags'];
+
 exports.update = async (req, res, next) => {
   try {
     const item = await MarketListing.findById(req.params.id);
     if (!item) return res.status(404).json({ message: 'Not found' });
     if (!item.seller.equals(req.user.userId)) return res.status(403).json({ message: 'Not authorised' });
-    Object.assign(item, req.body);
+    UPDATABLE_FIELDS.forEach((f) => { if (req.body[f] !== undefined) item[f] = req.body[f]; });
     await item.save();
     res.json(item);
   } catch (err) { next(err); }
