@@ -143,15 +143,15 @@ export default function FinanceHubPage() {
       ) : (
         <>
           <div className="grid grid-cols-3 gap-4 mb-6">
-            <StatCard icon={TrendingUp} label="Income" value={formatINR(totalIncome)} color="text-emerald-600" />
-            <StatCard icon={TrendingDown} label="Expenses" value={formatINR(totalExpense)} color="text-rose-600" />
-            <StatCard icon={Pencil} label="Balance" value={formatINR(balance)} color={balance >= 0 ? 'text-indigo-600' : 'text-rose-600'} />
+            <StatCard icon={TrendingUp} label="Income" value={formatINR(totalIncome)} color="text-success-600" />
+            <StatCard icon={TrendingDown} label="Expenses" value={formatINR(totalExpense)} color="text-danger-600" />
+            <StatCard icon={Pencil} label="Balance" value={formatINR(balance)} color={balance >= 0 ? 'text-primary-600' : 'text-danger-600'} />
           </div>
 
           <div className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800 mb-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Budget</h2>
-              <button onClick={() => setBudgetEdit((s) => !s)} className="text-xs font-medium text-indigo-600 hover:text-indigo-500">
+              <button onClick={() => setBudgetEdit((s) => !s)} className="text-xs font-medium text-primary-600 hover:text-primary-500">
                 {budgetEdit ? 'Cancel' : 'Set budget'}
               </button>
             </div>
@@ -178,7 +178,7 @@ export default function FinanceHubPage() {
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{e.note || (e.kind === 'income' ? e.source : e.category)}</p>
                     <p className="text-[11px] text-gray-400">{e.date?.slice(0, 10)} {e.category && `· ${e.category}`}</p>
                   </div>
-                  <span className={`text-sm font-semibold tabular-nums ${e.kind === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  <span className={`text-sm font-semibold tabular-nums ${e.kind === 'income' ? 'text-success-600' : 'text-danger-600'}`}>
                     {e.kind === 'income' ? '+' : '-'}{formatINR(e.amount)}
                   </span>
                 </div>
@@ -190,7 +190,7 @@ export default function FinanceHubPage() {
 
           <div className="mt-6 grid grid-cols-4 gap-3">
             {QUICK_LINKS.map((l) => (
-              <Link key={l.to} to={l.to} className="flex flex-col items-center gap-1.5 rounded-xl border border-gray-100 py-3 text-xs font-medium text-gray-500 hover:border-indigo-200 hover:text-indigo-600 dark:border-gray-800 dark:hover:border-indigo-800/60">
+              <Link key={l.to} to={l.to} className="flex flex-col items-center gap-1.5 rounded-xl border border-gray-100 py-3 text-xs font-medium text-gray-500 hover:border-primary-200 hover:text-primary-600 dark:border-gray-800 dark:hover:border-primary-800/60">
                 <l.icon className="h-4 w-4" />
                 {l.label}
               </Link>

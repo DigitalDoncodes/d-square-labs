@@ -171,7 +171,7 @@ function TechniqueSection({ icon: Icon, iconClass, title, items }) {
             {t.link && (
               <Link
                 to={t.link.to}
-                className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary-600 hover:underline dark:text-primary-400"
               >
                 {t.link.label} <ArrowRight className="h-3 w-3" />
               </Link>

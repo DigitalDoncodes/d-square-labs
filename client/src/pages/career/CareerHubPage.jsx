@@ -104,16 +104,16 @@ export default function CareerHubPage() {
             {companies.map((c) => {
               const news = newsMap[c.name] || [];
               return (
-                <Link key={c._id} to={`/career/companies/${c.slug}`} className="group rounded-2xl border border-gray-100 p-4 hover:border-indigo-200 hover:shadow-sm transition-all dark:border-gray-800 dark:hover:border-indigo-800/50">
+                <Link key={c._id} to={`/career/companies/${c.slug}`} className="group rounded-2xl border border-gray-100 p-4 hover:border-primary-200 hover:shadow-sm transition-all dark:border-gray-800 dark:hover:border-primary-800/50">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-500 dark:bg-gray-800 dark:text-gray-400">
                       {c.name?.charAt(0)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-gray-800 truncate dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">{c.name}</p>
+                      <p className="text-sm font-semibold text-gray-800 truncate dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400">{c.name}</p>
                       {c.industry && <p className="text-[11px] text-gray-400 truncate">{c.industry}</p>}
                     </div>
-                    <ExternalLink className="h-3.5 w-3.5 text-gray-300 group-hover:text-indigo-500 dark:text-gray-600" />
+                    <ExternalLink className="h-3.5 w-3.5 text-gray-300 group-hover:text-primary-500 dark:text-gray-600" />
                   </div>
                   {news.length > 0 ? (
                     news.slice(0, 1).map((n, i) => (
@@ -144,7 +144,7 @@ export default function CareerHubPage() {
 
 function QuickLink({ to, icon: Icon, label }) {
   return (
-    <Link to={to} className="flex items-center gap-2.5 rounded-xl border border-gray-100 px-4 py-3 text-sm font-medium text-gray-600 hover:border-indigo-200 hover:text-indigo-600 dark:border-gray-800 dark:text-gray-300 dark:hover:border-indigo-800/60 dark:hover:text-indigo-400 transition-colors">
+    <Link to={to} className="flex items-center gap-2.5 rounded-xl border border-gray-100 px-4 py-3 text-sm font-medium text-gray-600 hover:border-primary-200 hover:text-primary-600 dark:border-gray-800 dark:text-gray-300 dark:hover:border-primary-800/60 dark:hover:text-primary-400 transition-colors">
       <Icon className="h-4 w-4 shrink-0" />
       {label}
     </Link>

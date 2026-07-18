@@ -11,7 +11,7 @@ import { Skeleton } from '../../components/common/Skeleton';
 import { Page } from '../../components/common/motion';
 
 const FEATURE_CARDS = [
-  { to: '/me/journal', icon: BookLock, title: 'Journal', sub: 'Private reflection & mood tracking', color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-950/40' },
+  { to: '/me/journal', icon: BookLock, title: 'Journal', sub: 'Private reflection & mood tracking', color: 'text-primary-500', bg: 'bg-primary-50 dark:bg-primary-950/40' },
   { to: '/me/planner', icon: CalendarDays, title: 'Planner', sub: 'Tasks, goals and deadlines', color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/40' },
   { to: '/me/finance', icon: Wallet, title: 'Finance', sub: 'Budget, calculators & tracker', color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
   { to: '/me/wellbeing', icon: HeartHandshake, title: 'Wellbeing', sub: 'Breathe, meditate, recharge', color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-950/40' },
@@ -68,25 +68,25 @@ export default function MeHubPage() {
 
       {/* LIFE SNAPSHOT — 3 tiles as the signature */}
       <div className="mt-6 grid grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-amber-200/60 bg-amber-50 p-6 text-center dark:border-amber-800/40 dark:bg-amber-950/30">
-          <p className="text-3xl font-bold tabular-nums text-amber-600">{due}</p>
-          <p className="mt-1 text-xs font-medium text-amber-600/70">Due today</p>
+        <div className="rounded-2xl border border-warn-200/60 bg-warn-50 p-6 text-center dark:border-warn-800/40 dark:bg-warn-950/30">
+          <p className="text-3xl font-bold tabular-nums text-warn-700">{due}</p>
+          <p className="mt-1 text-xs font-medium text-warn-700/70">Due today</p>
         </div>
         <div className={`rounded-2xl border p-6 text-center ${
           overdue > 0
-            ? 'border-red-200/60 bg-red-50 dark:border-red-800/40 dark:bg-red-950/30'
+            ? 'border-danger-200/60 bg-danger-50 dark:border-danger-800/40 dark:bg-danger-950/30'
             : 'border-gray-200/60 bg-white dark:border-gray-800 dark:bg-gray-900'
         }`}>
-          <p className={`text-3xl font-bold tabular-nums ${overdue > 0 ? 'text-red-500' : 'text-gray-400'}`}>
+          <p className={`text-3xl font-bold tabular-nums ${overdue > 0 ? 'text-danger-500' : 'text-gray-400'}`}>
             {overdue}
           </p>
-          <p className={`mt-1 text-xs font-medium ${overdue > 0 ? 'text-red-400' : 'text-gray-400'}`}>
+          <p className={`mt-1 text-xs font-medium ${overdue > 0 ? 'text-danger-400' : 'text-gray-400'}`}>
             Overdue
           </p>
         </div>
-        <div className="rounded-2xl border border-indigo-200/60 bg-indigo-50 p-6 text-center dark:border-indigo-800/40 dark:bg-indigo-950/30">
-          <p className="text-3xl font-bold tabular-nums text-indigo-600">{upcoming}</p>
-          <p className="mt-1 text-xs font-medium text-indigo-500/70">This week</p>
+        <div className="rounded-2xl border border-primary-200/60 bg-primary-50 p-6 text-center dark:border-primary-800/40 dark:bg-primary-950/30">
+          <p className="text-3xl font-bold tabular-nums text-primary-600">{upcoming}</p>
+          <p className="mt-1 text-xs font-medium text-primary-500/70">This week</p>
         </div>
       </div>
 
@@ -96,7 +96,7 @@ export default function MeHubPage() {
           <Link
             key={c.to}
             to={c.to}
-            className="rounded-2xl border border-gray-200/80 bg-white p-4 transition-all hover:border-indigo-200 dark:border-gray-800/80 dark:bg-gray-900 dark:hover:border-indigo-800/60"
+            className="rounded-2xl border border-gray-200/80 bg-white p-4 transition-all hover:border-primary-200 dark:border-gray-800/80 dark:bg-gray-900 dark:hover:border-primary-800/60"
           >
             <div className={`mb-3 w-fit rounded-xl p-2 ${c.bg}`}>
               <c.icon className={`h-5 w-5 ${c.color}`} />
@@ -111,7 +111,7 @@ export default function MeHubPage() {
       <div className="mt-8 rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
         <div className="mb-3 flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Up next</span>
-          <Link to="/me/planner" className="flex items-center gap-1 text-[10px] font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+          <Link to="/me/planner" className="flex items-center gap-1 text-[10px] font-medium text-primary-600 hover:underline dark:text-primary-400">
             Open planner <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
@@ -119,7 +119,7 @@ export default function MeHubPage() {
           <div className="py-4 text-center">
             <Smile className="mx-auto mb-2 h-6 w-6 text-gray-300 dark:text-gray-600" />
             <p className="text-sm text-gray-400">Nothing due — plan tomorrow tonight.</p>
-            <Link to="/me/planner" className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+            <Link to="/me/planner" className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary-600 hover:underline dark:text-primary-400">
               Add a task <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
@@ -130,7 +130,7 @@ export default function MeHubPage() {
               return (
                 <li key={t._id} className="flex items-center justify-between text-sm">
                   <span className="truncate text-gray-700 dark:text-gray-300">{t.title}</span>
-                  <span className={`ml-2 shrink-0 text-xs ${days < 0 ? 'text-red-500 font-medium' : days <= 1 ? 'text-amber-600 font-medium' : 'text-gray-400'}`}>
+                  <span className={`ml-2 shrink-0 text-xs ${days < 0 ? 'text-danger-500 font-medium' : days <= 1 ? 'text-warn-700 font-medium' : 'text-gray-400'}`}>
                     {days < 0 ? 'Overdue · ' : days === 0 ? 'Today · ' : ''}{formatDate(t.dueDate)}
                   </span>
                 </li>

@@ -40,16 +40,16 @@ export default function CommunityHubPage() {
         <div className="card-hover rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="flex items-center gap-2 font-semibold">
-              <MessageSquare className="h-4 w-4 text-indigo-500" /> Feed
+              <MessageSquare className="h-4 w-4 text-primary-500" /> Feed
             </h2>
-            <Link to="/community/feed" className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+            <Link to="/community/feed" className="flex items-center gap-1 text-xs font-medium text-primary-600 hover:underline dark:text-primary-400">
               Open <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
           {data.posts.length === 0 ? (
             <div>
               <p className="text-sm text-gray-400">Nothing posted yet.</p>
-              <Link to="/community/feed" className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+              <Link to="/community/feed" className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:underline dark:text-primary-400">
                 Be the first to post <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
@@ -57,7 +57,7 @@ export default function CommunityHubPage() {
             <ul className="space-y-3">
               {data.posts.map((p) => (
                 <li key={p._id}>
-                  <Link to="/community/feed" className="block text-sm hover:text-indigo-600">
+                  <Link to="/community/feed" className="block text-sm hover:text-primary-600">
                     <p className="truncate font-medium">{p.title}</p>
                     <p className="text-xs text-gray-400">
                       {p.author?.name} · {formatDate(p.createdAt)}
@@ -73,9 +73,9 @@ export default function CommunityHubPage() {
         <div className="card-hover rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="flex items-center gap-2 font-semibold">
-              <Megaphone className="h-4 w-4 text-indigo-500" /> Announcements
+              <Megaphone className="h-4 w-4 text-primary-500" /> Announcements
             </h2>
-            <Link to="/community/announcements" className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+            <Link to="/community/announcements" className="flex items-center gap-1 text-xs font-medium text-primary-600 hover:underline dark:text-primary-400">
               View all <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
@@ -98,7 +98,7 @@ export default function CommunityHubPage() {
 
         {/* Gallery */}
         <Link to="/community/gallery" className="card-hover block rounded-2xl border border-gray-200/80 bg-white p-5 dark:border-gray-800/80 dark:bg-gray-900">
-          <Camera className="mb-2 h-5 w-5 text-indigo-500" />
+          <Camera className="mb-2 h-5 w-5 text-primary-500" />
           <p className="font-semibold">Gallery</p>
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Batch albums and photos</p>
         </Link>
