@@ -9,10 +9,12 @@ const {
   forgotPassword,
   resetPassword,
   deleteAccount,
+  checkEmail,
 } = require('../controllers/authController');
 const verifyToken = require('../middleware/verifyToken');
 const upload = require('../middleware/upload');
 
+router.get('/check-email', checkEmail);
 router.post('/register', register);
 router.post('/login', login);
 router.post('/forgot-password', forgotPassword);

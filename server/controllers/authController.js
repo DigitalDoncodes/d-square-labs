@@ -57,6 +57,21 @@ const signToken = (user) =>
     { expiresIn: '7d' }
   );
 
+// Used by the register flow to block advancing past the credentials step
+// with an email that's already taken, before the student fills out the
+// remaining 6 steps. Deliberately returns only a boolean, never whether the
+// account is pending/approved/etc — nothing beyond "is this email usable".
+exports.checkEmail = async (req, res, next) => {
+  try {
+    const email = String(req.query.email || '').toLowerCase().trim();
+    if (!email || !EMAIL_RE.test(email)) {
+      return res.status(400).json({ message: 'A valid email is required' });
+    }
+    const exists = await User.exists({ email });
+    res.json({ exists: Boolean(exists) });
+  } catch (err) { next(err); }
+};
+
 exports.register = async (req, res, next) => {
   try {
     const {

@@ -5,7 +5,8 @@ import toast from 'react-hot-toast';
 import { MailCheck } from 'lucide-react';
 import Button from '../components/common/Button';
 import AuthShell from '../components/layout/AuthShell';
-import { register as registerApi } from '../api/auth';
+import RegisterBackground from '../components/common/RegisterBackground';
+import { register as registerApi, checkEmail } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import {
   WelcomeStep,
@@ -45,16 +46,44 @@ const DEFAULT_VALUES = {
   priorDomain: '',
 };
 
+// The 'Account' step (index 1) is where email is entered — check it's not
+// already registered before letting the student invest time in the
+// remaining 6 steps, rather than only discovering the conflict at final submit.
+const EMAIL_CHECK_STEP = 1;
+
 export default function RegisterPage() {
   const methods = useForm({ defaultValues: DEFAULT_VALUES, mode: 'onChange' });
-  const { handleSubmit, formState: { isSubmitting, isValid } } = methods;
+  const { handleSubmit, trigger, getValues, setError, formState: { isSubmitting, isValid } } = methods;
   const { login } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [pending, setPending] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   const next = () => setStep((s) => Math.min(s + 1, STEPS.length - 1));
   const back = () => setStep((s) => Math.max(s - 1, 0));
+
+  const handleNext = async () => {
+    if (step !== EMAIL_CHECK_STEP) return next();
+
+    const fieldsOk = await trigger(['name', 'email', 'password']);
+    if (!fieldsOk) return;
+
+    setCheckingEmail(true);
+    try {
+      const email = getValues('email');
+      const res = await checkEmail(email);
+      if (res.data.exists) {
+        setError('email', { type: 'manual', message: 'This email is already registered — log in instead.' });
+        return;
+      }
+      next();
+    } catch {
+      toast.error('Could not verify your email right now — try again.');
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
 
   const onSubmit = async (data) => {
     try {
@@ -93,7 +122,7 @@ export default function RegisterPage() {
       if (res.data.pending) { setPending(true); return; }
       login(res.data.token);
       toast.success('Welcome to DATAD!');
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Registration failed');
     }
@@ -101,7 +130,7 @@ export default function RegisterPage() {
 
   if (pending) {
     return (
-      <AuthShell subtitle="One last step">
+      <AuthShell subtitle="One last step" background={<RegisterBackground />}>
         <div className="space-y-4 py-4 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400">
             <MailCheck className="h-8 w-8" />
@@ -129,7 +158,11 @@ export default function RegisterPage() {
   const totalSteps = STEPS.length;
 
   return (
-    <AuthShell subtitle={isWelcome ? 'Your student workspace, powered by Dax' : `Step ${stepNumber} of ${totalSteps}`}>
+    <AuthShell
+      subtitle={isWelcome ? 'Your student workspace, powered by Dax' : `Step ${stepNumber} of ${totalSteps}`}
+      background={<RegisterBackground />}
+      maxWidth="max-w-2xl"
+    >
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
           {!isWelcome && <ProgressBar currentStep={step} totalSteps={totalSteps} />}
@@ -151,7 +184,16 @@ export default function RegisterPage() {
                 {isSubmitting ? 'Creating your workspace…' : 'Create My Workspace ✨'}
               </button>
             ) : (
-              <Button type="submit" disabled={isSubmitting || !isValid} fullWidth={step === 0} loading={isSubmitting} className={step > 0 ? 'flex-1' : ''}>{step > 0 ? (step < totalSteps ? 'Continue →' : 'Get started →') : 'Get started →'}</Button>
+              <Button
+                type="button"
+                fullWidth={step === 0}
+                className={step > 0 ? 'flex-1' : ''}
+                onClick={handleNext}
+                disabled={checkingEmail}
+                loading={checkingEmail}
+              >
+                {checkingEmail ? 'Checking…' : step === 0 ? 'Get started →' : 'Continue →'}
+              </Button>
             )}
           </div>
 

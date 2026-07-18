@@ -158,6 +158,21 @@
 .stagger > *:nth-child(3) { animation-delay: 0.08s; }
 .stagger > *:nth-child(4) { animation-delay: 0.11s; }
 .stagger > *:nth-child(5) { animation-delay: 0.14s; }
+
+/* Login page: falling binary-code background column. */
+@keyframes binary-fall {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(100%); }
+}
+
+/* Login page: terminal-style blinking cursor after the animated headline. */
+@keyframes blink-cursor {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.blink-cursor {
+  animation: blink-cursor 1s step-end infinite;
+}
 .stagger > *:nth-child(6) { animation-delay: 0.17s; }
 
 /* Respect reduced-motion preferences. */

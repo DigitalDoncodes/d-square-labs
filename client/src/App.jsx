@@ -106,19 +106,12 @@ function AppLayout() {
   );
 }
 
-// "/" — the startup page for visitors; the daily dashboard once logged in.
+// "/" is always the public landing page. A logged-in user is sent straight
+// to /dashboard — "/" itself never renders app content.
 function HomeGate() {
   const { user } = useAuth();
   if (!user) return <LandingPage />;
-  return (
-    <SubscriptionProvider>
-      <AppShell>
-        <ErrorBoundary>
-          <DashboardPage />
-        </ErrorBoundary>
-      </AppShell>
-    </SubscriptionProvider>
-  );
+  return <Navigate to="/dashboard" replace />;
 }
 
 // Old top-level URLs keep working: strip the legacy prefix, keep the rest.
@@ -155,9 +148,10 @@ export default function App() {
               <Route path="/about" element={<AboutPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
-              {/* "/" is the public landing for visitors, the dashboard once logged in */}
+              {/* "/" is reserved for the public landing page — always, logged in or not. */}
               <Route path="/" element={<HomeGate />} />
               <Route element={<AppLayout />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/briefing" element={<IntelligencePage />} />
 
                 <Route path="/study" element={<WorkspaceLayout workspace="study" title="Study" />}>
