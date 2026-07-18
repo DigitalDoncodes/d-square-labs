@@ -1,532 +1,441 @@
-import { useState, useEffect, useMemo } from 'react';
-import { ArrowRight, Check, Sparkles } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import {
-  getDailyMission,
-  getRecommendationStream,
-  getReadiness,
-  getGoalProgress,
-  getWeeklyReview,
-  transitionLifecycle,
-} from '../../api/experience';
+  ArrowRight, ArrowUpRight, Sparkles, Send, Loader2, FileText, Wallet,
+  CalendarDays, BookOpen, Briefcase, Newspaper, Flame, GraduationCap,
+} from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { getReadiness } from '../../api/experience';
 import { listTasks } from '../../api/tasks';
 import { listNotes } from '../../api/notes';
 import { getTodayReflection } from '../../api/reflection';
 import { getTodayCase } from '../../api/dailyCase';
-import { daysUntil } from '../../utils/dateUtils';
+import { getMyResume } from '../../api/resume';
+import { listInternships } from '../../api/internships';
+import { daxChat, dashboardInsights } from '../../api/dax';
+import { daysUntil, formatDate } from '../../utils/dateUtils';
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { Page } from '../common/motion';
 import { Skeleton } from '../common/Skeleton';
 import Card from '../common/Card';
 import Button from '../common/Button';
+import AIEnhancement from '../common/AIEnhancement';
 
-const PROMPTS = [
-  'One page today is better than ten pages someday.',
-  'You don\'t have to do everything today. Just the next right thing.',
-  'Progress is quiet. Keep going.',
-  'Showing up today is enough. The rest follows.',
-  'Small steps, taken daily, become the person you\'re becoming.',
-  'You\'ve handled every hard day so far. Today is no different.',
-  'Comparison is noise. Your pace is the plan.',
-];
+// ── 1. Arrival — a personalised morning briefing, not a chat window ────────
 
-function deriveContextLine({ readiness, tasks, streak, trendDelta }) {
-  const score = typeof readiness === 'object' ? readiness?.score : readiness;
-  const overdue = tasks?.filter((t) => daysUntil(t.dueDate) < 0).length || 0;
-
-  const parts = [];
-
-  if (score != null) {
-    if (score >= 75) parts.push('Your readiness is strong.');
-    else if (score >= 50) parts.push('Your readiness is on track.');
-    else parts.push('Your readiness could use a boost.');
-    if (trendDelta?.delta != null && trendDelta.delta >= 0) {
-      parts.push(`Up ${trendDelta.delta} points this week.`);
-    }
-  }
-
-  if (streak >= 5) {
-    parts.push(`Day ${streak} of your streak — this is where growth happens.`);
-  } else if (streak > 0) {
-    parts.push(`${streak}-day streak. Keep showing up.`);
-  } else if (overdue > 2) {
-    parts.push(`You have ${overdue} tasks waiting. One step at a time.`);
-  }
-
-  return parts.length > 0 ? parts.join(' ') : 'A fresh day with new possibilities. What matters most today?';
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
 }
 
-function getImpactConfig(improvement) {
-  const i = (improvement || '').toLowerCase();
-  if (i.includes('significant')) return { label: 'Major leap', color: 'text-amber-600 dark:text-amber-400' };
-  if (i.includes('moderate')) return { label: 'Solid gain', color: 'text-indigo-600 dark:text-indigo-400' };
-  if (i.includes('slight')) return { label: 'Small step', color: 'text-emerald-600 dark:text-emerald-400' };
-  return { label: 'Progress', color: 'text-blue-600 dark:text-blue-400' };
-}
-
-function getReadinessBand(score) {
-  if (score == null) return { color: 'text-gray-400', ring: 'stroke-gray-300 dark:stroke-gray-600' };
-  if (score >= 75) return { color: 'text-emerald-500', ring: 'stroke-emerald-400' };
-  if (score >= 50) return { color: 'text-indigo-500', ring: 'stroke-indigo-400' };
-  if (score >= 25) return { color: 'text-amber-500', ring: 'stroke-amber-400' };
-  return { color: 'text-rose-500', ring: 'stroke-rose-400' };
-}
-
-function getTrendDelta(review) {
-  if (!review?.readinessChange) return null;
-  return review.readinessChange;
-}
-
-function deriveInsight({ readiness, tasks, caseData, notes, goalProgress }) {
-  if (readiness?.components?.length) {
-    const worst = [...readiness.components].sort(
-      (a, b) => a.points / a.max - b.points / b.max
-    )[0];
-    if (worst && worst.points / worst.max < 0.5) {
-      return {
-        insight: `Your ${worst.label} is your lowest area. Focus there first — it could raise your overall score significantly.`,
-        action: { label: 'View readiness breakdown', to: '/career/readiness' },
-      };
-    }
-  }
-
-  if (tasks?.length) {
-    const overdue = tasks.filter((t) => daysUntil(t.dueDate) < 0).length;
-    if (overdue >= 2) {
-      return {
-        insight: `You have ${overdue} overdue ${overdue === 1 ? 'task' : 'tasks'} waiting. Clearing just one restores a sense of control.`,
-        action: { label: 'View your tasks', to: '/planner' },
-      };
-    }
-  }
-
-  if (caseData?.streak && caseData.streak >= 3) {
-    return {
-      insight: `You're on a ${caseData.streak}-day streak. Each consecutive day builds momentum — consistency compounds.`,
-      action: { label: 'Keep it going', to: '/study' },
-    };
-  }
-
-  if (goalProgress?.overall?.completionPct != null && goalProgress.overall.completionPct < 100) {
-    return {
-      insight: `You're ${goalProgress.overall.completionPct}% toward your goals. ${goalProgress.overall.totalCompleted || 0} milestones completed.`,
-      action: { label: 'View your goals', to: '/me' },
-    };
-  }
-
-  if (notes?.length) {
-    return {
-      insight: `Your latest note shows active learning. Paraphrasing material in your own words is one of the highest-ROI study techniques.`,
-      action: { label: 'View your notes', to: '/study/notes' },
-    };
-  }
-
-  return null;
-}
-
-function LargeScoreRing({ score }) {
-  const R = 42;
-  const C = 2 * Math.PI * R;
-  const pct = Math.min(score ?? 0, 100) / 100;
-  const offset = C - pct * C;
-  const band = getReadinessBand(score);
-
+function Arrival({ firstName, brief, briefLoading }) {
   return (
-    <div className="relative h-[160px] w-[160px] shrink-0">
-      <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-        <circle
-          cx="50" cy="50" r={R} fill="none" strokeWidth="8"
-          className="stroke-gray-100 dark:stroke-gray-800"
-        />
-        <circle
-          cx="50" cy="50" r={R} fill="none" strokeWidth="8" strokeLinecap="round"
-          strokeDasharray={C} strokeDashoffset={offset}
-          className={`${band.ring} transition-[stroke-dashoffset] duration-1000 ease-out`}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`text-5xl font-bold tabular-nums ${band.color}`}>
-          {score ?? 0}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function ScoreRingSkeleton() {
-  return (
-    <div className="flex flex-col items-center gap-3">
-      <Skeleton className="h-[160px] w-[160px] rounded-full" />
-      <Skeleton className="h-3 w-20" />
-    </div>
-  );
-}
-
-function InsightCard({ insight }) {
-  if (!insight) return null;
-  return (
-    <div className="rounded-2xl border border-indigo-200/60 bg-indigo-50/80 p-5 dark:border-indigo-800/40 dark:bg-indigo-900/15">
-      <div className="flex items-start gap-3">
-        <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-indigo-500" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-200">
-            {insight.insight}
+    <div className="py-10 sm:py-14">
+      <p className="text-sm font-medium text-gray-400">
+        {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
+      </p>
+      <h1 className="mt-2 text-3xl font-bold leading-tight tracking-tight text-gray-900 dark:text-gray-50 sm:text-4xl">
+        {greeting()}, {firstName}.
+      </h1>
+      <div className="mt-4 max-w-2xl">
+        {briefLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-5 w-4/5" />
+          </div>
+        ) : (
+          <p className="flex items-start gap-2 text-lg leading-relaxed text-gray-600 dark:text-gray-300">
+            <Sparkles className="mt-1.5 h-4 w-4 shrink-0 text-primary-500" />
+            <span>{brief}</span>
           </p>
-          {insight.action && (
-            <Link
-              to={insight.action.to}
-              className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
-            >
-              {insight.action.label}
-              <ArrowRight className="h-3 w-3" />
-            </Link>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
 }
 
-function InsightSkeleton() {
+// ── 2. Today's Focus ────────────────────────────────────────────────────────
+
+function TodaysFocus({ tasks, loading }) {
+  const upcoming = useMemo(
+    () =>
+      [...tasks]
+        .filter((t) => t.status !== 'done')
+        .sort((a, b) => new Date(a.dueDate || 8640000000000000) - new Date(b.dueDate || 8640000000000000))
+        .slice(0, 5),
+    [tasks]
+  );
+
   return (
-    <div className="rounded-2xl border border-indigo-200/60 bg-indigo-50/80 p-5 dark:border-indigo-800/40 dark:bg-indigo-900/15">
-      <div className="flex items-start gap-3">
-        <Skeleton className="mt-0.5 h-4 w-4 rounded" />
-        <div className="min-w-0 flex-1 space-y-2">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-        </div>
+    <section>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Today's focus</h2>
+        <Link to="/me/planner" className="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400">
+          Open planner
+        </Link>
       </div>
-    </div>
+      {loading ? (
+        <div className="space-y-2">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}</div>
+      ) : upcoming.length === 0 ? (
+        <Card padding="md">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Nothing due — a clear runway. Good day to get ahead.</p>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {upcoming.map((t) => {
+            const d = t.dueDate ? daysUntil(t.dueDate) : null;
+            const overdue = d != null && d < 0;
+            const dueToday = d === 0;
+            return (
+              <Card key={t._id} padding="sm" className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-100">{t.title}</p>
+                  {t.type && <p className="text-xs capitalize text-gray-400">{t.type}</p>}
+                </div>
+                {t.dueDate && (
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
+                      overdue
+                        ? 'bg-danger-50 text-danger-700 dark:bg-danger-950/40 dark:text-danger-300'
+                        : dueToday
+                        ? 'bg-warn-50 text-warn-800 dark:bg-warn-950/40 dark:text-warn-300'
+                        : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+                    }`}
+                  >
+                    {overdue ? 'Overdue' : dueToday ? 'Today' : formatDate(t.dueDate)}
+                  </span>
+                )}
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }
 
-function MissionCardSkeleton() {
+// ── 3. Student Snapshot — motivating, not analytical ────────────────────────
+
+function SnapshotTile({ icon: Icon, label, value, suffix, tone }) {
+  const TONE = {
+    primary: 'text-primary-500',
+    success: 'text-success-500',
+    warn: 'text-warn-600',
+    danger: 'text-danger-500',
+  };
   return (
-    <Card padding="lg">
-      <div className="space-y-4">
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-7 w-3/4" />
-        <Skeleton className="h-4 w-56" />
-        <div className="space-y-3 pt-2">
-          <Skeleton className="h-5 w-full" />
-          <Skeleton className="h-5 w-full" />
-          <Skeleton className="h-5 w-2/3" />
-        </div>
-        <Skeleton className="mt-6 h-9 w-28 rounded-xl" />
-      </div>
+    <Card padding="md" className="flex flex-col gap-2">
+      <Icon className={`h-4 w-4 ${TONE[tone] || TONE.primary}`} />
+      <p className="text-2xl font-bold tabular-nums text-gray-900 dark:text-gray-50">
+        {value}
+        {suffix && <span className="ml-0.5 text-base font-medium text-gray-400">{suffix}</span>}
+      </p>
+      <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</p>
     </Card>
   );
 }
 
-export default function LivingSurface() {
-  useDocumentTitle('Home');
-  const { user } = useAuth();
+function StudentSnapshot({ readiness, tasks, resume, streak, loading }) {
+  const taskStats = useMemo(() => {
+    const total = tasks.length;
+    const done = tasks.filter((t) => t.status === 'done').length;
+    return total ? Math.round((done / total) * 100) : null;
+  }, [tasks]);
 
-  const [mission, setMission] = useState(null);
-  const [missionLoading, setMissionLoading] = useState(true);
-  const [missionError, setMissionError] = useState(null);
-  const [readiness, setReadiness] = useState(null);
-  const [readinessLoading, setReadinessLoading] = useState(true);
-  const [readinessError, setReadinessError] = useState(null);
-  const [stream, setStream] = useState(null);
-  const [streamLoading, setStreamLoading] = useState(true);
-  const [streamError, setStreamError] = useState(null);
-  const [goalProgress, setGoalProgress] = useState(null);
-  const [goalsLoading, setGoalsLoading] = useState(true);
-  const [goalsError, setGoalsError] = useState(null);
-  const [weeklyReview, setWeeklyReview] = useState(null);
-  const [reviewLoading, setReviewLoading] = useState(true);
-  const [reviewError, setReviewError] = useState(null);
-  const [tasks, setTasks] = useState([]);
-  const [notes, setNotes] = useState([]);
-  const [reflection, setReflection] = useState(null);
-  const [caseData, setCaseData] = useState(null);
+  const resumeStrength = useMemo(() => {
+    if (!resume) return null;
+    const sections = [
+      resume.summary,
+      resume.education?.length > 0,
+      resume.experience?.length > 0,
+      resume.skills?.length > 0,
+      resume.projects?.length > 0,
+    ];
+    return Math.round((sections.filter(Boolean).length / sections.length) * 100);
+  }, [resume]);
 
-  const [acceptedRecs, setAcceptedRecs] = useState(new Set());
-
-  const fetchMission = async () => {
-    setMissionLoading(true);
-    setMissionError(null);
-    try {
-      const res = await getDailyMission();
-      setMission(res.data.data || res.data.mission || res.data);
-    } catch {
-      setMissionError(true);
-    }
-    setMissionLoading(false);
-  };
-
-  const fetchReadiness = async () => {
-    setReadinessLoading(true);
-    setReadinessError(null);
-    try {
-      const res = await getReadiness();
-      setReadiness(res.data);
-    } catch {
-      setReadinessError(true);
-    }
-    setReadinessLoading(false);
-  };
-
-  const fetchStream = async () => {
-    setStreamLoading(true);
-    setStreamError(null);
-    try {
-      const res = await getRecommendationStream();
-      setStream(res.data);
-    } catch {
-      setStreamError(true);
-    }
-    setStreamLoading(false);
-  };
-
-  const fetchGoalProgress = async () => {
-    setGoalsLoading(true);
-    setGoalsError(null);
-    try {
-      const res = await getGoalProgress();
-      setGoalProgress(res.data);
-    } catch {
-      setGoalsError(true);
-    }
-    setGoalsLoading(false);
-  };
-
-  const fetchWeeklyReview = async () => {
-    setReviewLoading(true);
-    setReviewError(null);
-    try {
-      const res = await getWeeklyReview();
-      setWeeklyReview(res.data);
-    } catch {
-      setReviewError(true);
-    }
-    setReviewLoading(false);
-  };
-
-  useEffect(() => {
-    fetchMission();
-    fetchReadiness();
-    fetchStream();
-    fetchGoalProgress();
-    fetchWeeklyReview();
-
-    listTasks()
-      .then((res) => setTasks(res.data?.data || res.data || []))
-      .catch(() => {});
-    listNotes({ limit: 1 })
-      .then((res) => setNotes(res.data?.data || res.data || []))
-      .catch(() => {});
-    getTodayReflection()
-      .then((res) => setReflection(res.data))
-      .catch(() => {});
-    getTodayCase()
-      .then((res) => setCaseData(res.data))
-      .catch(() => {});
-  }, []);
-
-  const entries = useMemo(() => {
-    if (!stream?.entries) return [];
-    return stream.entries.filter(
-      (e) => !e.dismissed && !acceptedRecs.has(e.recommendation || e._id)
-    );
-  }, [stream, acceptedRecs]);
-
-  const insight = useMemo(
-    () => deriveInsight({ readiness, tasks, caseData, notes, goalProgress }),
-    [readiness, tasks, caseData, notes, goalProgress]
+  return (
+    <section>
+      <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Your snapshot</h2>
+      {loading ? (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full rounded-2xl" />)}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <SnapshotTile icon={GraduationCap} label="Career readiness" value={readiness ?? '—'} suffix={readiness != null ? '/100' : ''} tone="primary" />
+          <SnapshotTile icon={CalendarDays} label="Tasks completed" value={taskStats ?? '—'} suffix={taskStats != null ? '%' : ''} tone="success" />
+          <SnapshotTile icon={FileText} label="Resume strength" value={resumeStrength ?? '—'} suffix={resumeStrength != null ? '%' : ''} tone="warn" />
+          <SnapshotTile icon={Flame} label="Study streak" value={streak ?? 0} suffix={streak === 1 ? ' day' : ' days'} tone="danger" />
+        </div>
+      )}
+    </section>
   );
+}
 
-  const trendDelta = useMemo(() => getTrendDelta(weeklyReview), [weeklyReview]);
+// ── 4. Dax Intelligence — ambient, continuous observations ─────────────────
+// Reuses AIEnhancement/useEnhancement exactly as before: real calls into
+// studentIntelligenceEngine.enhance() (server/ai/runtime-v2), the same path
+// fixed for a missing `await` earlier this session.
 
-  const firstName = user?.name?.split(' ')[0] || 'there';
-  const dateLabel = new Date().toLocaleDateString('en-IN', {
-    weekday: 'short', day: 'numeric', month: 'short',
-  });
-  const encouragement = reflection?.quote?.text || PROMPTS[new Date().getDay() % PROMPTS.length];
-  const streak = caseData?.streak || 0;
-  const contextLine = useMemo(
-    () => deriveContextLine({ readiness, tasks, streak, trendDelta }),
-    [readiness, tasks, streak, trendDelta]
+function DaxIntelligence() {
+  return (
+    <section>
+      <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Dax noticed</h2>
+      <div className="space-y-3">
+        <AIEnhancement page="dashboard" action="view" variant="card" dismissKey="dax-dashboard-view" />
+        <AIEnhancement page="dashboard" action="detect-problems" variant="banner" dismissKey="dax-dashboard-problems" />
+        <AIEnhancement page="recommend" action="next" variant="minimal" />
+      </div>
+    </section>
   );
-  const score = typeof readiness === 'object' ? readiness?.score : readiness;
+}
 
-  const handleAcceptRec = async (rec) => {
-    const id = rec.recommendation || rec._id;
-    setAcceptedRecs((prev) => new Set(prev).add(id));
+// ── 5. Ask Dax — a spotlight-style input, not a chat window ────────────────
+
+const ASK_SUGGESTIONS = [
+  'Plan my week',
+  'Summarize my notes',
+  'Generate quiz questions',
+  'Improve my resume',
+  'Find internships',
+];
+
+function AskDax() {
+  const [message, setMessage] = useState('');
+  const [reply, setReply] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const inputRef = useRef(null);
+
+  const ask = async (text) => {
+    const q = (text ?? message).trim();
+    if (!q || loading) return;
+    setLoading(true);
+    setReply(null);
     try {
-      await transitionLifecycle(id, 'accepted');
-    } catch {}
+      const res = await daxChat(q);
+      setReply(res.data?.reply || res.data?.message || res.data?.result || 'Done.');
+    } catch {
+      setReply("I couldn't reach that just now — try again in a moment.");
+    } finally {
+      setLoading(false);
+      setMessage('');
+    }
   };
 
   return (
-    <Page>
-      {/* TOP BAR — date only */}
-      <div className="flex items-center justify-between py-4">
-        <span className="text-xs font-medium tracking-wide text-gray-400">
-          {dateLabel}
-        </span>
-        <span className="text-xs font-medium text-gray-400">
-          <span className="accent-text">{firstName}</span>
-        </span>
-      </div>
+    <section>
+      <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Ask Dax</h2>
+      <Card padding="md">
+        <form
+          onSubmit={(e) => { e.preventDefault(); ask(); }}
+          className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 focus-within:border-primary-400 dark:border-gray-800 dark:bg-gray-950"
+        >
+          <Sparkles className="h-4 w-4 shrink-0 text-primary-500" />
+          <input
+            ref={inputRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Ask anything — plan my week, summarize my notes…"
+            className="flex-1 border-0 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none dark:text-gray-100"
+          />
+          <button
+            type="submit"
+            disabled={loading || !message.trim()}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary-500 text-white transition-opacity disabled:opacity-30"
+          >
+            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+          </button>
+        </form>
 
-      {/* READINESS RING — the monument. No greeting, no hero text. */}
-      <div className="flex flex-col items-center py-12 text-center">
-        {readinessLoading ? (
-          <ScoreRingSkeleton />
-        ) : readinessError || score == null ? (
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex h-[160px] w-[160px] items-center justify-center rounded-full bg-gray-50 dark:bg-gray-900">
-              <span className="text-5xl font-bold tabular-nums text-gray-300 dark:text-gray-600">—</span>
-            </div>
-            <p className="text-sm text-gray-400">Set up readiness to begin.</p>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center">
-            <LargeScoreRing score={score} />
-            <p className="mt-4 max-w-sm text-base leading-relaxed text-gray-500 dark:text-gray-400">
-              {contextLine}
-            </p>
+        {(loading || reply) && (
+          <div className="mt-3 rounded-xl bg-primary-50 p-4 text-sm leading-relaxed text-gray-700 dark:bg-primary-950/20 dark:text-gray-200">
+            {loading ? <span className="text-gray-400">Dax is thinking…</span> : reply}
           </div>
         )}
 
-        {/* MISSION — compact, directly below the ring */}
-        <div className="mt-10 w-full text-left">
-          {missionLoading ? (
-            <MissionCardSkeleton />
-          ) : missionError || !mission ? (
-            <Card padding="md">
-              <div className="flex flex-col items-center gap-3 py-3 text-center">
-                <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                  Nothing urgent today.
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Clear schedule. Ready to explore or plan ahead.
-                </p>
-                <Link to="/planner">
-                  <Button variant="primary" size="sm" iconRight={ArrowRight}>
-                    Plan ahead
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-          ) : (
-            <Card padding="md">
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
-                Today's mission
-              </p>
-              <p className="mt-2 text-xl font-semibold leading-snug text-gray-900 dark:text-gray-100">
-                {mission.goal}
-              </p>
-              <p className="mt-1 text-xs text-gray-400">
-                {mission.estimatedCompletionTime || '~30 min'}
-                <span className="mx-2">·</span>
-                {getImpactConfig(mission.expectedReadinessImprovement).label}
-                {mission.reasoning && mission.reasoning.length < 80 && (
-                  <>
-                    <span className="mx-2">·</span>
-                    {mission.reasoning}
-                  </>
-                )}
-              </p>
-
-              {mission.tasks?.length > 0 && (
-                <ol className="mt-4 space-y-2">
-                  {mission.tasks.map((task, i) => (
-                    <li key={i} className="flex items-center gap-3">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-gray-300 text-[10px] font-semibold text-gray-400 dark:border-gray-600 dark:text-gray-500">
-                        {i + 1}
-                      </span>
-                      <span className="text-sm text-gray-700 dark:text-gray-200">{task}</span>
-                    </li>
-                  ))}
-                </ol>
-              )}
-
-              <div className="mt-6">
-                <Link to="/planner">
-                  <Button variant="primary" size="sm" iconRight={ArrowRight}>
-                    Begin
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      {/* DAX INSIGHT — one Dax moment */}
-      <div className="border-t border-gray-200/60 dark:border-gray-800/60" />
-      <div className="py-10">
-        {insight ? <InsightCard insight={insight} /> : null}
-      </div>
-
-      {/* RECOMMENDATIONS — compact, tertiary */}
-      {!streamError && (streamLoading || entries.length > 0) && (
-        <>
-          <div className="border-t border-gray-200/60 dark:border-gray-800/60" />
-          <div className="space-y-4 py-8">
-            {streamLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-5/6" />
-              </div>
-            ) : (
-              entries.slice(0, 3).map((rec) => {
-                const id = rec.recommendation || rec._id;
-                const accepted = acceptedRecs.has(id);
-                return (
-                  <div
-                    key={id}
-                    className="group flex items-center gap-3 py-1"
-                  >
-                    {rec.type && (
-                      <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                        {rec.type.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
-                      </span>
-                    )}
-                    <span className="flex-1 truncate text-sm text-gray-700 dark:text-gray-200">
-                      {rec.title}
-                    </span>
-                    <span className="shrink-0 text-[11px] text-gray-400">
-                      {rec.estimatedCompletionTime && rec.estimatedCompletionTime}
-                      {rec.estimatedCompletionTime && rec.confidence != null && ' '}
-                      {rec.confidence != null && `${Math.round(rec.confidence * 100)}%`}
-                    </span>
-                    {!accepted ? (
-                      <button
-                        onClick={() => handleAcceptRec(rec)}
-                        className="shrink-0 text-gray-300 transition-colors hover:text-indigo-500 dark:text-gray-600 dark:hover:text-indigo-400"
-                        aria-label={`Accept ${rec.title}`}
-                      >
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </button>
-                    ) : (
-                      <Check className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                    )}
-                  </div>
-                );
-              })
-            )}
+        {!reply && !loading && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {ASK_SUGGESTIONS.map((s) => (
+              <button
+                key={s}
+                onClick={() => ask(s)}
+                className="rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:border-primary-300 hover:text-primary-600 dark:border-gray-800 dark:text-gray-400 dark:hover:border-primary-700 dark:hover:text-primary-400"
+              >
+                {s}
+              </button>
+            ))}
           </div>
-        </>
+        )}
+      </Card>
+    </section>
+  );
+}
+
+// ── 6. Continue Working — quick links back into real work ──────────────────
+
+function ContinueWorking({ latestNote }) {
+  const LINKS = [
+    { icon: BookOpen, label: 'Notes', to: '/study/notes' },
+    { icon: CalendarDays, label: 'Planner', to: '/me/planner' },
+    { icon: FileText, label: 'Resume', to: '/career/resume' },
+    { icon: Wallet, label: 'Finance', to: '/me/finance' },
+  ];
+  return (
+    <section>
+      <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Continue working</h2>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {LINKS.map((l) => (
+          <Link key={l.to} to={l.to}>
+            <Card padding="md" hoverable className="flex h-full flex-col gap-2">
+              <l.icon className="h-4 w-4 text-gray-400" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{l.label}</span>
+            </Card>
+          </Link>
+        ))}
+      </div>
+      {latestNote && (
+        <Link to={`/study/notes/${latestNote._id}`}>
+          <Card padding="md" hoverable className="mt-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Pick up where you left off</p>
+            <p className="mt-1 truncate text-sm font-medium text-gray-800 dark:text-gray-100">{latestNote.title}</p>
+          </Card>
+        </Link>
       )}
+    </section>
+  );
+}
 
-      {/* ENCOURAGEMENT — footnote */}
-      <div className="border-t border-gray-200/60 dark:border-gray-800/60" />
-      <div className="py-8">
-        <p className="text-xs italic leading-relaxed text-gray-400">
-          &ldquo;{encouragement}&rdquo;
-        </p>
-        {reflection?.quote?.author && (
-          <p className="mt-1 text-[11px] text-gray-400">
-            &mdash; {reflection.quote.author}
-          </p>
+// ── 7. Opportunities — personalised, real listings ──────────────────────────
+
+function Opportunities({ internships, loading }) {
+  if (!loading && internships.length === 0) return null;
+  return (
+    <section>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Opportunities for you</h2>
+        <Link to="/career/opportunities" className="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400">
+          See all
+        </Link>
+      </div>
+      {loading ? (
+        <div className="grid gap-3 sm:grid-cols-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-28 w-full rounded-2xl" />)}</div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-3">
+          {internships.slice(0, 3).map((i) => (
+            <a key={i._id} href={i.applyLink} target="_blank" rel="noreferrer">
+              <Card padding="md" hoverable className="flex h-full flex-col gap-1">
+                <Briefcase className="h-4 w-4 text-primary-500" />
+                <p className="truncate text-sm font-semibold text-gray-800 dark:text-gray-100">{i.title}</p>
+                <p className="truncate text-xs text-gray-500 dark:text-gray-400">{i.company}</p>
+              </Card>
+            </a>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ── 8. Discover — the day's concept, and where to explore ──────────────────
+
+function Discover({ reflection }) {
+  const concept = reflection?.dailyConcept;
+  return (
+    <section>
+      <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Discover</h2>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Link to="/briefing">
+          <Card padding="md" hoverable className="flex h-full flex-col gap-2">
+            <Newspaper className="h-4 w-4 text-primary-500" />
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Today's briefing</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">News and concepts picked for your interests.</p>
+            <span className="mt-auto inline-flex items-center gap-1 text-xs font-medium text-primary-600 dark:text-primary-400">
+              Read now <ArrowUpRight className="h-3 w-3" />
+            </span>
+          </Card>
+        </Link>
+        {concept?.concept ? (
+          <Card padding="md" className="flex h-full flex-col gap-2">
+            <Sparkles className="h-4 w-4 text-warn-500" />
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{concept.concept}</p>
+            {concept.whyToday && <p className="text-xs text-gray-500 dark:text-gray-400">{concept.whyToday}</p>}
+          </Card>
+        ) : (
+          <Card padding="md" className="flex h-full flex-col justify-center gap-1">
+            <p className="text-sm text-gray-500 dark:text-gray-400">Your daily concept will appear here once it's ready.</p>
+          </Card>
         )}
+      </div>
+    </section>
+  );
+}
+
+// ── Root ─────────────────────────────────────────────────────────────────
+
+export default function LivingSurface() {
+  useDocumentTitle('Dashboard');
+  const { user } = useAuth();
+
+  const [readiness, setReadiness] = useState(null);
+  const [readinessLoading, setReadinessLoading] = useState(true);
+  const [tasks, setTasks] = useState([]);
+  const [tasksLoading, setTasksLoading] = useState(true);
+  const [notes, setNotes] = useState([]);
+  const [reflection, setReflection] = useState(null);
+  const [caseData, setCaseData] = useState(null);
+  const [resume, setResume] = useState(null);
+  const [internships, setInternships] = useState([]);
+  const [internshipsLoading, setInternshipsLoading] = useState(true);
+  const [brief, setBrief] = useState('');
+  const [briefLoading, setBriefLoading] = useState(true);
+
+  useEffect(() => {
+    getReadiness()
+      .then((res) => setReadiness(typeof res.data === 'object' ? res.data?.score : res.data))
+      .catch(() => {})
+      .finally(() => setReadinessLoading(false));
+
+    listTasks()
+      .then((res) => setTasks(res.data?.data || res.data || []))
+      .catch(() => {})
+      .finally(() => setTasksLoading(false));
+
+    listNotes({ limit: 1 }).then((res) => setNotes(res.data?.data || res.data || [])).catch(() => {});
+    getTodayReflection().then((res) => setReflection(res.data)).catch(() => {});
+    getTodayCase().then((res) => setCaseData(res.data)).catch(() => {});
+    getMyResume().then((res) => setResume(res.data?.data || res.data)).catch(() => {});
+
+    listInternships({ limit: 3 })
+      .then((res) => setInternships(res.data?.data || res.data || []))
+      .catch(() => {})
+      .finally(() => setInternshipsLoading(false));
+
+    dashboardInsights()
+      .then((res) => {
+        const d = res.data || {};
+        setBrief(d.nextBestAction || d.overallAssessment || "Let's see what today looks like.");
+      })
+      .catch(() => setBrief("Let's see what today looks like."))
+      .finally(() => setBriefLoading(false));
+  }, []);
+
+  const firstName = user?.name?.split(' ')[0] || 'there';
+  const streak = caseData?.streak || 0;
+
+  return (
+    <Page>
+      <div className="mx-auto max-w-4xl space-y-12 pb-16">
+        <Arrival firstName={firstName} brief={brief} briefLoading={briefLoading} />
+        <TodaysFocus tasks={tasks} loading={tasksLoading} />
+        <StudentSnapshot readiness={readiness} tasks={tasks} resume={resume} streak={streak} loading={readinessLoading || tasksLoading} />
+        <DaxIntelligence />
+        <AskDax />
+        <ContinueWorking latestNote={notes?.[0]} />
+        <Opportunities internships={internships} loading={internshipsLoading} />
+        <Discover reflection={reflection} />
       </div>
     </Page>
   );
