@@ -64,6 +64,7 @@ router.get('/me', verifyToken, async (req, res, next) => {
       trialUsed: status.trialUsed,
       requests,
       aiUsage: status.aiQuota,
+      credits: status.credits,
       chatQuota: status.chatQuota,
       capabilities: status.capabilities,
     });

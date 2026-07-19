@@ -128,32 +128,78 @@ const NVIDIA_MODELS = {
   },
 };
 
+// Key pool: primary key plus an optional fallback for resilience against
+// account-level failures (401 invalid key / 429 account rate limit) that a
+// different NVIDIA account survives. With only NVIDIA_API_KEY set, behavior
+// is identical to the previous single-key implementation.
+const KEY_RESET_MS = 5 * 60 * 1000;
+
+function nvidiaKeys() {
+  return [process.env.NVIDIA_API_KEY, process.env.NVIDIA_API_KEY_FALLBACK].filter(Boolean);
+}
+
+// Module-level so every NvidiaProvider instance (there's normally one)
+// shares the same "primary key is dead, use fallback" knowledge.
+let _activeKeyIndex = 0;
+let _keyFailedAt = 0;
+
+function _currentKeyIndex() {
+  if (_activeKeyIndex > 0 && Date.now() - _keyFailedAt > KEY_RESET_MS) {
+    _activeKeyIndex = 0; // periodically retry the primary key
+  }
+  return _activeKeyIndex;
+}
+
+function _isKeyLevelError(err) {
+  const status = err?.status || err?.response?.status;
+  return status === 401 || status === 429;
+}
+
 class NvidiaProvider {
   constructor(config) {
     this.name = 'nvidia';
-    this.model = config.model || 'meta/llama-3.3-70b-instruct';
+    this.model = config.model || 'meta/llama-3.1-8b-instruct';
     this.maxTokens = config.maxTokens || 2048;
     this.temperature = config.temperature ?? 0.7;
     this._config = config;
-    this._client = null;
+    this._clients = {}; // one OpenAI client per key index
   }
 
-  _getClient() {
-    if (!this._client) {
-      this._client = new OpenAI({
-        apiKey: process.env.NVIDIA_API_KEY,
+  _getClient(keyIndex = _currentKeyIndex()) {
+    const keys = nvidiaKeys();
+    const idx = Math.min(keyIndex, keys.length - 1);
+    if (!this._clients[idx]) {
+      this._clients[idx] = new OpenAI({
+        apiKey: keys[idx],
         baseURL: NVIDIA_BASE_URL,
       });
     }
-    return this._client;
+    return this._clients[idx];
+  }
+
+  // Run an SDK call with the active key; on a key-level error (401/429),
+  // retry once with the next key in the pool and remember the switch.
+  async _withKeyFallback(fn) {
+    const keys = nvidiaKeys();
+    const idx = _currentKeyIndex();
+    try {
+      return await fn(this._getClient(idx));
+    } catch (err) {
+      const nextIdx = idx + 1;
+      if (!_isKeyLevelError(err) || nextIdx >= keys.length) throw err;
+      console.warn(`[nvidiaProvider] key ${idx} failed (${err.status}); switching to fallback key`);
+      _activeKeyIndex = nextIdx;
+      _keyFailedAt = Date.now();
+      return fn(this._getClient(nextIdx));
+    }
   }
 
   isAvailable() {
-    return Boolean(process.env.NVIDIA_API_KEY);
+    return nvidiaKeys().length > 0;
   }
 
   getModelInfo(modelName) {
-    return NVIDIA_MODELS[modelName] || NVIDIA_MODELS['meta/llama-3.3-70b-instruct'];
+    return NVIDIA_MODELS[modelName] || NVIDIA_MODELS['meta/llama-3.1-8b-instruct'];
   }
 
   async complete({ messages, system, maxTokens, temperature, responseFormat, model }) {
@@ -172,7 +218,7 @@ class NvidiaProvider {
     };
     if (responseFormat) params.response_format = responseFormat;
 
-    const res = await this._getClient().chat.completions.create(params);
+    const res = await this._withKeyFallback((client) => client.chat.completions.create(params));
     const text = res.choices[0].message.content.trim();
     return {
       text,
@@ -185,14 +231,39 @@ class NvidiaProvider {
     };
   }
 
+  // Real token-by-token streaming via NVIDIA NIM's OpenAI-compatible
+  // chat/completions endpoint. `signal` is passed as the SDK's request-options
+  // arg so an aborted Express request genuinely cancels the upstream call,
+  // not just the client-side read.
+  async *completeStream({ messages, system, maxTokens, temperature, model, signal }) {
+    const resolvedModel = model || this.model;
+    const modelInfo = this.getModelInfo(resolvedModel);
+
+    const params = {
+      model: resolvedModel,
+      messages: [
+        ...(system ? [{ role: 'system', content: system }] : []),
+        ...messages,
+      ],
+      max_tokens: maxTokens || modelInfo.maxTokens || this.maxTokens,
+      temperature: temperature ?? this.temperature,
+      stream: true,
+    };
+
+    const stream = await this._withKeyFallback((client) => client.chat.completions.create(params, { signal }));
+    for await (const chunk of stream) {
+      const delta = chunk.choices?.[0]?.delta?.content;
+      if (delta) yield delta;
+    }
+  }
+
   async generateEmbeddings(inputs, model) {
     const embedModel = model || 'nvidia/nv-embedqa-e5-v5';
-    const client = this._getClient();
     const inputsArr = Array.isArray(inputs) ? inputs : [inputs];
-    const res = await client.embeddings.create({
+    const res = await this._withKeyFallback((client) => client.embeddings.create({
       model: embedModel,
       input: inputsArr,
-    });
+    }));
     return res.data.map((d) => d.embedding);
   }
 

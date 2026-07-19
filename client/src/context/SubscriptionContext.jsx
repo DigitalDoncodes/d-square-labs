@@ -26,6 +26,8 @@ export function SubscriptionProvider({ children }) {
   const tierExpiresAt = status?.tierExpiresAt ? new Date(status.tierExpiresAt) : null;
   const trialUsed = !!status?.trialUsed;
   const capabilities = status?.capabilities ?? {};
+  const credits = status?.credits ?? status?.aiQuota ?? null; // {used, limit, remaining}
+  const chatQuota = status?.chatQuota ?? null;
 
   const daysLeft = tierExpiresAt
     ? Math.max(0, Math.ceil((tierExpiresAt - Date.now()) / (24 * 60 * 60 * 1000)))
@@ -37,7 +39,7 @@ export function SubscriptionProvider({ children }) {
   const hasFeature = (feature) => capabilities[feature] === true;
 
   return (
-    <SubscriptionContext.Provider value={{ tier, tierExpiresAt, trialUsed, daysLeft, loading, hasAccess, hasFeature, capabilities, refresh: fetch }}>
+    <SubscriptionContext.Provider value={{ tier, tierExpiresAt, trialUsed, daysLeft, loading, hasAccess, hasFeature, capabilities, credits, chatQuota, refresh: fetch }}>
       {children}
     </SubscriptionContext.Provider>
   );

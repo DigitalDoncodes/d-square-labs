@@ -3,8 +3,7 @@ const verifyToken = require('../middleware/verifyToken');
 const { generalLimiter } = require('../middleware/rateLimiters');
 const { getMinimumTier, FEATURE } = require('../subscription/featureRegistry');
 const { canAccessFeature, refreshTier } = require('../subscription/permissionEngine');
-const AiUsage = require('../models/AiUsage');
-const aiQuota = require('../middleware/aiQuota');
+const usageMeter = require('../ai/usageMeter');
 const { enhance } = require('../ai/runtime-v2/studentIntelligenceEngine');
 
 const ENHANCE_FEATURES = {
@@ -55,31 +54,21 @@ router.post('/', async (req, res, next) => {
       });
     }
 
-    if (ENHANCE_QUOTA.has(pageAction)) {
-      const limit = aiQuota.DAILY_LIMIT;
-      const dateKey = new Date().toISOString().slice(0, 10);
-      const userLimit = limit[req.user.tier];
-      if (userLimit) {
-        const filter = { user: req.user.userId, dateKey, count: { $lt: userLimit } };
-        const usage = await AiUsage.findOneAndUpdate(
-          filter,
-          { $inc: { count: 1 } },
-          { new: true, upsert: true, setDefaultsOnInsert: true }
-        ).catch(async (err) => {
-          if (err.code === 11000) {
-            return AiUsage.findOneAndUpdate(filter, { $inc: { count: 1 } }, { new: true });
-          }
-          throw err;
+    // Pre-flight credit gate — charging happens at the AI completion sites
+    // (usageMeter.chargeCredits), weighted by which model actually served it.
+    if (ENHANCE_QUOTA.has(pageAction) && req.user.role !== 'admin') {
+      const credits = await usageMeter.checkCredits(req.user.userId, req.user.tier);
+      if (credits.limit && credits.blocked) {
+        return res.status(429).json({
+          code: 'CREDITS_EXHAUSTED',
+          message: `Daily AI credits used up (${credits.limit} on your plan). Resets at midnight UTC.`,
+          credits,
+          upgradeUrl: '/subscribe',
         });
-        if (!usage) {
-          return res.status(429).json({
-            message: `Daily AI limit reached (${userLimit} actions on your plan). Resets at midnight UTC.`,
-            limit: userLimit,
-            upgradeUrl: '/subscribe',
-          });
-        }
-        res.set('X-AI-Used', String(usage.count));
-        res.set('X-AI-Limit', String(userLimit));
+      }
+      if (credits.limit) {
+        res.set('X-AI-Credits-Used', String(credits.used));
+        res.set('X-AI-Credits-Limit', String(credits.limit));
       }
     }
 

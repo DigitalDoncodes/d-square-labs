@@ -2,6 +2,7 @@ const RuntimeComparison = require('../models/RuntimeComparison');
 const cfg = require('../config/automation');
 
 const v1Runner = require('./runner');
+const usageMeter = require('./usageMeter');
 const v2Engine = require('./runtime-v2/studentIntelligenceEngine');
 const intelligenceLayer = require('./intelligence-layer');
 
@@ -195,6 +196,64 @@ async function _routeHybrid(request) {
   return _formatGatewayResult(result, 'v1', 'hybrid', start);
 }
 
+// Streaming sibling of processRequest(), used only by the chat task's SSE
+// endpoint. Mirrors _execV1's messages-array path (profile enrichment +
+// provider dispatch) but yields text deltas instead of awaiting a full
+// result. No V2/hybrid/shadow branching — streaming always uses V1 dispatch,
+// same as processRequest() already forces for any messages-array request.
+async function* processStream(request) {
+  const normalized = _normalizeRequest(request);
+  const profile = await _buildProfile(normalized);
+  const { system, messages, provider, maxTokens, signal } = normalized;
+
+  if (!messages) throw new Error('processStream requires a messages array');
+
+  const profileContext = profile?.enrichedContext || '';
+  const enrichedSystem = profileContext
+    ? (system ? `${system}\n\n[Student Context]\n${profileContext}` : `[Student Context]\n${profileContext}`)
+    : system;
+  const enrichedMessages = profileContext
+    ? [{ role: 'system', content: enrichedSystem || '' }, ...messages.filter((m) => m.role !== 'system')]
+    : messages;
+
+  const { getProviderChain } = require('./providers');
+  const chain = getProviderChain(provider);
+  if (!chain.length) throw new Error('No AI provider available.');
+
+  let lastError = null;
+  for (const p of chain) {
+    if (typeof p.completeStream !== 'function') {
+      lastError = new Error(`Provider "${p.name}" does not support streaming.`);
+      continue;
+    }
+
+    try {
+      const gen = p.completeStream({ messages: enrichedMessages, system: enrichedSystem || undefined, maxTokens, signal });
+      const first = await gen.next();
+      if (first.done) return;
+      yield first.value;
+      yield* gen;
+      // Stream completed — charge credits (no token counts available on
+      // the streaming path; charge by model weight only).
+      usageMeter.chargeCredits({
+        userId: normalized.userId,
+        tier: normalized.tier,
+        model: p.defaultModel || p.name,
+        provider: p.name,
+        task: normalized.task || normalized.taskName || 'chat',
+      }).catch(() => {});
+      return;
+    } catch (err) {
+      lastError = err;
+      console.warn(`[aiGateway] Streaming provider "${p.name}" failed, trying next: ${err.message}`);
+    }
+  }
+
+  throw new Error(
+    `Streaming failed on all ${chain.length} available provider(s): ${lastError?.message || 'unknown error'}`
+  );
+}
+
 async function _execV1(request) {
   const { system, user, messages, provider, json, maxTokens, task } = request;
 
@@ -266,6 +325,19 @@ async function _execV1(request) {
     result = runResult.result;
     meta = runResult.meta;
   }
+
+  // Credit metering — fire-and-forget, common point after both branches.
+  // Requests without a userId (system/cron jobs) are uncharged.
+  usageMeter.chargeCredits({
+    userId: request.userId,
+    tier: request.tier,
+    model: meta.model,
+    provider: meta.provider,
+    promptTokens: meta.promptTokens,
+    completionTokens: meta.completionTokens,
+    task: task || request.taskName || '',
+    latencyMs: meta.latencyMs,
+  }).catch(() => {});
 
   return {
     result,
@@ -488,6 +560,7 @@ async function persistExecutionMetrics(gatewayResult, extra) {
 
 module.exports = {
   process: processRequest,
+  processStream,
   setMode,
   getMode,
   getAllModes,

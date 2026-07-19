@@ -7,6 +7,9 @@ const aiUsageSchema = new mongoose.Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     dateKey: { type: String, required: true }, // YYYY-MM-DD (UTC)
     count: { type: Number, default: 0 },
+    // Credit-weighted usage (expensive models charge more per request).
+    // Quota checks read this; `count` is kept for one release for rollback.
+    creditsUsed: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

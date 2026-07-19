@@ -1,9 +1,9 @@
 const intentEngine = require('./intentEngine');
 const contextBuilder = require('./contextBuilder');
-const modelRegistry = require('./modelRegistry');
 const capabilityEngine = require('./capabilityEngine');
 const modelRouterV2 = require('./modelRouterV2');
 const promptRegistry = require('./promptRegistry');
+const modelRegistry = require('./modelRegistry');
 const promptVersionManager = require('./promptVersionManager');
 const responseVerifierV2 = require('./responseVerifierV2');
 const telemetryEngine = require('./telemetryEngine');
@@ -14,38 +14,170 @@ const latencyOptimizer = require('./latencyOptimizer');
 const knowledgeGraphAdapter = require('./knowledgeGraphAdapter');
 const memoryAdapter = require('./memoryAdapter');
 const learningEngine = require('./learningEngine');
-
 const cfg = require('../../config/automation');
+const { getProvider } = require('../providers');
+const usageMeter = require('../usageMeter');
 
-async function processIntelligenceRequest({ userId, text, taskName, sourceCount, existingTitles, contextSize, estimatedCostUsd, tier, strategy, retryCount = 0 }) {
+const PAGE_ACTIONS = {
+  'dashboard:view': {
+    intent: 'explain',
+    contextKeys: ['memory', 'planner', 'study', 'placement', 'career', 'finance'],
+    promptType: 'dashboard-insights',
+    responseFormat: 'json',
+    requires: null,
+  },
+  'dashboard:detect-problems': {
+    intent: 'reason',
+    contextKeys: ['planner', 'study', 'memory', 'career', 'placement'],
+    promptType: 'dashboard-problem-detect',
+    responseFormat: 'json',
+    requires: null,
+  },
+  'dashboard:recommend': {
+    intent: 'recommendation',
+    contextKeys: ['memory', 'planner', 'study', 'career'],
+    promptType: 'dashboard-recommend',
+    responseFormat: 'json',
+    requires: null,
+  },
+  'planner:optimize': {
+    intent: 'planner',
+    contextKeys: ['planner', 'memory'],
+    promptType: 'planner-optimize',
+    responseFormat: 'json',
+    requires: 'AI_PLANNER_SUGGEST',
+  },
+  'notes:summarize': {
+    intent: 'summarize',
+    contextKeys: ['note'],
+    promptType: 'summarise-note',
+    responseFormat: 'json',
+    requires: 'AI_SUMMARISE',
+  },
+  'notes:flashcard': {
+    intent: 'generate',
+    contextKeys: ['note', 'memory'],
+    promptType: 'flashcard-generate',
+    responseFormat: 'json',
+    requires: 'FLASHCARD_GENERATE',
+  },
+  'notes:quiz': {
+    intent: 'generate',
+    contextKeys: ['note', 'memory'],
+    promptType: 'quiz-generate',
+    responseFormat: 'json',
+    requires: 'QUIZ_GENERATE',
+  },
+  'resume:ats': {
+    intent: 'resume',
+    contextKeys: ['resume', 'memory'],
+    promptType: 'resume-ats',
+    responseFormat: 'json',
+    requires: 'RESUME_ATS',
+  },
+  'resume:review': {
+    intent: 'review',
+    contextKeys: ['resume', 'memory'],
+    promptType: 'review-resume',
+    responseFormat: 'json',
+    requires: 'AI_RESUME_REVIEW',
+  },
+  'finance:advise': {
+    intent: 'explain',
+    contextKeys: ['finance', 'memory'],
+    promptType: 'finance-assist',
+    responseFormat: 'json',
+    requires: 'FINANCE_ASSIST',
+  },
+  'career:roadmap': {
+    intent: 'career',
+    contextKeys: ['career', 'resume', 'placement', 'memory'],
+    promptType: 'career-advice',
+    responseFormat: 'json',
+    requires: 'AI_CAREER_ADVICE',
+  },
+  'interview:coach': {
+    intent: 'interview',
+    contextKeys: ['resume', 'memory', 'career'],
+    promptType: 'interview-simulator',
+    responseFormat: 'json',
+    requires: 'AI_INTERVIEW_SIMULATOR',
+  },
+  'company:research': {
+    intent: 'research',
+    contextKeys: ['company', 'memory'],
+    promptType: 'company-research',
+    responseFormat: 'json',
+    requires: 'COMPANY_RESEARCH',
+  },
+  'compare:companies': {
+    intent: 'compare',
+    contextKeys: ['companies', 'memory'],
+    promptType: 'compare-companies',
+    responseFormat: 'json',
+    requires: 'AI_COMPARE_COMPANIES',
+  },
+  'recommend:next': {
+    intent: 'recommendation',
+    contextKeys: ['memory', 'planner', 'study', 'career', 'finance'],
+    promptType: 'dashboard-recommend',
+    responseFormat: 'json',
+    requires: null,
+  },
+  'study:case-framework': {
+    intent: 'teach',
+    contextKeys: ['memory'],
+    promptType: 'case-framework',
+    responseFormat: 'text',
+    requires: null,
+  },
+  'chat:message': {
+    intent: 'explain',
+    contextKeys: ['all'],
+    promptType: 'chat',
+    responseFormat: 'text',
+    requires: null,
+  },
+};
+
+async function enhance({ userId, page, action, data = {}, tier, strategy }) {
   const startTime = Date.now();
+  const pageAction = `${page}:${action}`;
+  const actionDef = PAGE_ACTIONS[pageAction];
 
-  const intent = intentEngine.classifyTask({ text, taskName, userId });
-  const context = await contextBuilder.buildContext(userId);
-
-  const routing = await modelRouterV2.routeRequest({
-    text,
-    taskName,
-    userId,
-    tier: tier || context?.user?.tier || 'free',
-    contextSize: contextSize || context?.contextSize || 0,
-    complexity: intent.complexity || 0.5,
-    strategy: strategy || 'capability-first',
-  });
-
-  const cacheResult = cacheLayer.get(taskName || intent.primaryIntent, userId);
-  if (cacheResult) {
-    return {
-      result: cacheResult,
-      intent,
-      context,
-      routing,
-      caching: { hit: true, key: taskName || intent.primaryIntent },
-      latencyMs: Date.now() - startTime,
-    };
+  if (!actionDef) {
+    throw Object.assign(new Error(`Unknown enhancement: ${pageAction}`), { statusCode: 400, name: 'ValidationError' });
   }
 
-  const prompt = promptRegistry.getPromptForIntent(intent.primaryIntent, taskName);
+  const context = await contextBuilder.buildContext(userId, {
+    contextKeys: actionDef.contextKeys,
+    ...(data.noteId ? { noteIds: [data.noteId] } : {}),
+    ...(data.companyId ? { companyIds: [data.companyId] } : {}),
+    ...(data.companySlugA && data.companySlugB ? { companySlugs: [data.companySlugA, data.companySlugB] } : {}),
+  });
+
+  const intent = { primaryIntent: actionDef.intent, confidence: 0.9, source: 'page-action' };
+  const capabilities = capabilityEngine.computeRequiredCapabilities(
+    intent.primaryIntent,
+    data.contextSize || context.contextSize || 0,
+    data.complexity || 0.5
+  );
+
+  const routing = await modelRouterV2.routeRequest({
+    text: data.text || data.query || '',
+    taskName: actionDef.promptType,
+    userId,
+    tier: tier || context?.user?.tier || 'free',
+    contextSize: capabilities.actualContextSize,
+    complexity: capabilities.complexity,
+    strategy: strategy || 'auto-select',
+  });
+
+  const prompt = promptRegistry.getPromptForIntent(intent.primaryIntent, actionDef.promptType) || {
+    system: '',
+    user: '',
+    promptId: actionDef.promptType,
+  };
   const currentVersion = prompt?.currentVersion || '1.0';
 
   const providerInstance = await modelRouterV2.resolveProvider(routing.provider);
@@ -57,11 +189,11 @@ async function processIntelligenceRequest({ userId, text, taskName, sourceCount,
 
   try {
     const response = await providerInstance.generate({
-      system: prompt?.system || '',
-      user: prompt?.user || '',
+      system: prompt.system || '',
+      user: buildUserPrompt(prompt.user || '', actionDef.promptType, data),
       context: context.text,
-      query: text,
-      taskName,
+      query: data.text || data.query || data.message || '',
+      taskName: actionDef.promptType,
       intent: intent.primaryIntent,
       userId,
     });
@@ -73,20 +205,16 @@ async function processIntelligenceRequest({ userId, text, taskName, sourceCount,
 
     verification = await responseVerifierV2.verifyResponse({
       output: rawOutput,
-      task: taskName,
+      task: actionDef.promptType,
       intent: intent.primaryIntent,
-      sourceCount,
-      existingTitles,
-      promptId: prompt?.promptId,
+      sourceCount: data.sourceCount,
+      existingTitles: data.existingTitles,
+      promptId: prompt.promptId,
       version: currentVersion,
     });
 
-    if (verification.status === 'failed' && retryCount < 3) {
-      return await processIntelligenceRequest({
-        userId, text, taskName, sourceCount, existingTitles,
-        contextSize, estimatedCostUsd, tier, strategy,
-        retryCount: retryCount + 1,
-      });
+    if (verification.status === 'failed') {
+      rawOutput = null;
     }
 
     success = verification.status !== 'failed';
@@ -94,126 +222,106 @@ async function processIntelligenceRequest({ userId, text, taskName, sourceCount,
     circuitBreaker.recordFailure(routing.provider, 'provider_unavailable');
     rawOutput = null;
     verification = {
-      pass: false,
-      status: 'failed',
-      confidence: 0,
-      issues: [err.message],
-      warnings: [],
-      hallucinationHits: [],
+      pass: false, status: 'failed', confidence: 0,
+      issues: [err.message], warnings: [], hallucinationHits: [],
     };
-    promptTokens = 0;
-    completionTokens = 0;
-    totalTokens = 0;
+    promptTokens = 0; completionTokens = 0; totalTokens = 0;
   }
 
   const latencyMs = Date.now() - startTime;
-
   const cost = costOptimizer.estimateCost({
-    provider: routing.provider,
-    model: routing.model,
-    promptTokens,
-    completionTokens,
-    estimatedCostUsd,
+    provider: routing.provider, model: routing.model,
+    promptTokens, completionTokens, estimatedCostUsd: data.estimatedCostUsd,
   });
 
+  const formatted = actionDef.responseFormat === 'json'
+    ? parseEnhancement(rawOutput, action)
+    : { text: rawOutput, confidence: verification?.confidence };
+
   telemetryEngine.recordCall({
-    userId,
-    task: taskName,
-    intent: intent.primaryIntent,
-    provider: routing.provider,
-    model: routing.model,
-    tokensUsed: totalTokens,
-    promptTokens,
-    completionTokens,
-    latencyMs,
-    estimatedCostUsd: cost,
+    userId, task: pageAction, intent: intent.primaryIntent,
+    provider: routing.provider, model: routing.model,
+    tokensUsed: totalTokens, promptTokens, completionTokens,
+    latencyMs, estimatedCostUsd: cost,
     confidence: verification?.confidence || 0,
-    status: verification?.status || 'failed',
+    status: success ? 'success' : 'failed',
     validationIssues: verification?.issues || [],
-    sourceCount: sourceCount || 0,
-    promptId: prompt?.promptId,
-    promptVersion: currentVersion,
-    retryAttempts: retryCount,
-    contextSize: contextSize || 0,
+    promptId: prompt.promptId, promptVersion: currentVersion,
+    retryAttempts: 0, contextSize: capabilities.actualContextSize,
     strategy: strategy || null,
   });
 
-  await telemetryEngine.persistCall({
-    task: taskName,
-    userId,
-    intent: intent.primaryIntent,
-    provider: routing.provider,
-    model: routing.model,
-    tokensUsed: totalTokens,
-    estimatedCostUsd: cost,
-    confidence: verification?.confidence,
-    validationStatus: verification?.status,
-    durationMs: latencyMs,
-    status: success ? 'success' : 'failed',
-    error: success ? null : verification?.issues?.join('; '),
-  });
+  if (success) {
+    // Credit metering — only successful generations charge the student.
+    usageMeter.chargeCredits({
+      userId, tier,
+      model: routing.model, provider: routing.provider,
+      promptTokens, completionTokens,
+      task: pageAction, latencyMs,
+    }).catch(() => {});
 
-  await telemetryEngine.incrementUserUsage(userId);
-
-  learningEngine.recordOutcome({
-    intent: intent.primaryIntent,
-    provider: routing.provider,
-    model: routing.model,
-    promptId: prompt?.promptId,
-    promptVersion: currentVersion,
-    confidence: verification?.confidence,
-    latencyMs,
-    cost,
-    success,
-  });
-
-  promptVersionManager.recordVersionUsage(prompt?.promptId, currentVersion, verification?.status, latencyMs);
-  promptVersionManager.recordConfidence(prompt?.promptId, currentVersion, verification?.confidence || 0);
-
-  if (success && verification?.confidence >= 0.7) {
-    cacheLayer.set(taskName || intent.primaryIntent, userId, {
-      output: rawOutput,
-      verification,
-    }, { contentType: intent.primaryIntent });
+    await memoryAdapter.saveMemory(userId, {
+      type: 'ai-enhancement',
+      key: `${pageAction}:${Date.now()}`,
+      value: { page, action, confidence: verification?.confidence },
+      tags: ['ai-enhancement', page, action],
+    });
   }
 
-  await memoryAdapter.saveMemory(userId, {
-    type: 'ai-interaction',
-    key: `${intent.primaryIntent}:${Date.now()}`,
-    value: {
-      query: text.slice(0, 200),
-      intent: intent.primaryIntent,
-      confidence: verification?.confidence,
-      status: verification?.status,
-    },
-    tags: ['ai-runtime-v2', intent.primaryIntent],
-  });
-
   return {
-    result: rawOutput,
-    verification,
-    intent,
-    context,
-    routing,
-    prompt: {
-      id: prompt?.promptId,
-      version: currentVersion,
+    page,
+    action,
+    insight: formatted,
+    verification: {
+      status: verification.status,
+      confidence: verification.confidence,
     },
-    caching: { hit: false },
+    routing: {
+      provider: routing.provider,
+      model: routing.model,
+      strategy: routing.routingDecision?.strategy || 'auto-select',
+    },
     cost,
     latencyMs,
-    retryCount,
     timestamp: new Date().toISOString(),
-    runtime: 'v2',
   };
 }
 
+function buildUserPrompt(template, promptType, data) {
+  if (!template) {
+    const dataStr = Object.entries(data)
+      .filter(([k]) => !['noteId', 'companyId', 'companySlugA', 'companySlugB', 'contextSize', 'complexity', 'estimatedCostUsd', 'sourceCount', 'existingTitles'].includes(k))
+      .map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`)
+      .join('\n');
+    return dataStr || '';
+  }
+  let result = template;
+  for (const [key, value] of Object.entries(data)) {
+    result = result.replace(new RegExp(`\\$\\{${key}\\}`, 'g'), String(value ?? ''));
+  }
+  return result;
+}
+
+function parseEnhancement(raw, action) {
+  if (!raw) return null;
+  if (typeof raw === 'object') return raw;
+
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed;
+  } catch {
+    if (action === 'view') {
+      const insight = raw.replace(/^["'\s]+|["'\s]+$/g, '').slice(0, 500);
+      return { insight, raw };
+    }
+    return { text: raw.slice(0, 2000), raw };
+  }
+}
+
 async function healthCheck() {
-  const intentCount = Object.keys(intentEngine.TASK_INTENT_MAP || {}).length;
   const modelCount = modelRegistry.getAvailableModels().length;
   const providerHealth = {};
-  const providers = ['groq', 'openai', 'anthropic', 'google', 'cohere', 'mistral'];
-
+  const providers = ['nvidia', 'ollama', 'groq', 'openai', 'anthropic', 'gemini'];
   for (const p of providers) {
     const cbState = circuitBreaker.getState(p);
     providerHealth[p] = {
@@ -222,29 +330,16 @@ async function healthCheck() {
       failures: cbState.failureCount,
     };
   }
-
   return {
     status: 'healthy',
     modules: {
-      intentEngine: intentCount > 0,
-      modelRegistry: modelCount > 0,
-      contextBuilder: true,
-      capabilityEngine: true,
-      modelRouterV2: true,
-      promptRegistry: true,
-      promptVersionManager: true,
-      responseVerifierV2: true,
-      telemetryEngine: true,
-      circuitBreaker: true,
-      cacheLayer: true,
-      costOptimizer: true,
-      latencyOptimizer: true,
-      knowledgeGraphAdapter: true,
-      memoryAdapter: true,
-      learningEngine: true,
+      intentEngine: true, modelRegistry: modelCount > 0,
+      contextBuilder: true, capabilityEngine: true,
+      modelRouterV2: true, promptRegistry: true,
+      responseVerifierV2: true, telemetryEngine: true,
     },
     stats: {
-      registeredIntents: intentCount,
+      pageActions: Object.keys(PAGE_ACTIONS).length,
       registeredModels: modelCount,
       providerHealth,
     },
@@ -252,6 +347,7 @@ async function healthCheck() {
 }
 
 module.exports = {
-  processIntelligenceRequest,
+  enhance,
   healthCheck,
+  PAGE_ACTIONS,
 };

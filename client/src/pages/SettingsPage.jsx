@@ -33,7 +33,7 @@ const TIER_BENEFITS = {
 };
 
 function SubscriptionCard() {
-  const { tier, tierExpiresAt, daysLeft, trialUsed } = useSubscription();
+  const { tier, tierExpiresAt, daysLeft, trialUsed, credits } = useSubscription();
   const meta = TIER_META[tier] || TIER_META.free;
   const Icon = meta.icon;
   const benefits = TIER_BENEFITS[tier] || TIER_BENEFITS.free;
@@ -108,6 +108,40 @@ function SubscriptionCard() {
           </>
         )}
       </div>
+
+      {/* Dax credits — daily AI allowance, weighted by model cost */}
+      {credits && credits.limit > 0 ? (
+        <div className="mb-4 rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+          <div className="mb-1.5 flex items-center justify-between text-sm">
+            <span className="font-medium text-gray-700 dark:text-gray-200">Dax credits today</span>
+            <span className="font-semibold text-gray-800 dark:text-gray-100">
+              {credits.used} / {credits.limit}
+            </span>
+          </div>
+          <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-800">
+            <div
+              className={`h-2 rounded-full transition-all ${
+                credits.used / credits.limit >= 0.95
+                  ? 'bg-red-500'
+                  : credits.used / credits.limit >= 0.75
+                    ? 'bg-amber-500'
+                    : 'bg-indigo-500'
+              }`}
+              style={{ width: `${Math.min(100, Math.round((credits.used / credits.limit) * 100))}%` }}
+            />
+          </div>
+          <p className="mt-1.5 text-[11px] text-gray-400">
+            Advanced models use more credits per request · resets daily at midnight UTC
+          </p>
+        </div>
+      ) : tier === 'free' ? (
+        <div className="mb-4 rounded-xl border border-dashed border-gray-300 p-4 text-center dark:border-gray-700">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            AI credits unlock with a trial or paid plan.{' '}
+            <Link to="/subscribe" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">See plans</Link>
+          </p>
+        </div>
+      ) : null}
 
       {/* Benefits */}
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">

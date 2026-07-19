@@ -5,17 +5,22 @@ const { getEffectiveTier, getAvailableCapabilities } = require('./permissionEngi
 const { isAtLeast } = require('./tierHierarchy');
 const { FEATURE } = require('./featureRegistry');
 
+const { CREDIT_LIMITS } = require('../ai/usageMeter');
+
 const todayKey = () => new Date().toISOString().slice(0, 10);
 
+// Legacy count-based limits — superseded by credit metering (CREDIT_LIMITS
+// in ai/usageMeter.js); kept exported for one release for rollback safety.
 const DAILY_AI_LIMITS = { free: 0, trial: 10, pro: 75, max: 250 };
 
 const CHAT_QUOTAS = { free: 10, trial: 30, pro: 100, max: 1000 };
 
+// Credit-weighted: a request costs 1–5 credits depending on the model.
 async function getRemainingAiQuota(userId, tier) {
-  const limit = DAILY_AI_LIMITS[tier] ?? 0;
+  const limit = CREDIT_LIMITS[tier] ?? 0;
   if (!limit) return { used: 0, limit: 0, remaining: 0 };
-  const usage = await AiUsage.findOne({ user: userId, dateKey: todayKey() }).select('count').lean();
-  const used = usage?.count || 0;
+  const usage = await AiUsage.findOne({ user: userId, dateKey: todayKey() }).select('creditsUsed').lean();
+  const used = usage?.creditsUsed || 0;
   return { used, limit, remaining: Math.max(0, limit - used) };
 }
 
@@ -45,6 +50,7 @@ async function getSubscriptionStatus(userId) {
     trialUsed: !!user.trialStartedAt,
     capabilities,
     aiQuota,
+    credits: aiQuota, // canonical name going forward; aiQuota kept for compat
     chatQuota,
     isActive: effectiveTier !== 'free',
     hasTrial: isAtLeast(effectiveTier, 'trial'),
@@ -59,4 +65,5 @@ module.exports = {
   getSubscriptionStatus,
   DAILY_AI_LIMITS,
   CHAT_QUOTAS,
+  CREDIT_LIMITS,
 };
