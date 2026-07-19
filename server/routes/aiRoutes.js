@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const verifyToken = require('../middleware/verifyToken');
-const { requireFeature } = require('../subscription/permissionEngine');
+const { requireFeature, refreshTier } = require('../subscription/permissionEngine');
 const { FEATURE } = require('../subscription/featureRegistry');
 const { withDaxIdentity } = require('../ai/dax');
 const checkRole   = require('../middleware/checkRole');
@@ -16,6 +16,7 @@ const { search } = require('../ai/embeddings/semanticSearch');
 const { upsertEmbedding } = require('../ai/embeddings/vectorStore');
 
 router.use(verifyToken);
+router.use(refreshTier);
 router.use(generalLimiter);
 
 // ── Summarise Note ────────────────────────────────────────────────────────

@@ -27,6 +27,16 @@ export default function ChatBot() {
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
+  // Reset chat state whenever the logged-in user changes (login/logout/switch
+  // account) so a stale user's messages never render for the next person —
+  // this component stays mounted across auth changes since it lives in the
+  // app shell, not the routed page tree.
+  useEffect(() => {
+    setMessages([{ role: 'assistant', content: DAX_WELCOME }]);
+    setRemaining(null);
+    setHistoryLoaded(false);
+  }, [user?.id]);
+
   // Load history on first open. The API also returns the remaining daily quota.
   useEffect(() => {
     if (!open || historyLoaded) return;
@@ -88,7 +98,7 @@ export default function ChatBot() {
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label={`Open ${DAX} chat`}
-        className="fixed bottom-24 right-4 z-50 flex h-[52px] w-[52px] items-center justify-center rounded-full bg-indigo-600 shadow-lg shadow-indigo-500/30 transform hover:scale-105 hover:bg-indigo-700 active:scale-95 lg:bottom-6 print:hidden"
+        className="fixed bottom-24 right-4 z-50 flex h-[52px] w-[52px] items-center justify-center rounded-full bg-primary-600 shadow-lg shadow-primary-500/30 transform hover:scale-105 hover:bg-primary-700 active:scale-95 lg:bottom-6 print:hidden"
       >
         {open
           ? <ChevronDown className="h-5 w-5 text-white" />
@@ -100,7 +110,7 @@ export default function ChatBot() {
         <div className="fixed bottom-44 right-4 z-50 flex w-[22rem] flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl shadow-black/10 dark:border-gray-800/80 dark:bg-gray-950 lg:bottom-24 print:hidden max-h-[70vh] min-h-[400px]"
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-gray-100 bg-indigo-600 px-4 py-3 dark:border-gray-800">
+          <div className="flex items-center justify-between border-b border-gray-100 bg-primary-600 px-4 py-3 dark:border-gray-800">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-white/90" />
               <span className="text-sm font-semibold text-white">{DAX}</span>
@@ -140,7 +150,7 @@ export default function ChatBot() {
                   <button
                     key={chip}
                     onClick={() => { setInput(chip); setTimeout(() => inputRef.current?.focus(), 50); }}
-                    className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800/60 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
+                    className="rounded-full border border-primary-200 bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 hover:bg-primary-100 dark:border-primary-800/60 dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50"
                   >
                     {chip}
                   </button>
@@ -153,7 +163,7 @@ export default function ChatBot() {
 
           {/* Input */}
           <div className="border-t border-gray-100 p-3 dark:border-gray-800">
-            <div className="flex items-end gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 focus-within:border-indigo-400 dark:border-gray-700 dark:bg-gray-900">
+            <div className="flex items-end gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 focus-within:border-primary-400 dark:border-gray-700 dark:bg-gray-900">
               <textarea
                 ref={inputRef}
                 rows={1}
@@ -173,7 +183,7 @@ export default function ChatBot() {
                 onClick={handleSend}
                 disabled={loading || !input.trim()}
                 aria-label="Send message"
-                className="shrink-0 rounded-lg bg-indigo-600 p-1.5 text-white hover:bg-indigo-700 disabled:opacity-40"
+                className="shrink-0 rounded-full bg-primary-600 p-1.5 text-white hover:bg-primary-700 disabled:opacity-40"
               >
                 {loading
                   ? <Loader2 className="h-4 w-4 animate-spin" />

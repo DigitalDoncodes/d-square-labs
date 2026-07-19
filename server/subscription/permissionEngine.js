@@ -1,5 +1,6 @@
 const { getRank, isAtLeast } = require('./tierHierarchy');
 const { getMinimumTier } = require('./featureRegistry');
+const User = require('../models/User');
 
 function getUserTier(user) {
   if (!user) return 'free';
@@ -51,4 +52,23 @@ function getAvailableCapabilities(user) {
   return getFeaturesForTier(effectiveTier);
 }
 
-module.exports = { canAccessFeature, requireFeature, getEffectiveTier, getUserTier, getAvailableCapabilities };
+// The JWT bakes in `tier` at login time and can go stale for up to its
+// expiry (7d) if the user's subscription changes mid-session. Refresh it
+// from the DB before any feature-gate check so req.user.tier is live.
+async function refreshTier(req, res, next) {
+  try {
+    if (req.user?.userId) {
+      const dbUser = await User.findById(req.user.userId).select('tier tierExpiresAt role').lean();
+      if (dbUser) {
+        req.user.tier = dbUser.tier;
+        req.user.tierExpiresAt = dbUser.tierExpiresAt;
+        req.user.role = dbUser.role || req.user.role;
+      }
+    }
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { canAccessFeature, requireFeature, getEffectiveTier, getUserTier, getAvailableCapabilities, refreshTier };
