@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { CAPABILITY_CHIPS } from '../../constants';
+import ModelSelector from './ModelSelector';
 
 // Placeholder — inert content for now. Dark mode is inherited automatically
 // via the host's document.documentElement.classList toggle, so no theme
@@ -20,6 +21,8 @@ export default function SettingsPanel({ open, onClose, brandName }) {
         </div>
 
         <div className="space-y-4">
+          <ModelSelector />
+
           <section>
             <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--dax-text-faint)]">Memory</p>
             <p className="text-sm text-[var(--dax-text-muted)]">
