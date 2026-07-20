@@ -324,4 +324,26 @@ router.put('/model/preference', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ── Usage dashboard ────────────────────────────────────────────────────
+// Returns today's AI usage: credits used, limit, remaining, and chat quota.
+router.get('/usage', async (req, res, next) => {
+  try {
+    const credits = await usageMeter.checkCredits(req.user.userId, req.user.tier);
+    const chatQuota = CHAT_QUOTAS[credits.tier] || 0;
+    const today = new Date().toISOString().slice(0, 10);
+    const todayCount = await ChatMessage.countDocuments({
+      user: req.user.userId,
+      role: 'user',
+      createdAt: { $gte: new Date(today) },
+    });
+
+    res.json({
+      tier: credits.tier,
+      ai: { used: credits.used, limit: credits.limit, remaining: Math.max(0, credits.limit - credits.used) },
+      chat: { used: todayCount, limit: chatQuota, remaining: Math.max(0, chatQuota - todayCount) },
+      blocked: credits.blocked,
+    });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;

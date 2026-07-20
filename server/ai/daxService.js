@@ -214,7 +214,7 @@ class ValidationError extends Error {
   constructor(msg) { super(msg); this.name = 'ValidationError'; this.statusCode = 422; }
 }
 
-const HISTORY_WINDOW = 12;
+const HISTORY_WINDOW = 30;
 const TOPIC_MAX_LEN = 80;
 
 async function getUserPreferredProvider(userId) {
@@ -229,6 +229,15 @@ function deriveTopic(message) {
   const firstLine = message.trim().split('\n')[0].replace(/\s+/g, ' ').trim();
   if (firstLine.length <= TOPIC_MAX_LEN) return firstLine;
   return `${firstLine.slice(0, TOPIC_MAX_LEN - 1).trimEnd()}…`;
+}
+
+// Route to tier-appropriate model. Pro/Max get stronger reasoning models.
+function selectTierModel(tier, userModel) {
+  if (userModel) return userModel; // User override always wins
+  // Tier-based defaults: max > pro > trial+free
+  if (tier === 'max') return 'deepseek-ai/deepseek-v4-pro';     // score 92
+  if (tier === 'pro') return 'deepseek-ai/deepseek-v4-flash';   // score 88
+  return 'meta/llama-3.1-8b-instruct'; // score 65, lightweight
 }
 
 const HANDLERS = {
@@ -771,7 +780,9 @@ const HANDLERS = {
 // existing HANDLERS.*.execute()-returns-an-error-shape convention.
 async function buildChatTurn(userId, message, conversationId, clientId) {
   if (!message?.trim()) throw new ValidationError('Message is required');
-  if (message.length > 2000) throw new ValidationError('Message too long (max 2000 chars)');
+  // Cap matches ChatMessage.content maxlength — large enough to paste a case
+  // study or job description, bounded so one turn cannot flood the context.
+  if (message.length > 8000) throw new ValidationError('Message too long (max 8000 chars)');
 
   // Every chat turn belongs to a conversation. Callers that don't supply one
   // (the legacy non-streaming /dax {task:'chat'} contract, which had no notion
@@ -1101,11 +1112,9 @@ async function* streamChat(userId, message, { signal, modelId, conversationId, c
   const provider = await getUserPreferredProvider(userId);
   const modelName = modelId ? modelId.replace(/^[^:]+:/, '') : undefined;
 
-  // Write tools are offered only to models capable of driving them. On a weak
-  // model a mangled argument becomes a confusing confirmation card — the
-  // proposal layer keeps it from becoming a bad write, but not from being a bad
-  // suggestion — so below the bar Dax stays read-only rather than degrading.
-  const effectiveModel = modelName || cfg.providers?.nvidia?.model;
+  // Route to tier-appropriate model: max gets v4-pro, pro gets v4-flash,
+  // free/trial get the lightweight 8B. User-selected model overrides tier default.
+  const effectiveModel = selectTierModel(turn.tier, modelName);
   const canWrite = supportsWriteTools(effectiveModel);
   const tools = canWrite ? [...TOOL_DEFINITIONS, ...WRITE_TOOL_DEFINITIONS] : TOOL_DEFINITIONS;
 
